@@ -41,7 +41,7 @@ that will close it.
 | NASA | NASA-STD-8739.4A w/ Change 4, Workmanship Standard for Crimping, Interconnecting Cables, Harnesses, and Wiring | https://standards.nasa.gov/sites/default/files/standards/NASA/A/4/nasa-std-87394a_w_change_4_0.pdf |
 | ADB | AviationDB SDR query page (third party; used only for a partial code list) | https://www.aviationdb.com/Aviation/SdrQuery.shtm |
 | #4 | Tripwire issue #4 (header and date examples copied from a real SDR-2026.csv) | https://github.com/Jott2121/tripwire/issues/4 |
-| PROF | Maintainer run of `scripts/profile_sdr.py` on `SDR-2026.csv`, 2026-10-11 (45,910 rows), relayed by the owner. Receipt to be committed as `reports/sdr_profile_2026.json` from a machine that can reach the FAA host; the agent sandbox cannot | (repo) |
+| PROF | `reports/sdr_profile_2026.json`: maintainer run of `scripts/profile_sdr.py` on `SDR-2026.csv`, 2026-10-11 (45,910 rows; counts and code values only, no narrative). Committed receipt; every PROF number below is read from it | (repo) |
 
 Secondary sources consulted for the N-number and time-in-service items: the
 FAA "Forming an N-Number" page
@@ -65,7 +65,7 @@ and AC 43-9C (maintenance records), both consistent with the CFR text.
 |-------|----------|--------|------------|
 | `DifficultyDate` | `mm/dd/yyyy` ("Difficulty Date. (mm/dd/yyyy)" on the form); example `01/02/2026` in the CSV | GA, SS, #4 | HIGH |
 | `SubmissionDate` | ISO-8601 with a UTC offset, e.g. `2026-01-02T14:09:41.140-05:00`. The offset in the one example is -05:00 (US Eastern standard time). **Resolved:** the offset is fixed at -05:00 in every month Jan-Oct 2026, so it does not follow DST | #4, PROF | HIGH (`submission_tz` resolved) |
-| Ordering | Part 121 filers report each 24-hour period beginning at 0900 local time and have 96 hours to submit (weekend/holiday extensions apply). A difficulty date after the submission date is therefore impossible for any filer, and a lag of more than a few days is unusual for part 121 | 121.703(d) | HIGH (rule), MEDIUM (lag expectation) |
+| Ordering | Part 121 filers report each 24-hour period beginning at 0900 local time and have 96 hours to submit (weekend/holiday extensions apply). A difficulty date after the submission date is therefore impossible for any filer. In SDR-2026: 0 negative lags, median 3 days, 95th percentile 58 days, maximum 264 | 121.703(d), PROF | HIGH |
 | Control-number date | `OperatorControlNumber` embeds the submission date as `YYYYMMDD` (see identifiers) | FI | HIGH |
 
 No SDR field carries a time of day other than `SubmissionDate`. No field is
@@ -79,7 +79,7 @@ documented as UTC.
 | Definition of the hour | 14 CFR 1.1 "time in service, with respect to maintenance time records, means the time from the moment an aircraft leaves the surface of the earth until it touches it at the next point of landing" (airborne time, not block time) | 1.1 (via AC 43-9C excerpt) | HIGH |
 | `AircraftTotalCycles`, `EngineTotalCycles`, `PropellerTotalCycles`, `PartTotalCycles`, `ComponentTotalCycles` | Dimensionless count of cycles; "If applicable", so frequently empty | FI | HIGH |
 | `PartTimeSince`, `ComponentTimeSince` | Hours since the most recent overhaul, repair, or inspection ("Time Since (hours)"); whole hours at component level | FI | HIGH |
-| `PartSinceCode`, `ComponentSinceCode` | Which event the TimeSince counts from. The form offers Overhaul / Repair / Inspection / Reset; the stored code values are not visible in any source we could read | FI, GA | UNRESOLVED (`code_tables`) |
+| `PartSinceCode`, `ComponentSinceCode` | Which event the TimeSince counts from. Stored values observed: `O`, `R`, `I`, matching the form's Overhaul / Repair / Inspection choices by initial; no `Reset` value seen | FI, GA, PROF | MEDIUM |
 | Whole vs decimal in the CSV | **Resolved:** 100% whole numbers in every hour column of SDR-2026 | PROF | HIGH (`whole_hours` resolved) |
 
 ## Lengths and airframe coordinates
@@ -90,8 +90,8 @@ documented as UTC.
 | `NumberOfCracks` | Count; optional, also slated for removal | FI | HIGH |
 | `FuselageStationFrom`, `FuselageStationTo`, `WingStationFrom`, `WingStationTo`, `ButtLineFrom`, `ButtlineTo`, `WaterLineFrom`, `WaterLineTo` | Airframe station coordinates. On US-built aircraft these are inches from a manufacturer-defined datum (fuselage station: fore-aft; butt line: left-right of centreline; water line: vertical). The SDRS instructions give From/To locations but state no unit; the unit comes from general airframe practice, and the datum is per maintenance manual | FI (fields), general references | MEDIUM |
 | `StringerFrom`, `StringerTo` | Stringer designation (text), with a side | FI | MEDIUM |
-| `StringerFromSide`, `StringerToSide`, `WingStationFromSide`, `WingStationToSide`, `ButtLineFromSide`, `ButtlineToSide` | Left/right qualifiers; stored code values unknown | FI | UNRESOLVED (`code_tables`) |
-| `CorrosionLevel` | Levels 1, 2, 3 as defined for corrosion prevention and control programs: Level 1 reworkable within manufacturer limits; Level 2 beyond those limits, requiring repair or replacement of a principal structural element; Level 3 a potential airworthiness concern needing prompt action. The CSV encoding (digit, word, or other) is unverified | 8300.12 (definitions), FI (field) | MEDIUM |
+| `StringerFromSide`, `StringerToSide`, `WingStationFromSide`, `WingStationToSide`, `ButtLineFromSide`, `ButtlineToSide` | Left/right qualifiers; stored values observed: `L`, `R` | FI, PROF | MEDIUM |
+| `CorrosionLevel` | Levels 1, 2, 3 as defined for corrosion prevention and control programs: Level 1 reworkable within manufacturer limits; Level 2 beyond those limits, requiring repair or replacement of a principal structural element; Level 3 a potential airworthiness concern needing prompt action. Stored as a single digit: `2` (5,130 rows) and `3` (3 rows) observed; no `1` in 2026 | 8300.12 (definitions), FI (field), PROF | MEDIUM |
 
 Conversion factors used by the build (exact by definition, in
 `standards.CONVERSION_FACTORS`): 1 in = 25.4 mm; 1 h = 60 min;
@@ -123,13 +123,13 @@ the full SDRS look-up tables are read (`code_tables`).
 | Field | Known values | Source | Confidence |
 |-------|--------------|--------|------------|
 | `SubmitterTypeCode` | A carrier part 121; B repair station part 145; C operator part 91; D mechanic; E carrier part 135; F manufacturer; G FAA; H other; I part 125; L part 133. Observed in SDR-2026: A B C D E G H I M P S W Z (`M` 7 times); meanings of M P S W Z not in any source read. *Partial* | GA, FI, PROF | MEDIUM |
-| `NatureOfConditionA`, `NatureOfConditionB`, `NatureOfConditionC` | 1-3 codes, A required: A flame/fire; B smoke/fumes/odors/sparks; C F.O.D.; D inflight separation; E vibration/buffet; F flight control affected; G multiple failure; H electrical; list continues. *Partial* | GA, FI | MEDIUM |
-| `PrecautionaryProcedureA`, `PrecautionaryProcedureB`, `PrecautionaryProcedureC`, `PrecautionaryProcedureD` | 1-4 codes (FI; SS says up to three): A unscheduled landing; B emergency descent; C aborted takeoff; D return to block; E engine shutdown; F activate fire extinguisher; J fuel dumped (from FI's worked example "E, J, A"). *Partial* | GA, FI | MEDIUM |
-| `StageOfOperationCode` | Two letters (BL: "Alpha 2"), flight and ground stages: AA air ambulance; AB aerobatic; AG agriculture; AP approach; CL climb; CR cruise; DE descent; ET ETOPS; EX external load; FF fire fighting; HO hovering; list continues. *Partial* | BL, FI, ADB | HIGH (shape), MEDIUM (values) |
-| `HowDiscoveredCode` | One alphanumeric (BL: "Alpha-numeric 1"); table not located | BL, FI | MEDIUM (shape), UNRESOLVED (values) |
+| `NatureOfConditionA`, `NatureOfConditionB`, `NatureOfConditionC` | 1-3 codes, A required: A flame/fire; B smoke/fumes/odors/sparks; C F.O.D.; D inflight separation; E vibration/buffet; F flight control affected; G multiple failure; H electrical. Observed in SDR-2026 beyond A-H: I J K L M N O P R S T W X Y Z (`O` is 75% of rows); meanings not read. *Partial* | GA, FI, PROF | MEDIUM |
+| `PrecautionaryProcedureA`, `PrecautionaryProcedureB`, `PrecautionaryProcedureC`, `PrecautionaryProcedureD` | 1-4 codes (FI; SS says up to three): A unscheduled landing; B emergency descent; C aborted takeoff; D return to block; E engine shutdown; F activate fire extinguisher; J fuel dumped (from FI's worked example "E, J, A"). Observed beyond these: G H K L O R (`K` is 79% of rows); meanings not read. *Partial* | GA, FI, PROF | MEDIUM |
+| `StageOfOperationCode` | Two letters (BL: "Alpha 2"), flight and ground stages: AA air ambulance; AB aerobatic; AG agriculture; AP approach; CL climb; CR cruise; DE descent; ET ETOPS; EX external load; FF fire fighting; HO hovering. Observed beyond these: IN (78% of rows), TX, NR, TO, LD, UK; meanings not read. *Partial* | BL, FI, ADB, PROF | HIGH (shape), MEDIUM (values) |
+| `HowDiscoveredCode` | One alphanumeric (BL: "Alpha-numeric 1"). Observed: V (69%), O, C, E, 9, U, B, M, X, L, T, D, W; meanings not read. *Partial* | BL, FI, PROF | MEDIUM |
 | `SDRType` | One letter; observed values A and G (FI references `G`); meanings not located. *Partial* | FI, PROF | MEDIUM |
-| `ReceivingRegionCode`, `ReceivingDistrictOffice` | FAA region (two letters in a third-party sample) and district office number; tables not located | FI | UNRESOLVED |
-| `PartCondition` | From a drop-down table; values not located | FI | UNRESOLVED |
+| `ReceivingRegionCode`, `ReceivingDistrictOffice` | Two-letter region, observed: SW GL SO CE NM EA WP AL FS NE; two-digit district office, 30 values observed; meanings not read. *Partial* | FI, PROF | MEDIUM |
+| `PartCondition` | From a drop-down table; 95% of values are longer than four characters (the profiler lists only short codes: ODOR, WORN, NONE, FOD, BENT, OPEN, TORN, FIRE were the most frequent). Word-valued, table not read | FI, PROF | MEDIUM |
 | `CorrosionLevel` | 1 / 2 / 3 (definitions above); stored encoding unverified | 8300.12 | MEDIUM |
 
 ## Spec-limit sources for M1
@@ -196,15 +196,14 @@ with the same question. The profiling step is `scripts/profile_sdr.py` (PR #8).
 | `control_number_shape` | Do real rows follow 4+8+sequence? | 44,879 of 45,910 do; a mismatch is a warning, not a reject |
 | `nasa_8739_4a_table` | Exact Table 12-1 minimums per AWG? | Read from the official PDF by the maintainer, 2026-10-11; 11 rows in `tripwire/public_specs.py` |
 
-The receipt behind these answers, `reports/sdr_profile_2026.json`, is not yet
-committed: the agent sandbox cannot reach the FAA host. Until it is, the rows
-above cite the relayed maintainer run. Observed stage-of-operation,
-how-discovered and corrosion code values were not included in the relay and
-are added when the report lands.
+The receipt behind these answers is committed at
+`reports/sdr_profile_2026.json`; every PROF figure in this document is read from
+it. Observed code values for every coded column are recorded in the
+`standards.py` code lists with `complete=False` and in the Code lists section.
 
 ### Still open
 
 | Key | Question | How to resolve |
 |-----|----------|----------------|
-| `code_tables` | Full tables for `SDRType`, region, district office, `HowDiscoveredCode`, `PartCondition`, since-codes, side codes, `CorrosionLevel`, and the rest of the three partial lists | Read the SDRS Look-up Tables (host blocked from the sandbox) or take distinct values from the committed profile |
+| `code_tables` | Meanings of the observed values for `SDRType`, region, district office, `HowDiscoveredCode`, `PartCondition`, and the unlabelled values of the three partial lists and `SubmitterTypeCode` | Read the SDRS Look-up Tables (host blocked from the sandbox) and label each observed value |
 | `sdrs_2026_upgrade` | Does the summer-2026 SDRS release change the download layout? | Re-profile the first post-upgrade file and diff the header |

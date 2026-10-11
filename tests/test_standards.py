@@ -67,15 +67,10 @@ def test_every_field_cites_a_source_and_units_match_kinds():
             re.compile(f.pattern)
 
 
-def test_unresolved_fields_are_listed_as_open_items():
-    unresolved_cols = [f.column for f in s.SDR_FIELDS if f.confidence is s.Confidence.UNRESOLVED]
-    assert unresolved_cols, "the registry should carry its honest unknowns"
-    questions = " ".join(u.question for u in s.UNRESOLVED)
-    for col in unresolved_cols:
-        if s.SDR_FIELD_BY_NAME[col].kind is s.FieldKind.CODE:
-            assert "code tables" in questions.lower()
-        else:
-            assert col in questions or col.lower().replace("nnumber", "") in questions.lower()
+def test_no_field_is_unresolved_after_the_profile_and_open_items_remain_honest():
+    assert not [f.column for f in s.SDR_FIELDS if f.confidence is s.Confidence.UNRESOLVED]
+    assert "code_tables" in s.UNRESOLVED_KEYS  # meanings of observed values are still unknown
+    assert all(not cl.complete for cl in s.CODE_LISTS)
 
 
 def test_unresolved_keys_are_unique_and_actionable():
@@ -97,6 +92,11 @@ def test_code_list_check_is_tri_state():
     assert s.SUBMITTER_TYPE.check("Q") is None  # partial list: unknown, not rejected
     assert set("ABCDEGHIMPSWZ") <= set(s.SUBMITTER_TYPE.codes)  # all observed in SDR-2026
     assert set(s.SDR_TYPE.codes) == {"A", "G"} and s.SDR_TYPE.check("S") is None
+    assert {"IN", "TX", "NR", "TO", "LD", "UK"} <= set(s.STAGE_OF_OPERATION.codes)
+    assert set(s.HOW_DISCOVERED.codes) == set("VOCE9UBMXLTDW")
+    assert set(s.SINCE_CODE.codes) == {"O", "R", "I"} and set(s.SIDE_CODE.codes) == {"L", "R"}
+    assert len(s.RECEIVING_REGION.codes) == 10 and s.RECEIVING_REGION.check("SW") is True
+    assert set("ABCDEFGHIJKLMNOPRSTWXYZ") <= set(s.NATURE_OF_CONDITION.codes)
     complete = s.CodeList("x", {"1": "one"}, True, s.Confidence.HIGH, "https://example.invalid")
     assert complete.check("1") is True
     assert complete.check("2") is False
@@ -209,5 +209,6 @@ def test_doc_mentions_every_column_source_and_open_item():
     for r in s.RESOLVED:
         assert f"`{r.key}`" in text, r.key
     assert "reports/sdr_profile_2026.json" in text
+    assert (DOC.parent.parent / "reports" / "sdr_profile_2026.json").exists()
     for level in s.Confidence:
         assert level.value in text
