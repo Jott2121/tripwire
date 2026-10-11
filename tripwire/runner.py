@@ -86,6 +86,8 @@ def plan_matrix(tasks: Sequence[Task], models: Sequence[ModelConfig]) -> tuple[J
         for model in models:
             for path in paths:
                 for cond in CONDITIONS:
+                    if cond is Condition.GATE and path is ExecPath.SERVER_SIDE:
+                        continue  # not gateable: remote MCP results never reach the harness
                     jobs += [
                         Job(plan, model, path, cond, k + 1) for k in range(REPEATS if extra else 1)
                     ]
@@ -223,8 +225,8 @@ def _preflight(
         price = pricing.get(job.model.label)
         if not job.model.resolved or price is None:
             raise RunnerRefused(f"model or pricing UNRESOLVED for {job.model.label!r}")
-        if job.condition is Condition.GATE:
-            raise RunnerRefused("gate condition requested but the gate (M6) does not exist")
+        if job.condition is Condition.GATE and job.path is ExecPath.SERVER_SIDE:
+            raise RunnerRefused("the gate cannot run on the server-side path")
         total += estimate_run_cost(price)
     if total > cap_usd:
         raise RunnerRefused(f"projected spend {total:.2f} USD exceeds the cap {cap_usd:.2f} USD")

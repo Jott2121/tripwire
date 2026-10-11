@@ -141,4 +141,15 @@ open question for the owner (M7).
 
 ## Deviations log (append-only)
 
-None yet.
+- **2026-10-11, M6 (gate), server-side path not gated.** Condition 3 (prompt fix + gate) now exists
+  (`tripwire/gate.py`) but runs on the client-side path only. On the server-side path xAI calls the
+  remote MCP server itself, so tool results never reach the harness and cannot be checked, and a
+  write cannot be read back before the agent answers. Rather than fake it, `plan_matrix` plans no
+  gate jobs on the server-side path and the runner/`run_one` refuse one. Effect: the gate is
+  compared only on the client-side path (including its repeats); H5 (path difference) is unaffected
+  for conditions 1 and 2. This supersedes the sentence under Condition 3 that the runner refuses the
+  condition until M6.
+- **2026-10-11, M6 (gate), coverage limits.** The gate cannot catch F1 (unit swap) or F3 (wrong
+  value) from metadata, and cannot catch a text field truncated inside a read result (F5, no
+  `query_defects` row-count signal). On those cells the gate condition is expected to match
+  prompt-fix. See the docstring of `tripwire/gate.py`; the tests demonstrate each claim.

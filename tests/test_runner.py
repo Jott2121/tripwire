@@ -145,8 +145,17 @@ def test_unresolved_models_prices_and_the_gate_are_refused(repo, tmp_path):
         _run(repo, tmp_path, _jobs(1, model=unresolved), _client(1))
     with pytest.raises(RunnerRefused, match="UNRESOLVED"):
         _run(repo, tmp_path, _jobs(1), _client(1), pricing={sp.MODEL.label: None})
+    server_gate = [replace(_jobs(1, Condition.GATE)[0], path=ExecPath.SERVER_SIDE)]
     with pytest.raises(RunnerRefused, match="gate"):
-        _run(repo, tmp_path, _jobs(1, Condition.GATE), _client(1))
+        _run(repo, tmp_path, server_gate, _client(1))
+
+
+def test_gate_condition_runs_client_side_and_is_never_planned_server_side(repo, tmp_path):
+    assert _run(repo, tmp_path, _jobs(1, Condition.GATE), _client(1)) is ExitCode.OK
+    row = _receipt(tmp_path)[0]
+    assert row["gate"]["blocked"] is False and row["adjudication"]["correct"]
+    gated = [j for j in plan_matrix(sp.TASKS, [sp.MODEL]) if j.condition is Condition.GATE]
+    assert gated and {j.path for j in gated} == {ExecPath.CLIENT_SIDE}
 
 
 def test_a_receipt_directory_is_bound_to_its_protocol_version(repo, tmp_path):
@@ -175,6 +184,7 @@ def test_matrix_shape_subset_repeats_and_second_path():
     assert {j.path for j in in_sub} == set(ExecPath)
     assert {j.repeat for j in in_sub} == set(range(1, REPEATS + 1))
     assert {j.condition for j in jobs} == set(Condition)
+    assert not [j for j in jobs if j.condition is Condition.GATE and j.path is ExecPath.SERVER_SIDE]
 
 
 def test_resume_after_a_quota_halt_parks_the_stale_ledger_and_finishes(repo, tmp_path):
