@@ -27,5 +27,8 @@ htmlcov/
 .cursor/plans/
 runs/tmp/
 
+# Downloaded SDR data -- real rows are never committed (see docs/DATA.md)
+data/raw/
+
 # OS
 .DS_Store
