@@ -348,7 +348,8 @@ def fault_plan(
     A faulted task gets ``round(clean_share * runs_per_task)`` clean slots and its other slots
     cycle through its applicable faults, so each fault is used within one of equal; control
     tasks are always clean. The run count and clean share are arguments on purpose.
-    TODO(M5): the preregistration fixes both; no default is chosen here.
+    Fixed for the benchmark in ``runner`` (7 and 1/7) and docs/PREREGISTRATION.md; no default
+    here.
     """
     if isinstance(runs_per_task, bool) or not isinstance(runs_per_task, int) or runs_per_task < 1:
         raise TaskError(f"runs_per_task must be an int >= 1, got {runs_per_task!r}")
