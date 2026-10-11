@@ -182,14 +182,14 @@ _WHOLE_HOURS = (
 _CYCLES = "Count of cycles; entered only when applicable, so often empty."
 _SINCE = "Hours since the most recent overhaul, repair, or inspection; see the SinceCode."
 _SINCE_CODE = (
-    "Which event the TimeSince counts from (overhaul / repair / inspection / reset). "
-    "The stored code values are not visible in any source we could read."
+    "Which event the TimeSince counts from; stored values O, R, I observed in SDR-2026, "
+    "matching the form's Overhaul / Repair / Inspection choices (SINCE_CODE)."
 )
 _STATION = (
     "Airframe station coordinate; inches on US-built aircraft, datum set by the manufacturer. "
     "Not stated in the SDRS instructions."
 )
-_SIDE = "Left/right side qualifier for a stringer or butt-line location; stored codes unknown."
+_SIDE = "Left/right side qualifier; stored values L and R observed in SDR-2026 (SIDE_CODE)."
 _FREE = "Free text."
 _MFR_PN = "Manufacturer's part number, never an operator-internal number. No universal format."
 _MFR_SN = "Manufacturer's serial number."
@@ -217,14 +217,21 @@ _CRACK_NOTE = (
 )
 _CORR_NOTE = (
     "Levels 1/2/3 as defined for corrosion prevention and control programs "
-    "(FAA Order 8300.12); the stored encoding in the CSV is unverified."
+    "(FAA Order 8300.12); stored as a single digit (2 and 3 observed in SDR-2026)."
 )
 _SOO_NOTE = "Two-letter code (batch layout: Alpha 2); flight and ground stages. List partial."
-_HOW_NOTE = "One alphanumeric (batch layout: Alpha-numeric 1); code table not located."
+_HOW_NOTE = "One alphanumeric (batch layout: Alpha-numeric 1); 13 values observed (HOW_DISCOVERED)."
+_FSDO_NOTE = (
+    "Two-digit FAA district office number; 30 values observed in SDR-2026; meanings not read."
+)
+_PCOND_NOTE = (
+    "From a drop-down; 95% of values are longer than four characters (word-like, e.g. ODOR, "
+    "WORN, NONE, FOD were the short ones observed). Full table not read."
+)
 _STYPE_NOTE = "One letter from the submitter-type look-up (see SUBMITTER_TYPE; list partial)."
 _SDRTYPE_NOTE = "One-letter code; A and G observed in SDR-2026 (FI mentions 'G'). Meanings unknown."
 _JASC_NOTE = "Four digits: first two = system (ATA-100-like chapter), last two = component."
-_REGION_NOTE = "FAA region code (two letters in one third-party sample); table not located."
+_REGION_NOTE = "Two-letter FAA region code; ten values observed in SDR-2026 (RECEIVING_REGION)."
 _DISC_NOTE = "Operator-submitted narrative. Never committed to this repo (docs/DATA.md)."
 
 # (column, kind, unit, confidence, source, note[, fmt[, pattern]])
@@ -246,8 +253,8 @@ _SDR_SPEC: tuple[tuple, ...] = (
     ("OperatorDesignator", _ID, _NONE, _H, _FI, _OP_DESIG_NOTE, None, r"[A-Z0-9]{4}"),
     ("SubmitterDesignator", _ID, _NONE, _H, SRC_SINGLE_SUBMISSION, "FAA-assigned; not editable."),
     ("SubmitterTypeCode", _CODE, _NONE, _M, _FI, _STYPE_NOTE, None, r"[A-Z]"),
-    ("ReceivingRegionCode", _CODE, _NONE, _U, _FI, _REGION_NOTE),
-    ("ReceivingDistrictOffice", _CODE, _NONE, _U, _FI, "FAA district office; table not located."),
+    ("ReceivingRegionCode", _CODE, _NONE, _M, SRC_DOWNLOAD_PAGE, _REGION_NOTE, None, r"[A-Z]{2}"),
+    ("ReceivingDistrictOffice", _CODE, _NONE, _M, SRC_DOWNLOAD_PAGE, _FSDO_NOTE, None, r"\d{2}"),
     ("SDRType", _CODE, _NONE, _M, SRC_DOWNLOAD_PAGE, _SDRTYPE_NOTE, None, r"[A-Z]"),
     ("JASCCode", _CODE, _NONE, _H, SRC_JASC, _JASC_NOTE, None, r"\d{4}"),
     ("NatureOfConditionA", _CODE, _NONE, _M, _FI, "Required; 1-3 codes, A first."),
@@ -279,12 +286,12 @@ _SDR_SPEC: tuple[tuple, ...] = (
     ("PartName", _TXT, _NONE, _H, _FI, "Manufacturer's name for the part; from a drop-down."),
     ("PartNumber", _TXT, _NONE, _H, _FI, _MFR_PN),
     ("PartSerialNumber", _TXT, _NONE, _H, _FI, _MFR_SN),
-    ("PartCondition", _CODE, _NONE, _U, _FI, "From a drop-down; table not located."),
+    ("PartCondition", _CODE, _NONE, _M, _FI, _PCOND_NOTE),
     ("PartLocation", _TXT, _NONE, _M, _FI, "Where on the aircraft; free text."),
     ("PartTotalTime", _INT, _HOUR, _H, _FI, _WHOLE_HOURS),
     ("PartTotalCycles", _INT, _CYC, _H, _FI, _CYCLES),
     ("PartTimeSince", _INT, _HOUR, _H, _FI, _SINCE),
-    ("PartSinceCode", _CODE, _NONE, _U, _FI, _SINCE_CODE),
+    ("PartSinceCode", _CODE, _NONE, _M, _FI, _SINCE_CODE, None, r"[A-Z]"),
     ("ComponentMake", _TXT, _NONE, _H, _FI, _FREE),
     ("ComponentModel", _TXT, _NONE, _H, _FI, _FREE),
     ("ComponentName", _TXT, _NONE, _H, _FI, _FREE),
@@ -294,21 +301,21 @@ _SDR_SPEC: tuple[tuple, ...] = (
     ("ComponentTotalTime", _INT, _HOUR, _H, _FI, _WHOLE_HOURS),
     ("ComponentTotalCycles", _INT, _CYC, _H, _FI, _CYCLES),
     ("ComponentTimeSince", _INT, _HOUR, _H, _FI, _SINCE),
-    ("ComponentSinceCode", _CODE, _NONE, _U, _FI, _SINCE_CODE),
+    ("ComponentSinceCode", _CODE, _NONE, _M, _FI, _SINCE_CODE, None, r"[A-Z]"),
     ("FuselageStationFrom", _NUM, _INCH, _M, _FI, _STATION),
     ("FuselageStationTo", _NUM, _INCH, _M, _FI, _STATION),
     ("StringerFrom", _TXT, _NONE, _M, _FI, "Stringer designation (From)."),
-    ("StringerFromSide", _CODE, _NONE, _U, _FI, _SIDE),
+    ("StringerFromSide", _CODE, _NONE, _M, _FI, _SIDE, None, r"[LR]"),
     ("StringerTo", _TXT, _NONE, _M, _FI, "Stringer designation (To)."),
-    ("StringerToSide", _CODE, _NONE, _U, _FI, _SIDE),
+    ("StringerToSide", _CODE, _NONE, _M, _FI, _SIDE, None, r"[LR]"),
     ("WingStationFrom", _NUM, _INCH, _M, _FI, _STATION),
-    ("WingStationFromSide", _CODE, _NONE, _U, _FI, _SIDE),
+    ("WingStationFromSide", _CODE, _NONE, _M, _FI, _SIDE, None, r"[LR]"),
     ("WingStationTo", _NUM, _INCH, _M, _FI, _STATION),
-    ("WingStationToSide", _CODE, _NONE, _U, _FI, _SIDE),
+    ("WingStationToSide", _CODE, _NONE, _M, _FI, _SIDE, None, r"[LR]"),
     ("ButtLineFrom", _NUM, _INCH, _M, _FI, _STATION),
-    ("ButtLineFromSide", _CODE, _NONE, _U, _FI, _SIDE),
+    ("ButtLineFromSide", _CODE, _NONE, _M, _FI, _SIDE, None, r"[LR]"),
     ("ButtlineTo", _NUM, _INCH, _M, _FI, _STATION),
-    ("ButtlineToSide", _CODE, _NONE, _U, _FI, _SIDE),
+    ("ButtlineToSide", _CODE, _NONE, _M, _FI, _SIDE, None, r"[LR]"),
     ("WaterLineFrom", _NUM, _INCH, _M, _FI, _STATION),
     ("WaterLineTo", _NUM, _INCH, _M, _FI, _STATION),
     ("CrackLength", _NUM, _INCH, _H, SRC_SINGLE_SUBMISSION, _CRACK_NOTE),
@@ -383,6 +390,7 @@ NATURE_OF_CONDITION = _codes(
     F="FLIGHT CONTROL AFFECTED",
     G="MULTIPLE FAILURE",
     H="ELECTRICAL",
+    **dict.fromkeys("IJKLMNOPRSTWXYZ", _OBS),
 )
 PRECAUTIONARY_PROCEDURE = _codes(
     "PrecautionaryProcedure",
@@ -396,6 +404,7 @@ PRECAUTIONARY_PROCEDURE = _codes(
     E="ENGINE SHUTDOWN",
     F="ACTIVATE FIRE EXTINGUISHER",
     J="FUEL DUMPED",
+    **dict.fromkeys("GHKLOR", _OBS),
 )
 STAGE_OF_OPERATION = _codes(
     "StageOfOperationCode",
@@ -413,7 +422,33 @@ STAGE_OF_OPERATION = _codes(
     EX="EXTERNAL LOAD",
     FF="FIRE FIGHTING",
     HO="HOVERING",
+    IN=_OBS,
+    TX=_OBS,
+    NR=_OBS,
+    TO=_OBS,
+    LD=_OBS,
+    UK=_OBS,
 )
+HOW_DISCOVERED = _codes(
+    "HowDiscoveredCode", False, _M, SRC_DOWNLOAD_PAGE, **dict.fromkeys("VOCE9UBMXLTDW", _OBS)
+)
+RECEIVING_REGION = _codes(
+    "ReceivingRegionCode",
+    False,
+    _M,
+    SRC_DOWNLOAD_PAGE,
+    **dict.fromkeys(("SW", "GL", "SO", "CE", "NM", "EA", "WP", "AL", "FS", "NE"), _OBS),
+)
+SINCE_CODE = _codes(
+    "PartSinceCode / ComponentSinceCode",
+    False,
+    _M,
+    _FI,
+    O="OVERHAUL (observed; initial matches the form)",
+    R="REPAIR (observed; initial matches the form)",
+    I="INSPECTION (observed; initial matches the form)",
+)
+SIDE_CODE = _codes("*Side", False, _M, SRC_DOWNLOAD_PAGE, L=_OBS + "; left", R=_OBS + "; right")
 CORROSION_LEVEL = _codes(
     "CorrosionLevel",
     False,
@@ -424,7 +459,7 @@ CORROSION_LEVEL = _codes(
         "2": "Beyond rework limits; repair or replacement of a principal structural element",
         "3": "Potential airworthiness concern needing prompt action",
     },
-)
+)  # observed stored values: 2 (5,130 rows) and 3 (3 rows); 1 not seen in 2026
 # Titles for the JASC codes the synthetic generator uses (issue #4 / PR #6).
 JASC_TITLES = _codes(
     "JASCCode",
@@ -443,6 +478,10 @@ JASC_TITLES = _codes(
 CODE_LISTS: tuple[CodeList, ...] = (
     SUBMITTER_TYPE,
     SDR_TYPE,
+    HOW_DISCOVERED,
+    RECEIVING_REGION,
+    SINCE_CODE,
+    SIDE_CODE,
     NATURE_OF_CONDITION,
     PRECAUTIONARY_PROCEDURE,
     STAGE_OF_OPERATION,
@@ -579,9 +618,10 @@ class Resolved:
 
 
 # Closed by a maintainer run of scripts/profile_sdr.py on SDR-2026.csv (2026-10-11,
-# 45,910 rows), relayed by the owner. The JSON receipt is to be committed as
-# reports/sdr_profile_2026.json by a machine that can reach the FAA host.
-PROFILE_SOURCE = "maintainer run of scripts/profile_sdr.py on SDR-2026.csv, 2026-10-11"
+# 45,910 rows). The receipt is committed as reports/sdr_profile_2026.json.
+PROFILE_SOURCE = (
+    "reports/sdr_profile_2026.json (scripts/profile_sdr.py on SDR-2026.csv, 2026-10-11)"
+)
 RESOLVED: tuple[Resolved, ...] = (
     Resolved(
         "column_count", "76 columns in the expected order; the 77-field count is the upload layout."
@@ -602,11 +642,12 @@ RESOLVED_KEYS: frozenset[str] = frozenset(r.key for r in RESOLVED)
 UNRESOLVED: tuple[Unresolved, ...] = (
     Unresolved(
         "code_tables",
-        "Full code tables for SDRType, ReceivingRegionCode, ReceivingDistrictOffice, "
-        "HowDiscoveredCode, PartCondition, Part/ComponentSinceCode, *Side, CorrosionLevel, "
-        "and the rest of NatureOfCondition / PrecautionaryProcedure / StageOfOperation.",
+        "Meanings of the code values observed in SDR-2026 (reports/sdr_profile_2026.json) for "
+        "SDRType, ReceivingRegionCode, ReceivingDistrictOffice, HowDiscoveredCode, "
+        "PartCondition, and the unlabelled values of NatureOfCondition / "
+        "PrecautionaryProcedure / StageOfOperation / SubmitterTypeCode.",
         "Read the SDRS Look-up Tables and Field Instructions at sdrs.faa.gov (host blocked "
-        "from the agent sandbox), or take distinct values from the committed profile report.",
+        "from the agent sandbox) and label each observed value.",
     ),
     Unresolved(
         "nasa_8739_4a_table",
