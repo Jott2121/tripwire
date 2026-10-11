@@ -37,7 +37,7 @@ def _row(**overrides: str) -> dict[str, str]:
     return row
 
 
-def _write(path, rows, header=s.SDR_COLUMNS, encoding="latin-1"):
+def _write(path, rows, header=s.SDR_COLUMNS, encoding="utf-8"):
     with path.open("w", encoding=encoding, newline="") as f:
         w = csv.DictWriter(f, fieldnames=header, lineterminator="\r\n", extrasaction="ignore")
         w.writeheader()
@@ -76,8 +76,7 @@ def test_answers_cover_every_profile_backed_open_item(sample):
         "extra_in_file": [],
         "order_matches_expected": True,
     }
-    assert answers["encoding"]["latin-1"] == 0
-    assert answers["encoding"]["utf-8"] >= 1  # the latin-1 'é' is not valid UTF-8
+    assert answers["encoding"] == {"latin-1": 0, "utf-8": 0, "cp1252": 0}
     assert answers["submission_tz"] == {"2026-01": {"-05:00": 2}, "2026-07": {"-04:00": 1}}
     assert answers["whole_hours"]["AircraftTotalTime"] == 0.5
     assert answers["registry_prefix"] == {
@@ -113,7 +112,7 @@ def test_narrative_text_never_appears_in_the_report(sample):
 def test_extra_and_missing_columns_and_bad_width_rows_are_reported(tmp_path):
     header = [c for c in s.SDR_COLUMNS if c != "WaterLineTo"] + ["Extra77"]
     path = _write(tmp_path / "x.csv", [_row(Extra77="v")], header=header)
-    with path.open("a", encoding="latin-1", newline="") as f:
+    with path.open("a", encoding="utf-8", newline="") as f:
         f.write("short,row\r\n")
     report = prof.profile(path)
     cc = report["answers"]["column_count"]
@@ -128,6 +127,12 @@ def test_extra_and_missing_columns_and_bad_width_rows_are_reported(tmp_path):
 
 def test_max_rows_limits_the_profile(sample):
     assert prof.profile(sample, max_rows=1)["data_rows"] == 1
+
+
+def test_a_latin1_file_is_reported_not_crashed(tmp_path):
+    path = _write(tmp_path / "l1.csv", [_row(Discrepancy="caf\u00e9")], encoding="latin-1")
+    enc = prof.profile(path)["answers"]["encoding"]
+    assert enc["latin-1"] == 0 and enc["utf-8"] >= 1
 
 
 @pytest.mark.parametrize("name", ["iso_datetime", "date_mdy", "decimal", "digits", "alpha"])

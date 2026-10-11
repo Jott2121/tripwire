@@ -179,7 +179,7 @@ def profile(path: str | Path, max_rows: int | None = None) -> dict:
     if not data:
         raise ProfileError(f"{path} is empty")
     enc = decode_report(data)
-    text = data.decode(s.SDR_ENCODING)
+    text = data.decode(s.SDR_ENCODING, errors="replace")  # never crash; errors are in `encoding`
     rows = list(csv.reader(text.splitlines()))
     if not rows or not rows[0]:
         raise ProfileError(f"{path} has no header")
