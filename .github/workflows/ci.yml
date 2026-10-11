@@ -1,0 +1,38 @@
+name: ci
+on:
+  push: { branches: [main] }
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: { python-version: ["3.11", "3.12", "3.13"] }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "${{ matrix.python-version }}" }
+      - run: pip install -e ".[dev]"
+      - run: ruff check . && ruff format --check .
+      - run: python -m pytest -q --cov=tripwire --cov-report=term-missing --cov-fail-under=90
+  no-employer-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      # Employer names are never written in the repo. The scan hashes every word and
+      # two-word phrase of every tracked file (AGENTS.md, .cursor/, .github/ included)
+      # against .github/blocked-terms.sha256 and fails closed if that list is missing,
+      # empty, or malformed. EMPLOYER_MARKERS (optional secret) adds patterns.
+      - name: Block employer names (hashed list, whole tree)
+        env:
+          EMPLOYER_MARKERS: ${{ secrets.EMPLOYER_MARKERS }}
+        run: python scripts/scan_blocked_terms.py
+      - name: Block export-control markers and committed build junk
+        run: |
+          ! git grep -nIiE '\bCUI\b|ITAR|EXPORT CONTROLLED|PROPRIETARY' -- . ':!.cursor' ':!AGENTS.md' ':!.github'
+          ! git ls-files | grep -E '(__pycache__/|\.pyc$|^\.coverage$)'

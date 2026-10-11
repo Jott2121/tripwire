@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Agent run state
+.claude/last-run-done
+.claude/settings.local.json
+.ghost/
+.cursor/hook-logs/
+.cursor/plans/
+runs/tmp/
+
+# OS
+.DS_Store

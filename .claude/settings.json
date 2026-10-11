@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash(pytest)",
+      "Bash(pytest *)",
+      "Bash(python -m pytest)",
+      "Bash(python -m pytest *)",
+      "Bash(ruff *)",
+      "Bash(python scripts/scan_blocked_terms.py)",
+      "Bash(python scripts/scan_blocked_terms.py *)",
+      "Bash(git status)",
+      "Bash(git status *)",
+      "Bash(git diff)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push -u origin claude/*)",
+      "Bash(gh pr create *)",
+      "Bash(gh issue view *)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "Bash(git push --force-with-lease*)",
+      "Bash(git push origin main*)",
+      "Bash(git reset --hard*)",
+      "Bash(git rebase*)",
+      "Bash(git tag*)",
+      "Bash(gh pr merge*)",
+      "Bash(gh release*)",
+      "Bash(gh secret*)",
+      "Bash(gh auth*)",
+      "Bash(curl*)",
+      "Bash(wget*)",
+      "Bash(rm -rf*)",
+      "Bash(rm -fr*)",
+      "Bash(env)",
+      "Bash(printenv*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Edit(./.env*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.config/gh/**)",
+      "Read(~/.zshrc)",
+      "Read(~/.zshenv)",
+      "Read(~/.zprofile)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mkdir -p \"$CLAUDE_PROJECT_DIR/.claude\" && printf '%s stop branch=%s head=%s\\n' \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\" \"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --abbrev-ref HEAD 2>/dev/null)\" \"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --short HEAD 2>/dev/null)\" >> \"$CLAUDE_PROJECT_DIR/.claude/last-run-done\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

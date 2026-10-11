@@ -1,0 +1,9 @@
+# SHA-256 of each blocked term: lowercased, words joined by one space.
+# Read by scripts/scan_blocked_terms.py (CI job no-employer-data).
+# Plaintext terms are deliberately not committed. Add one with:
+#   python -c 'import sys; sys.path.insert(0, "scripts"); import scan_blocked_terms as s; print(s.digest("<term>"))'
+# An empty or missing file fails the scan closed.
+cb5c36fe59056a6a1afb4b133d30981f672257d6c372bace38798b504fc0c6f2
+8c6a10a10f5de2282f957c71717b5a15ab371af5bd781b4d38e72f556964da06
+c376013522845bfce25461e2335a75a6808fd9365beba1c8ad75200ff2488ea3
+f277af9c64194778d745db1e6f142c724110717970ed251b4611f28e683957ae

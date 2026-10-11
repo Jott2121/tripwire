@@ -1,0 +1,6 @@
+{
+  "setup-worktree-unix": [
+    "uv venv -q && uv pip install -q -e '.[dev]'",
+    "[ -f \"$ROOT_WORKTREE_PATH/.env\" ] && cp \"$ROOT_WORKTREE_PATH/.env\" .env || true"
+  ]
+}

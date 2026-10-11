@@ -1,0 +1,14 @@
+---
+description: Use when writing code that calls the xAI/Grok API, LLM clients, prompts, tool schemas, or model configuration
+globs: "**/llm/**,**/models/**,**/prompts/**,**/*client*.py,**/*grok*.py"
+alwaysApply: false
+---
+# LLM / Grok integration
+
+- One thin client module wraps the provider SDK; everything else depends on an interface (bring-your-own-model stays possible).
+- Model id, temperature, max tokens, and seed (where supported) come from config, are logged per run, and appear in every results table.
+- Every call records tokens in/out, latency, cost estimate, and model id to the run ledger (agent-cost-attribution format).
+- Timeouts and retries are explicit and bounded; on exhaustion the caller gets a fail-closed result, not a guess.
+- Structured outputs are schema-validated; a validation failure is a refusal, not a best-effort parse.
+- Tests use recorded fixtures or a fake client; no live calls in CI.
+- API keys only from env (`XAI_API_KEY`); never committed, never echoed.
