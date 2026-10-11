@@ -67,8 +67,8 @@ def test_answers_cover_every_profile_backed_open_item(sample):
     report = prof.profile(sample)
     answers = report["answers"]
     for key in ("column_count", "encoding", "submission_tz", "whole_hours", "registry_prefix"):
-        assert key in answers and key in s.UNRESOLVED_KEYS
-    assert "control_number_shape" in answers
+        assert key in answers and key in s.RESOLVED_KEYS  # closed by the maintainer profile
+    assert "control_number_shape" in answers and "control_number_shape" in s.RESOLVED_KEYS
     assert answers["column_count"] == {
         "header_columns": 76,
         "expected_named_columns": 76,
