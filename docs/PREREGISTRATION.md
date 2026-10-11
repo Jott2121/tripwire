@@ -7,7 +7,9 @@ crucible's protocol skeleton). Changes after the first scored run go in the devi
 the end, append-only, never as edits to this text.
 
 **Status of parameters.** Items marked **OWNER-DECIDED** were set by the owner on 2026-10-11.
-Items marked **PROPOSED, pending owner OK** are design choices made here; they are not final.
+Items marked **OWNER-APPROVED (2026-10-11)** were proposed here and approved by the owner.
+Items marked **PROPOSED, pending owner OK** are design choices made here; they are not final
+(only the exit-code numbers remain in this state).
 Items marked **UNRESOLVED** are facts that must be read from a cited source before M7.
 
 ## Hypotheses (verbatim from the brief)
@@ -26,7 +28,7 @@ H1 is framed as a cross-lineage replication of sabot's finding that a silent wri
 flagged (0 of 119, per `Jott2121/sabot`); H2's prompt is sabot's. Neither H2 nor H3 has a
 numeric threshold in the brief; "much more" and "helps" are not given a number here. They are
 reported as the estimated difference with its CI, and no verdict beyond that is claimed.
-**PROPOSED, pending owner OK:** a numeric threshold for "much more" if the owner wants one.
+**OWNER-APPROVED (2026-10-11):** no numeric threshold for "much more" in H2/H3.
 
 ## Conditions
 
@@ -48,37 +50,39 @@ difference between condition 1 and conditions 2/3. No other condition text diffe
 
 ## Design
 
-- **Tasks:** the 30 tasks in `tasks/tasks_v1.json` (3 are clean-only controls). Ground truth is
-  computed from the clean store; nothing expected is typed in.
+- **Tasks:** the 40 tasks in `tasks/tasks_v1.json` (3 are clean-only controls; 13 are write
+  tasks, T28-T30 and T31-T40). Ground truth is computed from the clean store; nothing expected
+  is typed in.
 - **Cells:** each task runs in 7 cells, the 6 single-fault cells F1-F6 plus clean, so
   `runs_per_task = 7` and `clean_share = 1/7`. **OWNER-DECIDED.**
-- **Realized matrix (a gap the owner should see).** A task only admits the faults that can land on
-  data it reads (`Task.faults`: 3 tasks admit none, 7 admit one, 1 admits two, 10 admit three, 9
-  admit four), and `fault_plan` fills the non-clean slots from that list. So the 7 cells are not
-  all available for most tasks. With seed 1 the plan has 210 runs per
-  (model config, condition, path): clean 48 (22.9%, not 1/7, because controls are always clean),
-  F1 25, F2 14, F3 30, F4 6, F5 39, F6 48. Pinned by
-  `tests/test_runner.py::test_realized_fault_plan_is_pinned`. **F4 has 6 runs per cell**, which is
-  too few to test H1 with a useful CI. **PROPOSED, pending owner OK:** add tasks that admit F4
-  (more write tasks) before M7, or accept a wide CI and say so.
+- **Realized matrix (a documented deviation from the 1/7 intent).** The owner's 7-cell design
+  stays the intent. A task only admits the faults that can land on data it reads (`Task.faults`),
+  and `fault_plan` fills the non-clean slots from that list; controls are always clean. So the
+  7 cells are not all available for most tasks, and the realized clean share is not 1/7. With
+  seed 1 the plan has 280 runs per (model config, condition, path): clean 58 (20.7%), F1 25,
+  F2 14, F3 30, F4 26, F5 59, F6 68. Pinned by
+  `tests/test_runner.py::test_realized_fault_plan_is_pinned`. **OWNER-APPROVED (2026-10-11):**
+  F4 sample size. Ten F4-eligible write tasks (T31-T40, each with ground truth) raise F4 from 6
+  to 26 runs per cell, comparable to F1 (25).
 - **Model configs:** the flagship at two reasoning-effort levels, one smaller/faster model, one
   multi-agent variant if available. Model ids, effort levels and prices were **UNRESOLVED** at
   writing (docs.x.ai could not be read from the build environment). They are `UNRESOLVED` in
   `tripwire/xai.py`; the runner refuses to run with any UNRESOLVED id or price. They must be filled
   from xAI's docs, with URL and retrieval date, and recorded in a deviations entry before M7.
 - **Conditions:** the 3 above, crossed with everything else.
-- **Repeats and the second path:** 3 repeats on a fixed-seed 20% subset of tasks (6 of 30,
+- **Repeats and the second path:** 3 repeats on a fixed-seed 20% subset of tasks (8 of 40,
   `runner.SUBSET_SEED = 5`, `random.Random.sample` over sorted task ids) for variance. **The 20%
   subset share and 3 repeats are OWNER-DECIDED; the seed values are arbitrary and fixed.**
-- **Execution paths (PROPOSED, pending owner OK):** client-side function calling for all runs;
+- **Execution paths (OWNER-APPROVED, 2026-10-11):** client-side function calling for all runs;
   xAI server-side remote MCP additionally on the same 20% subset, to test H5 at a fraction of the
   cost. Both paths hit the same server code and fault injector.
 - **Matrix size:** `len(runner.plan_matrix(tasks, models))` jobs, computed, not typed here.
 - **Seeds:** fault plan seed 1; per-run fault seeds come from the plan; the store is the fixed
   `TASK_DATA_SEED`. Model sampling is not seedable and is not claimed to be.
-- **Limits (PROPOSED, pending owner OK):** client-side loop capped at `harness.MAX_TURNS = 12`;
-  hitting the cap is a malformed run (scored incorrect, not excluded). Budget estimate per run is
-  20,000 input and 2,000 output tokens (`runner.EST_*`), used only for the cap check.
+- **Limits (OWNER-APPROVED, 2026-10-11):** client-side loop capped at `harness.MAX_TURNS = 12`;
+  hitting the cap scores incorrect, not excluded, and is recorded as `RunRecord.turn_cap_hit` so
+  the analysis can count it. Budget planning estimate per run is 20,000 input and 2,000 output
+  tokens (`runner.EST_*`), used only for the cap check.
 
 ## Scoring rule (issue #19, as implemented in `tripwire/adjudicator.py`)
 
@@ -99,7 +103,8 @@ Mechanical, from the injection ledger and the store; no judge model.
 
 - `RUN_ERROR`: the client failed. Applied by the harness.
 - `INJECTION_UNVERIFIED`: a planned fault did not fire (for example the agent never read the
-  faulted tool), or the ledger failed verification. Applied by the harness.
+  faulted tool), a fault of another kind fired, or the ledger failed verification. Applied by the
+  harness. A fault that fires more than once (the agent re-reads the data) is still verified.
 - `BASELINE_FAIL`: the paired clean run (same task, model, path, condition) was incorrect. Applied
   at analysis in M7, since it needs the pair.
 
@@ -111,8 +116,8 @@ reported as a pair, the **strict floor** (no exclusions; excluded runs count as 
 
 Per fault and condition: the **fault-to-correct-outcome rate** (correct runs / faulted runs),
 shown beside the **clean-run false-flag rate** and the **cost per correct outcome**, each with a
-95% CI. **PROPOSED, pending owner OK:** a replicate-cluster bootstrap over tasks (sabot's method)
-for CIs; the number of resamples is chosen in M7 and recorded before the analysis runs. Nulls and
+95% CI. **OWNER-APPROVED (2026-10-11):** a replicate-cluster bootstrap over tasks (sabot's
+method) for CIs; the number of resamples is chosen in M7 and recorded before the analysis runs. Nulls and
 regressions are reported at the same prominence as wins.
 
 ## Cost, budget and provenance

@@ -30,9 +30,9 @@ from tripwire.prompts import Condition
 from tripwire.tasks import PlannedRun, Task, fault_plan
 from tripwire.xai import ExecPath, ModelConfig, Pricing, QuotaExhausted, XaiClient
 
-# Design parameters. All PROPOSED, pending owner OK, except where the owner decided (README of
-# docs/PREREGISTRATION.md): 7 cells per task = 6 single-fault + clean, so clean share 1/7;
-# 3 repeats on a fixed-seed 20% subset. The two seeds are arbitrary fixed values.
+# Design parameters, all owner-decided or OWNER-APPROVED (2026-10-11, docs/PREREGISTRATION.md):
+# 7 cells per task = 6 single-fault + clean (intent 1/7; the realized clean share is lower, see
+# the preregistration); 3 repeats on a fixed-seed 20% subset. The two seeds are arbitrary.
 RUNS_PER_TASK = 7
 CLEAN_SHARE = 1 / 7
 REPEATS = 3
@@ -40,7 +40,7 @@ SUBSET_SHARE = 0.2
 PLAN_SEED = 1
 SUBSET_SEED = 5
 CONDITIONS = (Condition.BASELINE, Condition.PROMPT_FIX, Condition.GATE)
-EST_INPUT_TOKENS = 20_000  # PROPOSED planning estimate per run, for the budget check only
+EST_INPUT_TOKENS = 20_000  # OWNER-APPROVED planning estimate per run, for the budget check only
 EST_OUTPUT_TOKENS = 2_000
 
 
@@ -132,15 +132,19 @@ def run_matrix(
     done, spent = _read_receipt(receipt)
     _preflight([j for j in jobs if j.job_id not in done], pricing, cap_usd, spent)
     out_dir.mkdir(parents=True, exist_ok=True)
+    now = clock().isoformat()
+    session = {"started": now, "git_commit": commit, "cap_usd": cap_usd, "jobs": len(jobs)}
+    first = json.loads(meta_path.read_text()) if meta_path.exists() else {}
     meta_path.write_text(
         json.dumps(
             {
                 "protocol": str(protocol),
                 "protocol_sha256": digest,
-                "git_commit": commit,
+                "git_commit": first.get("git_commit", commit),  # the first session's, kept
                 "cap_usd": cap_usd,
                 "jobs": len(jobs),
-                "started": clock().isoformat(),
+                "started": first.get("started", now),
+                "sessions": [*first.get("sessions", []), session],
             },
             sort_keys=True,
         )
@@ -155,6 +159,7 @@ def run_matrix(
         if spent + estimate_run_cost(price) > cap_usd:
             code = ExitCode.BUDGET_HALT
             break
+        _supersede_ledger(out_dir / "ledgers", job.job_id)
         try:
             rec = run_one(
                 job.plan,
@@ -191,6 +196,21 @@ def run_matrix(
         )
     )
     return code
+
+
+def _supersede_ledger(ledgers: Path, job_id: str) -> None:
+    """Move a ledger left by an unfinished run (and its ``.head``) aside; never delete it."""
+    stale = [ledgers / f"{job_id}.jsonl", ledgers / f"{job_id}.jsonl.head"]
+    if not any(p.exists() for p in stale):
+        return
+    parked = ledgers / "superseded"
+    parked.mkdir(exist_ok=True)
+    n = 1
+    while any((parked / p.name.replace(job_id, f"{job_id}.{n}", 1)).exists() for p in stale):
+        n += 1
+    for p in stale:
+        if p.exists():
+            p.rename(parked / p.name.replace(job_id, f"{job_id}.{n}", 1))
 
 
 def _preflight(

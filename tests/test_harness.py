@@ -241,3 +241,25 @@ def test_xai_placeholders_are_unresolved_and_live_calls_refused():
         xai.ScriptedClient([sp.resp(remote=[call])]).chat(
             xai.ChatRequest("m", None, (), (), remote)
         )
+
+
+def test_rereading_the_faulted_tool_is_still_verified():
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT, FaultKind.F1)
+    reads = sp.read_calls(task)
+    client = sp.client_for(
+        [sp.resp(calls=reads), sp.resp(calls=reads)], [sp.resp(sp.refusal_json("F1"))]
+    )
+    rec = _run(task, FaultKind.F1, ExecPath.CLIENT_SIDE, client)
+    assert rec.adjudication["injected"] == ("F1", "F1")
+    assert rec.adjudication["correct"] and rec.exclusion is None
+
+
+def test_hitting_the_turn_cap_is_recorded_and_scored_incorrect_not_excluded():
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    loop = [sp.resp(calls=sp.read_calls(task)) for _ in range(MAX_TURNS)]
+    rec = _run(task, None, ExecPath.CLIENT_SIDE, sp.client_for(loop))
+    assert rec.turn_cap_hit and rec.exclusion is None and rec.adjudication["correct"] is False
+    script = sp.agent_script(task, ExecPath.CLIENT_SIDE, sp.truth_json(task))
+    ok = _run(task, None, ExecPath.CLIENT_SIDE, sp.client_for(script))
+    assert ok.turn_cap_hit is False
+    assert json.loads(rec.to_json())["turn_cap_hit"] is True

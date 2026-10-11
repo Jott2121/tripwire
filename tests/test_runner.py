@@ -161,13 +161,13 @@ def test_realized_fault_plan_is_pinned():
     """Numbers quoted in docs/PREREGISTRATION.md; regenerate the doc if this changes."""
     plan = tk.fault_plan(sp.TASKS, 1, RUNS_PER_TASK, CLEAN_SHARE)
     counts = Counter(r.fault.value if r.fault else "clean" for r in plan)
-    assert len(plan) == 210
-    assert counts == {"clean": 48, "F1": 25, "F2": 14, "F3": 30, "F4": 6, "F5": 39, "F6": 48}
+    assert len(plan) == 280
+    assert counts == {"clean": 58, "F1": 25, "F2": 14, "F3": 30, "F4": 26, "F5": 59, "F6": 68}
 
 
 def test_matrix_shape_subset_repeats_and_second_path():
     subset = repeat_subset(sp.TASKS)
-    assert len(subset) == 6 and subset == repeat_subset(sp.TASKS)
+    assert len(subset) == 8 and subset == repeat_subset(sp.TASKS)
     jobs = plan_matrix(sp.TASKS, [sp.MODEL])
     assert len({j.job_id for j in jobs}) == len(jobs)
     in_sub = [j for j in jobs if j.plan.task_id in subset]
@@ -175,3 +175,46 @@ def test_matrix_shape_subset_repeats_and_second_path():
     assert {j.path for j in in_sub} == set(ExecPath)
     assert {j.repeat for j in in_sub} == set(range(1, REPEATS + 1))
     assert {j.condition for j in jobs} == set(Condition)
+
+
+def test_resume_after_a_quota_halt_parks_the_stale_ledger_and_finishes(repo, tmp_path):
+    jobs = _jobs(2)
+    halted = xai.ScriptedClient([xai.QuotaExhausted("quota")])
+    assert _run(repo, tmp_path, jobs, halted) is ExitCode.QUOTA_HALT
+    stale = tmp_path / "out/ledgers" / f"{jobs[0].job_id}.jsonl"
+    assert stale.exists()  # run_one created it before the first call
+    assert _run(repo, tmp_path, jobs, _client(2)) is ExitCode.OK
+    assert [r["run_id"] for r in _receipt(tmp_path)] == [j.job_id for j in jobs]
+    parked = tmp_path / "out/ledgers/superseded"
+    assert (parked / f"{jobs[0].job_id}.1.jsonl").exists()
+    assert (parked / f"{jobs[0].job_id}.1.jsonl.head").exists()
+    assert stale.exists()  # the rerun wrote a fresh one
+
+
+def test_repeated_halts_never_overwrite_parked_ledgers(repo, tmp_path):
+    jobs = _jobs(1)
+    for _ in range(2):
+        client = xai.ScriptedClient([xai.QuotaExhausted("q")])
+        assert _run(repo, tmp_path, jobs, client) is ExitCode.QUOTA_HALT
+    assert _run(repo, tmp_path, jobs, _client(1)) is ExitCode.OK
+    names = sorted(p.name for p in (tmp_path / "out/ledgers/superseded").glob("*.jsonl"))
+    assert names == [f"{jobs[0].job_id}.1.jsonl", f"{jobs[0].job_id}.2.jsonl"]
+
+
+def test_meta_keeps_the_first_session_and_appends_each_resume(repo, tmp_path):
+    jobs = _jobs(2)
+    _run(repo, tmp_path, jobs[:1], _client(1))
+    meta_path = tmp_path / "out/meta.json"
+    first = json.loads(meta_path.read_text())
+    _git(repo, "commit", "-q", "--allow-empty", "-m", "unrelated")  # HEAD moves on
+    run_matrix(
+        jobs, sp.BY_ID, _client(1), out_dir=tmp_path / "out", protocol=repo / "PREREG.md",
+        repo=repo, cap_usd=100.0, pricing={sp.MODEL.label: sp.PRICE},
+        clock=lambda: sp.NOW.replace(year=2027),
+    )  # fmt: skip
+    meta = json.loads(meta_path.read_text())
+    assert meta["started"] == first["started"] and meta["git_commit"] == first["git_commit"]
+    assert len(meta["sessions"]) == 2
+    assert meta["sessions"][0]["started"] == first["started"]
+    assert meta["sessions"][1]["started"].startswith("2027")
+    assert meta["sessions"][1]["git_commit"] != first["git_commit"]

@@ -278,7 +278,10 @@ def build_tasks(ds: synthdata.Dataset) -> tuple[Task, ...]:
     )
 
     # Writes: create the order, read it back, report the id.
-    for d, action in zip(ds.defects[5:8], synthdata.ACTIONS, strict=False):
+    # T31-T40 are extra write tasks (defects 8-17) so F4 gets about as many runs as F1.
+    acts = synthdata.ACTIONS
+    writes = [(d, acts[i % len(acts)]) for i, d in enumerate(ds.defects[5:8] + ds.defects[8:18])]
+    for d, action in writes:
         add(
             TaskKind.WORK_ORDER,
             (d.defect_id,),

@@ -45,7 +45,7 @@ from tripwire.xai import (
     XaiError,
 )
 
-MAX_TURNS = 12  # PROPOSED, pending owner OK: client-side loop cap; hitting it is a malformed run
+MAX_TURNS = 12  # OWNER-APPROVED (2026-10-11): client-side loop cap; hitting it scores incorrect
 
 
 class Exclusion(StrEnum):
@@ -80,6 +80,7 @@ class RunRecord:
     adjudication: dict[str, Any] | None
     exclusion: str | None
     error: str | None = None
+    turn_cap_hit: bool = False  # the loop ended at MAX_TURNS with no reply: scored incorrect
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True)
@@ -233,7 +234,8 @@ def run_one(
                 if verdict
                 else _no_verdict(run_id, tuple(e.fault for e in ledger.events))
             )
-            if plan.fault and adj.injected != (plan.fault.value,):
+            # re-reading refires the fault (rate 1.0): only a missing or foreign kind is unverified
+            if plan.fault and set(adj.injected) != {plan.fault.value}:
                 exclusion = Exclusion.INJECTION_UNVERIFIED
         except LedgerError:
             exclusion = Exclusion.INJECTION_UNVERIFIED
@@ -258,6 +260,7 @@ def run_one(
         adjudication=asdict(adj) if adj else None,
         exclusion=exclusion.value if exclusion else None,
         error=error,
+        turn_cap_hit=final is None and error is None and turns >= MAX_TURNS,
     )
 
 
