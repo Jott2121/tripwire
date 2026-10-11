@@ -27,6 +27,8 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from tripwire import contract as c
 from tripwire import synthdata
+from tripwire.faults import FaultConfig, FaultConfigError, FaultInjector, parse_faults
+from tripwire.ledger import Ledger, LedgerError
 from tripwire.store import NotFound, Store, StoreError
 
 TOKEN_ENV = "TRIPWIRE_SERVER_TOKEN"
@@ -45,13 +47,19 @@ def _plain(obj: Any) -> Any:
     return c.to_jsonable(obj)
 
 
-def _guarded(fn: Callable[..., Any]) -> Callable[..., Any]:
-    """Map store/contract failures to typed tool errors; nothing fails open."""
+def _guarded(fn: Callable[..., Any], faults: FaultInjector | None = None) -> Callable[..., Any]:
+    """Map store/contract failures to typed tool errors; nothing fails open.
+
+    With ``faults`` the plain result passes through the fault middleware; without it the
+    path is exactly the M2 one.
+    """
 
     @functools.wraps(fn)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         try:
-            return _plain(fn(*args, **kwargs))
+            if faults is None:
+                return _plain(fn(*args, **kwargs))
+            return faults.intercept(fn.__name__, kwargs, lambda: _plain(fn(*args, **kwargs)))
         except NotFound as exc:
             raise ToolError(f"NOT_FOUND: {exc.args[0]}") from exc
         except (StoreError, c.ContractError, ValueError) as exc:
@@ -69,8 +77,13 @@ def _parse_since(since: str | None) -> date | None:
         raise StoreError(f"since must be an ISO date (YYYY-MM-DD), got {since!r}") from exc
 
 
-def build_mcp(store: Store, clock: Clock | None = None) -> FastMCP:
-    """The FastMCP app exposing exactly the five tools over ``store``."""
+def build_mcp(
+    store: Store, clock: Clock | None = None, faults: FaultInjector | None = None
+) -> FastMCP:
+    """The FastMCP app exposing exactly the five tools over ``store``.
+
+    ``faults`` (M3) plants recorded faults between the tools and the agent; ``None`` is clean.
+    """
     now = clock or (lambda: datetime.now(UTC))
     mcp = FastMCP("tripwire", stateless_http=True, json_response=True)
 
@@ -111,7 +124,7 @@ def build_mcp(store: Store, clock: Clock | None = None) -> FastMCP:
 
     tools = (query_defects, get_spec, get_test_result, create_work_order, get_work_order)
     for fn in tools:
-        mcp.tool(name=fn.__name__)(_guarded(fn))
+        mcp.tool(name=fn.__name__)(_guarded(fn, faults))
     for tool in mcp._tool_manager.list_tools():  # unknown fields are errors, not ignored
         tool.parameters["additionalProperties"] = False
         model = tool.fn_metadata.arg_model
@@ -157,10 +170,13 @@ class BearerAuth:
 
 
 def build_app(
-    store: Store, token: str | None, clock: Clock | None = None
+    store: Store,
+    token: str | None,
+    clock: Clock | None = None,
+    faults: FaultInjector | None = None,
 ) -> tuple[ASGIApp, FastMCP]:
     """The authenticated ASGI app and its FastMCP; a missing token raises ServerConfigError."""
-    mcp = build_mcp(store, clock)
+    mcp = build_mcp(store, clock, faults)
     return BearerAuth(mcp.streamable_http_app(), token or ""), mcp
 
 
@@ -169,11 +185,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--faults", default="", help="comma list of F1..F6; blank = clean mode")
+    parser.add_argument("--fault-seed", type=int, default=0)
+    parser.add_argument("--ledger", help="JSONL path for the injection ledger (new file only)")
+    parser.add_argument("--run-id", default="run-0")
     args = parser.parse_args(argv)
     store = Store.from_dataset(synthdata.generate(args.seed))
     try:
-        app, _ = build_app(store, os.environ.get(TOKEN_ENV))
-    except ServerConfigError as exc:
+        faults = None
+        if args.faults.strip():
+            config = FaultConfig(args.fault_seed, parse_faults(args.faults))
+            faults = FaultInjector(
+                config, Ledger(args.ledger), args.run_id, store, lambda: datetime.now(UTC)
+            )
+        app, _ = build_app(store, os.environ.get(TOKEN_ENV), faults=faults)
+    except (ServerConfigError, FaultConfigError, LedgerError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     import uvicorn  # pragma: no cover

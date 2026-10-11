@@ -179,3 +179,38 @@ def test_constructor_fails_closed(case):
     override, reason = _bad_inputs(DS)[case]
     with pytest.raises(StoreError, match=reason):
         Store(**{**_parts(DS), **override})
+
+
+def _rev_spec(revision: str, superseded_by: str | None) -> c.SpecLimit:
+    prov = c.Provenance("t", URL, "t", NOW)
+    return c.SpecLimit(
+        "TW-X",
+        revision,
+        "p",
+        "row",
+        URL,
+        prov,
+        maximum=c.Quantity(1.0, c.s.Unit.INCH),
+        superseded_by=superseded_by,
+    )
+
+
+def test_revision_key_sorts_numerically_not_lexically():
+    from tripwire.store import revision_key
+
+    assert sorted(["r10", "r2", "r1", "r9", "r11"], key=revision_key) == [
+        "r1",
+        "r2",
+        "r9",
+        "r10",
+        "r11",
+    ]
+    assert sorted(["chg10", "chg4", "chg4a"], key=revision_key) == ["chg4", "chg4a", "chg10"]
+    assert sorted(["b", "a1", "1"], key=revision_key) == ["1", "a1", "b"]  # mixed parts compare
+
+
+def test_spec_revisions_sort_r2_before_r10():
+    specs = [_rev_spec("r10", None), _rev_spec("r2", "r10"), _rev_spec("r1", "r2")]
+    st = Store((), (), specs, (), ())
+    assert [sp.revision for sp in st.spec_revisions("TW-X", "p", "row")] == ["r1", "r2", "r10"]
+    assert st.get_spec("TW-X", "p", "row").revision == "r10"
