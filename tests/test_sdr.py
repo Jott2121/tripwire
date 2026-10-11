@@ -82,7 +82,7 @@ def test_malformed_date_row_is_rejected_with_line_number(tmp_path):
 def test_wrong_column_count_row_is_rejected(tmp_path):
     rows = make_sdr_rows(2, seed=2)
     path = _write(tmp_path, rows)
-    with path.open("a", encoding="latin-1", newline="") as f:
+    with path.open("a", encoding="utf-8", newline="") as f:
         f.write("too,few,columns\r\n")
     result = load_sdr_csv(path)
     assert len(result.records) == 2
@@ -93,7 +93,7 @@ def test_wrong_column_count_row_is_rejected(tmp_path):
 def test_missing_required_column_raises(tmp_path):
     bad_header = [c for c in SDR_COLUMNS if c != "JASCCode"]
     path = tmp_path / "bad.csv"
-    with path.open("w", encoding="latin-1", newline="") as f:
+    with path.open("w", encoding="utf-8", newline="") as f:
         f.write(",".join(bad_header) + "\r\n")
     with pytest.raises(SDRFormatError, match="JASCCode"):
         load_sdr_csv(path)
@@ -106,7 +106,7 @@ def test_missing_file_raises(tmp_path):
 
 def test_empty_file_raises(tmp_path):
     path = tmp_path / "empty.csv"
-    path.write_text("", encoding="latin-1")
+    path.write_text("", encoding="utf-8")
     with pytest.raises(SDRFormatError, match="empty"):
         load_sdr_csv(path)
 
@@ -130,8 +130,23 @@ def test_naive_submission_date_is_rejected(tmp_path):
     assert "timezone-aware" in result.rejects[0].reason
 
 
-def test_latin1_text_round_trips(tmp_path):
+def test_utf8_text_round_trips(tmp_path):
     rows = make_sdr_rows(1, seed=6)
     rows[0]["Discrepancy"] = "corrosión found during inspection café"
-    result = load_sdr_csv(_write(tmp_path, rows))
+    path = _write(tmp_path, rows)
+    assert "café".encode() in path.read_bytes()  # written as UTF-8, not latin-1
+    result = load_sdr_csv(path)
     assert result.records[0].discrepancy == "corrosión found during inspection café"
+
+
+def test_invalid_utf8_byte_raises_format_error_with_offset(tmp_path):
+    rows = make_sdr_rows(3, seed=4)
+    rows[1]["Discrepancy"] = "BADBYTEHERE"
+    path = _write(tmp_path, rows)
+    clean = path.read_bytes()
+    offset = clean.index(b"BADBYTEHERE") + 3
+    # A lone 0xE9 is latin-1 "é" but an invalid UTF-8 start byte here.
+    path.write_bytes(clean[:offset] + b"\xe9" + clean[offset:])
+    with pytest.raises(SDRFormatError, match=rf"byte offset {offset} \(line 3\)") as info:
+        load_sdr_csv(path)
+    assert isinstance(info.value.__cause__, UnicodeDecodeError)

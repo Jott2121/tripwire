@@ -23,7 +23,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 URL_TEMPLATE = "https://external.apic4e.faa.gov/sdrs/retrieve/SDR-{year}.csv"
-ENCODING = "latin-1"
+ENCODING = "utf-8"  # the SDR download is UTF-8 (see docs/DATA.md)
 
 
 def sdr_url(year: int) -> str:
@@ -31,8 +31,14 @@ def sdr_url(year: int) -> str:
 
 
 def _row_count(data: bytes) -> int:
-    """Number of CSV data rows (excluding the header), robust to quoted fields."""
-    text = data.decode(ENCODING)
+    """Number of CSV data rows (excluding the header), robust to quoted fields.
+
+    Decodes with ``errors="replace"`` so a stray non-UTF-8 byte cannot break the
+    manifest: this count is informational, while the manifest's byte count and
+    sha256 always describe the raw file as downloaded. The loader
+    (:func:`tripwire.sdr.load_sdr_csv`) is what fails closed on such a byte.
+    """
+    text = data.decode(ENCODING, errors="replace")
     rows = sum(1 for _ in csv.reader(io.StringIO(text)))
     return max(rows - 1, 0)
 

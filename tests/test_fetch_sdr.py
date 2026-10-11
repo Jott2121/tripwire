@@ -75,6 +75,22 @@ def test_fetch_year_counts_rows_ignoring_quoted_newlines(tmp_path):
     assert manifest["row_count"] == 2
 
 
+def test_fetch_year_manifest_survives_a_stray_non_utf8_byte(tmp_path):
+    fetch = _load_fetch_module()
+    # b"\xe9" alone is not valid UTF-8; the manifest must still be written.
+    payload = b"h1,h2\r\ncaf\xe9,c\r\nd,e\r\n"
+
+    def fake_opener(url):
+        return _FakeResponse(payload)
+
+    manifest_path = fetch.fetch_year(2024, dest_dir=tmp_path / "data", opener=fake_opener)
+    manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
+    assert manifest["row_count"] == 2
+    assert manifest["bytes"] == len(payload)
+    assert manifest["sha256"] == hashlib.sha256(payload).hexdigest()
+    assert (tmp_path / "data" / "raw" / "SDR-2024.csv").read_bytes() == payload
+
+
 def test_sdr_url_pattern():
     fetch = _load_fetch_module()
     assert fetch.sdr_url(2024) == "https://external.apic4e.faa.gov/sdrs/retrieve/SDR-2024.csv"

@@ -1,21 +1,24 @@
 """Load FAA Service Difficulty Reports (SDRs) into typed, frozen records.
 
-The public SDR annual CSVs are ``latin-1`` encoded with 77 columns (see
-``docs/DATA.md``). This module maps the subset of columns Tripwire reasons about
-into :class:`SDRRecord`, rejecting any malformed row with its line number rather
-than silently skipping it or returning a half-filled record.
+The public SDR annual CSV downloads are UTF-8 encoded with 76 columns (see
+``docs/DATA.md``; 77 is the separate batch *upload* layout, not the download).
+This module maps the subset of columns Tripwire reasons about into
+:class:`SDRRecord`, rejecting any malformed row with its line number rather
+than silently skipping it or returning a half-filled record. A file that is not
+valid UTF-8 fails closed with :class:`SDRFormatError` naming the byte offset.
 
 No real SDR rows are ever committed; fixtures are synthetic (see
 :mod:`tripwire.synth`).
 """
 
 import csv
+import io
 import re
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 
-# The exact 77-column header of SDR-<year>.csv, in file order.
+# The exact 76-column header of the SDR-<year>.csv download, in file order.
 SDR_COLUMNS: tuple[str, ...] = (
     "OperatorControlNumber",
     "DifficultyDate",
@@ -112,12 +115,12 @@ REQUIRED_COLUMNS: tuple[str, ...] = (
     "Discrepancy",
 )
 
-ENCODING = "latin-1"
+ENCODING = "utf-8"
 _JASC = re.compile(r"\d{4}")
 
 
 class SDRFormatError(Exception):
-    """The file is missing or its header lacks a required column."""
+    """The file is missing, empty, not valid UTF-8, or lacks a required column."""
 
 
 @dataclass(frozen=True)
@@ -200,17 +203,29 @@ def _parse_row(row: list[str], index: dict[str, int]) -> SDRRecord:
 def load_sdr_csv(path: str | Path) -> LoadResult:
     """Load an SDR CSV into typed records, collecting malformed rows as rejects.
 
-    Fails closed: a missing file, or a header missing any required column,
-    raises :class:`SDRFormatError`. A row with the wrong column count or an
-    unparseable field becomes a :class:`Reject` carrying its line number.
+    Fails closed: a missing or empty file, bytes that are not valid UTF-8, or a
+    header missing any required column raises :class:`SDRFormatError`. A row
+    with the wrong column count or an unparseable field becomes a
+    :class:`Reject` carrying its line number.
     """
     path = Path(path)
     try:
-        handle = path.open("r", encoding=ENCODING, newline="")
+        data = path.read_bytes()
     except FileNotFoundError as exc:
         raise SDRFormatError(f"SDR file not found: {path}") from exc
 
-    with handle as f:
+    # Decode the whole file at once so a bad byte is reported at its absolute
+    # offset in the file (a streaming decoder only knows its chunk offset).
+    try:
+        text = data.decode(ENCODING)
+    except UnicodeDecodeError as exc:
+        line = data.count(b"\n", 0, exc.start) + 1
+        raise SDRFormatError(
+            f"SDR file is not valid {ENCODING}: {exc.reason} at byte offset {exc.start}"
+            f" (line {line}): {path}"
+        ) from exc
+
+    with io.StringIO(text, newline="") as f:
         reader = csv.reader(f)
         try:
             header = next(reader)
