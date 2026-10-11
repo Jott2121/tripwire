@@ -134,17 +134,28 @@ the full SDRS look-up tables are read (`code_tables`).
 
 ## Spec-limit sources for M1
 
-M1 needs public limit tables with units. The candidate named in the brief,
-NASA-STD-8739.4A (crimp pull-test minimums by wire gauge, Table 12-1), is
-tabulated in **newtons with pounds-force in parentheses** per every excerpt
-seen, and the standard forbids pulling beyond 80 percent of the specified
-minimum during a non-destructive pull test. Change 1 of the standard "removed
-ambiguous, duplicate information from Table 12-1", so values must be taken from
-the current change, not from third-party copies. The excerpts we could reach
-were garbled (rows did not align with gauges), so **no value from that table is
-recorded here**; see `nasa_8739_4a_table`. `standards.py` fixes the canonical
-force unit as newton with the exact lbf factor so the table can be entered
-later without a unit decision.
+NASA-STD-8739.4A Table 12-1 (crimp tensile strength, minimum, by wire gauge) is
+tabulated in **newtons with pounds-force in parentheses**. The agent sandbox
+cannot open the PDF; the maintainer read the table from the official PDF on
+2026-10-11 and relayed it. `tripwire/public_specs.py` carries the full table,
+cites only the official PDF, and marks every row HIGH with
+`verified_against_pdf=True`, `checked_on=2026-10-11` and the PDF's sha256
+(`83d2038895dfb4e1ac18fd314ae444ff5fea56e7cc2723649ee3aa8388ecc27d`) in its
+provenance string (a test refuses a PDF-verified row that is not HIGH):
+
+| AWG | 28 | 26 | 24 | 22 | 20 | 18 | 16 | 14 | 12 | 10 | 8 |
+|-----|----|----|----|----|----|----|----|----|----|----|---|
+| N (lb) | 22 (5) | 36 (8) | 36 (8) | 57 (13) | 92 (21) | 142 (32) | 183 (41) | 290 (65) | 459 (103) | 707 (159) | 1281 (288) |
+
+Correction: an earlier draft entered AWG 26 = 22 N from third-party copies;
+that value belongs to AWG 28. The third-party copies are no longer cited.
+The standard also forbids pulling beyond 80 percent of the specified minimum
+in a non-destructive pull test.
+
+Synthetic spec limits (`TW-SRM-<part>`, crack-length maxima per fictional part,
+revision `r1` superseded by `r2`) come from `tripwire/synthdata.py` and cite
+the generator, never a standard; they exist so stale-revision faults have a
+history to be stale against.
 
 ## PR #6 assumptions: verdicts
 
@@ -174,7 +185,7 @@ documented shape, read the file as UTF-8, and emit whole-hour total times.
 Each key exists in `standards.UNRESOLVED` (open) or `standards.RESOLVED` (closed)
 with the same question. The profiling step is `scripts/profile_sdr.py` (PR #8).
 
-### Resolved by the maintainer profile of SDR-2026 (PROF)
+### Resolved by maintainer runs (PROF and the NASA PDF read)
 
 | Key | Question | Answer |
 |-----|----------|--------|
@@ -184,6 +195,7 @@ with the same question. The profiling step is `scripts/profile_sdr.py` (PR #8).
 | `whole_hours` | Whole hours only, or decimals? | 100% whole numbers in every hour column |
 | `registry_prefix` | Does the CSV omit the N? | Yes: 0% start with N; 45,621 of 45,663 valid without it |
 | `control_number_shape` | Do real rows follow 4+8+sequence? | 44,879 of 45,910 do; a mismatch is a warning, not a reject |
+| `nasa_8739_4a_table` | Exact Table 12-1 minimums per AWG? | Read from the official PDF by the maintainer, 2026-10-11; 11 rows in `tripwire/public_specs.py` |
 
 The receipt behind these answers is committed at
 `reports/sdr_profile_2026.json`; every PROF figure in this document is read from
@@ -195,5 +207,4 @@ it. Observed code values for every coded column are recorded in the
 | Key | Question | How to resolve |
 |-----|----------|----------------|
 | `code_tables` | Meanings of the observed values for `SDRType`, region, district office, `HowDiscoveredCode`, `PartCondition`, and the unlabelled values of the three partial lists and `SubmitterTypeCode` | Read the SDRS Look-up Tables (host blocked from the sandbox) and label each observed value |
-| `nasa_8739_4a_table` | Exact Table 12-1 minimums per AWG in N and lbf | Open the NASA PDF directly; excerpts were garbled |
 | `sdrs_2026_upgrade` | Does the summer-2026 SDRS release change the download layout? | Re-profile the first post-upgrade file and diff the header |
