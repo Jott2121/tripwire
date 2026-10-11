@@ -1,0 +1,1574 @@
+{
+  "answers": {
+    "column_count": {
+      "expected_named_columns": 76,
+      "extra_in_file": [],
+      "header_columns": 76,
+      "missing_from_file": [],
+      "order_matches_expected": true
+    },
+    "control_number_shape": {
+      "filled": 45910,
+      "length_histogram": {
+        "9": 1,
+        "10": 170,
+        "12": 6,
+        "13": 759,
+        "14": 573,
+        "15": 3296,
+        "16": 10986,
+        "17": 30119
+      },
+      "matches_documented_shape": 44879
+    },
+    "difficulty_to_submission_lag_days": {
+      "max": 264,
+      "n": 45910,
+      "negative": 0,
+      "p50": 3,
+      "p95": 58
+    },
+    "encoding": {
+      "cp1252": 151,
+      "latin-1": 0,
+      "utf-8": 0
+    },
+    "registry_prefix": {
+      "filled": 45663,
+      "starts_with_n": 0,
+      "valid_with_prefix": 0,
+      "valid_without_prefix": 45621
+    },
+    "submission_tz": {
+      "2026-01": {
+        "-05:00": 3315
+      },
+      "2026-02": {
+        "-05:00": 4334
+      },
+      "2026-03": {
+        "-05:00": 5356
+      },
+      "2026-04": {
+        "-05:00": 5260
+      },
+      "2026-05": {
+        "-05:00": 4826
+      },
+      "2026-06": {
+        "-05:00": 5148
+      },
+      "2026-07": {
+        "-05:00": 5170
+      },
+      "2026-08": {
+        "-05:00": 5298
+      },
+      "2026-09": {
+        "-05:00": 5707
+      },
+      "2026-10": {
+        "-05:00": 1496
+      }
+    },
+    "whole_hours": {
+      "AircraftTotalTime": 1.0,
+      "ComponentTimeSince": 1.0,
+      "ComponentTotalTime": 1.0,
+      "EngineTotalTime": 1.0,
+      "PartTimeSince": 1.0,
+      "PartTotalTime": 1.0,
+      "PropellerTotalTime": 1.0
+    }
+  },
+  "bytes": 21579636,
+  "columns": {
+    "AircraftMake": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.9984,
+      "filled": 45837,
+      "length_max": 6,
+      "length_min": 3,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 45837
+      }
+    },
+    "AircraftModel": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.9983,
+      "filled": 45834,
+      "length_max": 12,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 34518,
+        "alpha": 19,
+        "digits": 11182,
+        "other": 115
+      }
+    },
+    "AircraftSerialNumber": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.9971,
+      "filled": 45777,
+      "length_max": 11,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 614,
+        "digits": 45163
+      }
+    },
+    "AircraftTotalCycles": {
+      "expected_kind": "integer",
+      "expected_unit": "cycle",
+      "fill_rate": 0.9819,
+      "filled": 45079,
+      "length_max": 7,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 1.0,
+        "max": 4674082.0,
+        "median": 19541.0,
+        "min": 3.0,
+        "parsed": 45079
+      },
+      "rows": 45910,
+      "shapes": {
+        "digits": 45079
+      }
+    },
+    "AircraftTotalTime": {
+      "expected_kind": "integer",
+      "expected_unit": "h",
+      "fill_rate": 0.9913,
+      "filled": 45509,
+      "length_max": 7,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 1.0,
+        "max": 7228621.0,
+        "median": 42815.0,
+        "min": 5.0,
+        "parsed": 45509
+      },
+      "rows": 45910,
+      "shapes": {
+        "digits": 45509
+      }
+    },
+    "ButtLineFrom": {
+      "expected_kind": "numeric",
+      "expected_unit": "in",
+      "fill_rate": 0.0822,
+      "filled": 3772,
+      "length_max": 10,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 0.9177,
+        "max": 1145.0,
+        "median": 24.0,
+        "min": -2462.0,
+        "parsed": 3365
+      },
+      "rows": 45910,
+      "shapes": {
+        "alnum": 168,
+        "alpha": 3,
+        "decimal": 295,
+        "digits": 3066,
+        "other": 240
+      }
+    },
+    "ButtLineFromSide": {
+      "distinct_values": {
+        "L": 1865,
+        "R": 1745
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.0786,
+      "filled": 3610,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 3610
+      },
+      "values_longer_than_code": 0
+    },
+    "ButtlineTo": {
+      "expected_kind": "numeric",
+      "expected_unit": "in",
+      "fill_rate": 0.0293,
+      "filled": 1343,
+      "length_max": 10,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 0.8683,
+        "max": 3880.0,
+        "median": 33.0,
+        "min": -15.0,
+        "parsed": 1245
+      },
+      "rows": 45910,
+      "shapes": {
+        "alnum": 57,
+        "decimal": 169,
+        "digits": 1075,
+        "other": 42
+      }
+    },
+    "ButtlineToSide": {
+      "distinct_values": {
+        "L": 836,
+        "R": 959
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.0391,
+      "filled": 1795,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 1795
+      },
+      "values_longer_than_code": 0
+    },
+    "ComponentLocation": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0132,
+      "filled": 604,
+      "length_max": 17,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 1,
+        "alpha": 77,
+        "digits": 3,
+        "other": 523
+      }
+    },
+    "ComponentMake": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0117,
+      "filled": 539,
+      "length_max": 12,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 539
+      }
+    },
+    "ComponentModel": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0011,
+      "filled": 51,
+      "length_max": 10,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 45,
+        "alpha": 2,
+        "digits": 4
+      }
+    },
+    "ComponentName": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0147,
+      "filled": 676,
+      "length_max": 15,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 481,
+        "other": 195
+      }
+    },
+    "ComponentPartNumber": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0136,
+      "filled": 626,
+      "length_max": 17,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 365,
+        "alpha": 1,
+        "digits": 260
+      }
+    },
+    "ComponentSerialNumber": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0102,
+      "filled": 468,
+      "length_max": 12,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 267,
+        "alpha": 2,
+        "digits": 199
+      }
+    },
+    "ComponentSinceCode": {
+      "distinct_values": {
+        "I": 113,
+        "O": 97,
+        "R": 92
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.0066,
+      "filled": 302,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 302
+      },
+      "values_longer_than_code": 0
+    },
+    "ComponentTimeSince": {
+      "expected_kind": "integer",
+      "expected_unit": "h",
+      "fill_rate": 0.0058,
+      "filled": 267,
+      "length_max": 6,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 1.0,
+        "max": 811905.0,
+        "median": 2044.0,
+        "min": 1.0,
+        "parsed": 267
+      },
+      "rows": 45910,
+      "shapes": {
+        "digits": 267
+      }
+    },
+    "ComponentTotalCycles": {
+      "expected_kind": "integer",
+      "expected_unit": "cycle",
+      "fill_rate": 0.0051,
+      "filled": 234,
+      "length_max": 6,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 1.0,
+        "max": 714422.0,
+        "median": 8088.0,
+        "min": 1.0,
+        "parsed": 234
+      },
+      "rows": 45910,
+      "shapes": {
+        "digits": 234
+      }
+    },
+    "ComponentTotalTime": {
+      "expected_kind": "integer",
+      "expected_unit": "h",
+      "fill_rate": 0.0065,
+      "filled": 299,
+      "length_max": 6,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 1.0,
+        "max": 811905.0,
+        "median": 12177.0,
+        "min": 1.0,
+        "parsed": 299
+      },
+      "rows": 45910,
+      "shapes": {
+        "digits": 299
+      }
+    },
+    "CorrosionLevel": {
+      "distinct_values": {
+        "2": 5130,
+        "3": 3
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.1118,
+      "filled": 5133,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "digits": 5133
+      },
+      "values_longer_than_code": 0
+    },
+    "CrackLength": {
+      "expected_kind": "numeric",
+      "expected_unit": "in",
+      "fill_rate": 0.024,
+      "filled": 1103,
+      "length_max": 7,
+      "length_min": 5,
+      "numeric": {
+        "integer_fraction": 0.7833,
+        "max": 760.0,
+        "median": 1.0,
+        "min": 0.015,
+        "parsed": 1103
+      },
+      "rows": 45910,
+      "shapes": {
+        "decimal": 1103
+      }
+    },
+    "DifficultyDate": {
+      "expected_kind": "date",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 10,
+      "length_min": 10,
+      "rows": 45910,
+      "shapes": {
+        "date_mdy": 45910
+      }
+    },
+    "Discrepancy": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 8294,
+      "length_min": 16,
+      "rows": 45910,
+      "shapes": {
+        "other": 45910
+      }
+    },
+    "EngineMake": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0415,
+      "filled": 1905,
+      "length_max": 6,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 1905
+      }
+    },
+    "EngineModel": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0417,
+      "filled": 1913,
+      "length_max": 12,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 1880,
+        "other": 33
+      }
+    },
+    "EngineSerialNumber": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.016,
+      "filled": 733,
+      "length_max": 12,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 320,
+        "alpha": 3,
+        "digits": 410
+      }
+    },
+    "EngineTotalCycles": {
+      "expected_kind": "integer",
+      "expected_unit": "cycle",
+      "fill_rate": 0.0113,
+      "filled": 521,
+      "length_max": 5,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 1.0,
+        "max": 50666.0,
+        "median": 9093.0,
+        "min": 1.0,
+        "parsed": 521
+      },
+      "rows": 45910,
+      "shapes": {
+        "digits": 521
+      }
+    },
+    "EngineTotalTime": {
+      "expected_kind": "integer",
+      "expected_unit": "h",
+      "fill_rate": 0.0135,
+      "filled": 622,
+      "length_max": 6,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 1.0,
+        "max": 345556.0,
+        "median": 11545.0,
+        "min": 2.0,
+        "parsed": 622
+      },
+      "rows": 45910,
+      "shapes": {
+        "digits": 622
+      }
+    },
+    "FuselageStationFrom": {
+      "expected_kind": "numeric",
+      "expected_unit": "in",
+      "fill_rate": 0.1755,
+      "filled": 8056,
+      "length_max": 12,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 0.9121,
+        "max": 7270000000000.0,
+        "median": 500.0,
+        "min": -13.263,
+        "parsed": 6405
+      },
+      "rows": 45910,
+      "shapes": {
+        "alnum": 973,
+        "decimal": 674,
+        "digits": 5726,
+        "other": 683
+      }
+    },
+    "FuselageStationTo": {
+      "expected_kind": "numeric",
+      "expected_unit": "in",
+      "fill_rate": 0.0974,
+      "filled": 4471,
+      "length_max": 12,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 0.921,
+        "max": 7270000000.0,
+        "median": 581.0,
+        "min": 0.0,
+        "parsed": 3482
+      },
+      "rows": 45910,
+      "shapes": {
+        "alnum": 612,
+        "alpha": 1,
+        "decimal": 357,
+        "digits": 3117,
+        "other": 384
+      }
+    },
+    "HowDiscoveredCode": {
+      "distinct_values": {
+        "9": 309,
+        "B": 40,
+        "C": 3843,
+        "D": 4,
+        "E": 408,
+        "L": 7,
+        "M": 28,
+        "O": 9265,
+        "T": 6,
+        "U": 85,
+        "V": 31884,
+        "W": 4,
+        "X": 27
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 45601,
+        "digits": 309
+      },
+      "values_longer_than_code": 0
+    },
+    "JASCCode": {
+      "distinct_values": {
+        "2120": 925,
+        "2150": 301,
+        "2520": 158,
+        "2530": 275,
+        "2560": 2044,
+        "2565": 704,
+        "2612": 162,
+        "2750": 181,
+        "2910": 237,
+        "3240": 215,
+        "3260": 183,
+        "3350": 5684,
+        "3397": 603,
+        "3520": 150,
+        "5100": 279,
+        "5210": 2292,
+        "5220": 652,
+        "5230": 300,
+        "5240": 329,
+        "5250": 269,
+        "5270": 447,
+        "5310": 1905,
+        "5311": 780,
+        "5312": 239,
+        "5313": 878,
+        "5315": 870,
+        "5320": 5930,
+        "5321": 1115,
+        "5322": 343,
+        "5330": 1437,
+        "5340": 466,
+        "5344": 194,
+        "5347": 1812,
+        "5350": 304,
+        "5410": 376,
+        "5420": 214,
+        "5510": 160,
+        "5511": 180,
+        "5512": 222,
+        "5514": 241,
+        "5520": 607,
+        "5610": 244,
+        "5710": 384,
+        "5712": 155,
+        "5720": 430,
+        "5730": 777,
+        "5753": 724,
+        "5754": 456,
+        "7200": 346,
+        "7830": 303
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 4,
+      "length_min": 4,
+      "rows": 45910,
+      "shapes": {
+        "digits": 45910
+      },
+      "values_longer_than_code": 0
+    },
+    "NatureOfConditionA": {
+      "distinct_values": {
+        "A": 42,
+        "B": 1874,
+        "C": 209,
+        "D": 55,
+        "E": 246,
+        "F": 336,
+        "G": 67,
+        "H": 40,
+        "I": 3,
+        "J": 3020,
+        "K": 545,
+        "L": 3782,
+        "M": 112,
+        "N": 588,
+        "O": 34288,
+        "P": 95,
+        "R": 147,
+        "S": 103,
+        "T": 2,
+        "W": 278,
+        "X": 17,
+        "Y": 49,
+        "Z": 12
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 45910
+      },
+      "values_longer_than_code": 0
+    },
+    "NatureOfConditionB": {
+      "distinct_values": {
+        "A": 16,
+        "B": 341,
+        "C": 3,
+        "D": 1,
+        "E": 38,
+        "F": 45,
+        "G": 36,
+        "H": 5,
+        "I": 1,
+        "J": 725,
+        "K": 9,
+        "L": 15,
+        "M": 6,
+        "N": 5,
+        "O": 10,
+        "P": 5,
+        "R": 11,
+        "S": 22,
+        "W": 5,
+        "X": 1,
+        "Y": 24,
+        "Z": 3
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.0289,
+      "filled": 1327,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 1327
+      },
+      "values_longer_than_code": 0
+    },
+    "NatureOfConditionC": {
+      "distinct_values": {
+        "A": 2,
+        "B": 4,
+        "E": 1,
+        "F": 3,
+        "G": 3,
+        "H": 1,
+        "J": 40,
+        "K": 10,
+        "M": 2,
+        "O": 2,
+        "R": 2,
+        "S": 4,
+        "W": 1,
+        "Y": 10
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.0019,
+      "filled": 85,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 85
+      },
+      "values_longer_than_code": 0
+    },
+    "NumberOfCracks": {
+      "expected_kind": "integer",
+      "expected_unit": "count",
+      "fill_rate": 0.0407,
+      "filled": 1870,
+      "length_max": 2,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 1.0,
+        "max": 14.0,
+        "median": 1.0,
+        "min": 1.0,
+        "parsed": 1870
+      },
+      "rows": 45910,
+      "shapes": {
+        "digits": 1870
+      }
+    },
+    "OperatorControlNumber": {
+      "expected_kind": "identifier",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 17,
+      "length_min": 9,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 45901,
+        "digits": 2,
+        "other": 7
+      }
+    },
+    "OperatorDesignator": {
+      "expected_kind": "identifier",
+      "expected_unit": "",
+      "fill_rate": 0.9792,
+      "filled": 44956,
+      "length_max": 4,
+      "length_min": 4,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 2017,
+        "alpha": 42939
+      }
+    },
+    "PartCondition": {
+      "distinct_values": {
+        "BENT": 69,
+        "CUT": 12,
+        "DIM": 15,
+        "FIRE": 40,
+        "FLAT": 2,
+        "FOD": 112,
+        "FOM": 27,
+        "FULL": 3,
+        "HAZE": 2,
+        "ICED": 1,
+        "LOST": 1,
+        "LOW": 15,
+        "NONE": 114,
+        "ODOR": 1133,
+        "OPEN": 66,
+        "SLOW": 7,
+        "TORN": 55,
+        "WEAK": 25,
+        "WORN": 695
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 16,
+      "length_min": 3,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 39783,
+        "other": 6127
+      },
+      "values_longer_than_code": 43516
+    },
+    "PartLocation": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.9745,
+      "filled": 44737,
+      "length_max": 19,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 44,
+        "alpha": 1873,
+        "digits": 8,
+        "other": 42812
+      }
+    },
+    "PartMake": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.502,
+      "filled": 23046,
+      "length_max": 12,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 23043,
+        "other": 3
+      }
+    },
+    "PartName": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 16,
+      "length_min": 3,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 28877,
+        "other": 17033
+      }
+    },
+    "PartNumber": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.409,
+      "filled": 18778,
+      "length_max": 16,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 13742,
+        "alpha": 31,
+        "digits": 5004,
+        "other": 1
+      }
+    },
+    "PartSerialNumber": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0863,
+      "filled": 3962,
+      "length_max": 16,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 1507,
+        "alpha": 181,
+        "digits": 2274
+      }
+    },
+    "PartSinceCode": {
+      "distinct_values": {
+        "I": 837,
+        "O": 686,
+        "R": 2097
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.0788,
+      "filled": 3620,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 3620
+      },
+      "values_longer_than_code": 0
+    },
+    "PartTimeSince": {
+      "expected_kind": "integer",
+      "expected_unit": "h",
+      "fill_rate": 0.0735,
+      "filled": 3376,
+      "length_max": 7,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 1.0,
+        "max": 1487066.0,
+        "median": 12096.0,
+        "min": 1.0,
+        "parsed": 3376
+      },
+      "rows": 45910,
+      "shapes": {
+        "digits": 3376
+      }
+    },
+    "PartTotalCycles": {
+      "expected_kind": "integer",
+      "expected_unit": "cycle",
+      "fill_rate": 0.0801,
+      "filled": 3678,
+      "length_max": 7,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 1.0,
+        "max": 1418673.0,
+        "median": 12087.0,
+        "min": 1.0,
+        "parsed": 3678
+      },
+      "rows": 45910,
+      "shapes": {
+        "digits": 3678
+      }
+    },
+    "PartTotalTime": {
+      "expected_kind": "integer",
+      "expected_unit": "h",
+      "fill_rate": 0.0881,
+      "filled": 4044,
+      "length_max": 7,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 1.0,
+        "max": 3852709.0,
+        "median": 20193.0,
+        "min": 1.0,
+        "parsed": 4044
+      },
+      "rows": 45910,
+      "shapes": {
+        "digits": 4044
+      }
+    },
+    "PrecautionaryProcedureA": {
+      "distinct_values": {
+        "A": 2445,
+        "B": 244,
+        "C": 433,
+        "D": 380,
+        "E": 129,
+        "F": 17,
+        "G": 22,
+        "H": 41,
+        "J": 7,
+        "K": 36153,
+        "L": 82,
+        "O": 5956,
+        "R": 1
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 45910
+      },
+      "values_longer_than_code": 0
+    },
+    "PrecautionaryProcedureB": {
+      "distinct_values": {
+        "A": 212,
+        "B": 11,
+        "C": 2,
+        "D": 10,
+        "E": 7,
+        "F": 5,
+        "G": 9,
+        "H": 9,
+        "I": 3,
+        "K": 3,
+        "O": 28
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.0065,
+      "filled": 299,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 299
+      },
+      "values_longer_than_code": 0
+    },
+    "PrecautionaryProcedureC": {
+      "distinct_values": {
+        "A": 12,
+        "E": 1,
+        "F": 1,
+        "G": 2,
+        "I": 5,
+        "K": 1,
+        "O": 1
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.0005,
+      "filled": 23,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 23
+      },
+      "values_longer_than_code": 0
+    },
+    "PrecautionaryProcedureD": {
+      "distinct_values": {
+        "A": 1,
+        "K": 1,
+        "O": 3
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.0001,
+      "filled": 5,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 5
+      },
+      "values_longer_than_code": 0
+    },
+    "PropellerMake": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0012,
+      "filled": 56,
+      "length_max": 6,
+      "length_min": 5,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 56
+      }
+    },
+    "PropellerModel": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0012,
+      "filled": 55,
+      "length_max": 11,
+      "length_min": 4,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 55
+      }
+    },
+    "PropellerSerialNumber": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0008,
+      "filled": 38,
+      "length_max": 8,
+      "length_min": 5,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 29,
+        "digits": 9
+      }
+    },
+    "PropellerTotalCycles": {
+      "expected_kind": "integer",
+      "expected_unit": "cycle",
+      "fill_rate": 0.0002,
+      "filled": 7,
+      "length_max": 4,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 1.0,
+        "max": 8248.0,
+        "median": 5412.0,
+        "min": 1.0,
+        "parsed": 7
+      },
+      "rows": 45910,
+      "shapes": {
+        "digits": 7
+      }
+    },
+    "PropellerTotalTime": {
+      "expected_kind": "integer",
+      "expected_unit": "h",
+      "fill_rate": 0.0008,
+      "filled": 39,
+      "length_max": 5,
+      "length_min": 2,
+      "numeric": {
+        "integer_fraction": 1.0,
+        "max": 20102.0,
+        "median": 2402.0,
+        "min": 18.0,
+        "parsed": 39
+      },
+      "rows": 45910,
+      "shapes": {
+        "digits": 39
+      }
+    },
+    "ReceivingDistrictOffice": {
+      "distinct_values": {
+        "00": 7,
+        "01": 360,
+        "02": 806,
+        "03": 444,
+        "04": 1,
+        "05": 1059,
+        "06": 1977,
+        "07": 1419,
+        "09": 177,
+        "10": 2,
+        "11": 211,
+        "13": 38,
+        "15": 2977,
+        "17": 16,
+        "19": 527,
+        "21": 8163,
+        "23": 1702,
+        "25": 3572,
+        "27": 5250,
+        "28": 1,
+        "29": 7544,
+        "31": 38,
+        "33": 4409,
+        "35": 68,
+        "37": 302,
+        "39": 993,
+        "61": 41,
+        "63": 4,
+        "65": 125,
+        "67": 969,
+        "68": 8,
+        "70": 1,
+        "74": 1,
+        "75": 1,
+        "76": 1,
+        "77": 1,
+        "78": 1,
+        "79": 1,
+        "90": 1,
+        "99": 2692
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 2,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "digits": 45910
+      },
+      "values_longer_than_code": 0
+    },
+    "ReceivingRegionCode": {
+      "distinct_values": {
+        "AL": 244,
+        "CE": 5453,
+        "EA": 2393,
+        "FS": 7,
+        "GL": 7018,
+        "NE": 1,
+        "NM": 3080,
+        "SO": 6779,
+        "SW": 20128,
+        "WP": 807
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 2,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 45910
+      },
+      "values_longer_than_code": 0
+    },
+    "RegistryNNumber": {
+      "expected_kind": "identifier",
+      "expected_unit": "",
+      "fill_rate": 0.9946,
+      "filled": 45663,
+      "length_max": 5,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 40488,
+        "alpha": 20,
+        "digits": 5151,
+        "other": 4
+      }
+    },
+    "SDRType": {
+      "distinct_values": {
+        "A": 44713,
+        "G": 1197
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 45910
+      },
+      "values_longer_than_code": 0
+    },
+    "StageOfOperationCode": {
+      "distinct_values": {
+        "AA": 8,
+        "AP": 498,
+        "CL": 2011,
+        "CR": 1834,
+        "DE": 644,
+        "EX": 1,
+        "FF": 1,
+        "HO": 14,
+        "IN": 35985,
+        "LD": 345,
+        "NR": 1960,
+        "TO": 472,
+        "TX": 2089,
+        "UK": 48
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 2,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 45910
+      },
+      "values_longer_than_code": 0
+    },
+    "StringerFrom": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0612,
+      "filled": 2808,
+      "length_max": 7,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 114,
+        "alpha": 3,
+        "decimal": 1,
+        "digits": 2647,
+        "other": 43
+      }
+    },
+    "StringerFromSide": {
+      "distinct_values": {
+        "L": 1385,
+        "R": 1414
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.061,
+      "filled": 2799,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 2799
+      },
+      "values_longer_than_code": 0
+    },
+    "StringerTo": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0273,
+      "filled": 1253,
+      "length_max": 7,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 86,
+        "decimal": 3,
+        "digits": 1145,
+        "other": 19
+      }
+    },
+    "StringerToSide": {
+      "distinct_values": {
+        "L": 631,
+        "R": 846
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.0322,
+      "filled": 1477,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 1477
+      },
+      "values_longer_than_code": 0
+    },
+    "StructuralOther": {
+      "expected_kind": "text",
+      "expected_unit": "",
+      "fill_rate": 0.0085,
+      "filled": 391,
+      "length_max": 20,
+      "length_min": 2,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 5,
+        "alpha": 74,
+        "other": 312
+      }
+    },
+    "SubmissionDate": {
+      "expected_kind": "datetime",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 29,
+      "length_min": 29,
+      "rows": 45910,
+      "shapes": {
+        "iso_datetime": 45910
+      }
+    },
+    "SubmitterDesignator": {
+      "expected_kind": "identifier",
+      "expected_unit": "",
+      "fill_rate": 0.9812,
+      "filled": 45046,
+      "length_max": 4,
+      "length_min": 4,
+      "rows": 45910,
+      "shapes": {
+        "alnum": 2807,
+        "alpha": 42239
+      }
+    },
+    "SubmitterTypeCode": {
+      "distinct_values": {
+        "A": 42633,
+        "B": 1337,
+        "C": 75,
+        "D": 200,
+        "E": 1485,
+        "G": 25,
+        "H": 53,
+        "I": 2,
+        "M": 7,
+        "P": 14,
+        "S": 1,
+        "W": 75,
+        "Z": 3
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 1.0,
+      "filled": 45910,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 45910
+      },
+      "values_longer_than_code": 0
+    },
+    "WaterLineFrom": {
+      "expected_kind": "numeric",
+      "expected_unit": "in",
+      "fill_rate": 0.0245,
+      "filled": 1125,
+      "length_max": 12,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 0.841,
+        "max": 2800.0,
+        "median": 164.0,
+        "min": -2837.0,
+        "parsed": 1006
+      },
+      "rows": 45910,
+      "shapes": {
+        "alnum": 46,
+        "decimal": 172,
+        "digits": 811,
+        "other": 96
+      }
+    },
+    "WaterLineTo": {
+      "expected_kind": "numeric",
+      "expected_unit": "in",
+      "fill_rate": 0.0047,
+      "filled": 216,
+      "length_max": 9,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 0.9043,
+        "max": 2466.0,
+        "median": 160.0,
+        "min": -2900.0,
+        "parsed": 188
+      },
+      "rows": 45910,
+      "shapes": {
+        "alnum": 12,
+        "decimal": 18,
+        "digits": 164,
+        "other": 22
+      }
+    },
+    "WingStationFrom": {
+      "expected_kind": "numeric",
+      "expected_unit": "in",
+      "fill_rate": 0.0136,
+      "filled": 624,
+      "length_max": 12,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 0.5937,
+        "max": 10729.0,
+        "median": 313.5,
+        "min": -765.0,
+        "parsed": 411
+      },
+      "rows": 45910,
+      "shapes": {
+        "alnum": 47,
+        "decimal": 174,
+        "digits": 235,
+        "other": 168
+      }
+    },
+    "WingStationFromSide": {
+      "distinct_values": {
+        "L": 362,
+        "R": 346
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.0154,
+      "filled": 708,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 708
+      },
+      "values_longer_than_code": 0
+    },
+    "WingStationTo": {
+      "expected_kind": "numeric",
+      "expected_unit": "in",
+      "fill_rate": 0.0099,
+      "filled": 456,
+      "length_max": 12,
+      "length_min": 1,
+      "numeric": {
+        "integer_fraction": 0.63,
+        "max": 11198.0,
+        "median": 323.03,
+        "min": -254.0,
+        "parsed": 300
+      },
+      "rows": 45910,
+      "shapes": {
+        "alnum": 19,
+        "decimal": 114,
+        "digits": 185,
+        "other": 138
+      }
+    },
+    "WingStationToSide": {
+      "distinct_values": {
+        "L": 270,
+        "R": 255
+      },
+      "expected_kind": "code",
+      "expected_unit": "",
+      "fill_rate": 0.0114,
+      "filled": 525,
+      "length_max": 1,
+      "length_min": 1,
+      "rows": 45910,
+      "shapes": {
+        "alpha": 525
+      },
+      "values_longer_than_code": 0
+    }
+  },
+  "data_rows": 45910,
+  "file": "SDR-2026.csv",
+  "rows_with_wrong_column_count": 0
+}
