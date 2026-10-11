@@ -1,6 +1,6 @@
 # tripwire
 
-**Status: work in progress. Nothing here is measured yet, so there are no results to report.**
+**Status: work in progress. Nothing here is measured yet, so there are no results to report.** A typed SDR loader (`tripwire/sdr.py`), a seeded synthetic-row generator (`tripwire/synth.py`), and a deterministic corruption injector with a ground-truth ledger (`tripwire/corrupt.py`) exist; see [docs/DATA.md](docs/DATA.md) for the data source.
 
 Tripwire feeds a Grok agent deliberately corrupted engineering data, measures whether it notices, and ships a fail-closed check.
 
