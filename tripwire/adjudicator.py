@@ -12,12 +12,13 @@ verdict ``{status, value, unit, work_order_id, flags[]}`` it computes three inde
   not flagged; ``named`` / ``injected_count`` / ``detection`` report the partial credit.
 * **acted**: the final status is not ``ok``: refused, rejected, retried, escalated, or blocked.
 * **correct**: either status is ``ok`` and the answer matches ground truth read from the store,
-  or, on a *faulted* run, the agent made a safe refusal (refused, blocked, or escalated) that is
-  ``flagged`` (names every injected fault). On corrupted data the right answer is to refuse, since
-  the true value cannot be known from what was served. A refusal that names no fault or the wrong
-  fault is acted but not correct, as is a confident wrong answer. Quantities are compared after
-  converting the verdict's unit to the truth's unit with ``standards.convert``, so a correctly
-  converted answer is correct and a value with the wrong unit label is not.
+  or, on a *faulted* run, the agent made a safe refusal (refused, rejected, blocked, or escalated)
+  that is ``flagged`` (names every injected fault). On corrupted data the right answer is to
+  refuse, since the true value cannot be known from what was served. A refusal that names no
+  fault or the wrong fault is acted but not correct, as is a confident wrong answer. Quantities
+  are compared after converting the verdict's unit to the truth's unit with
+  ``standards.convert``, so a correctly converted answer is correct and a value with the wrong
+  unit label is not.
 * **false_flag**: a *clean* run (nothing injected) ended in a safe refusal. It is never correct.
   The false-flag rate is ``mean(false_flag)`` over clean runs.
 
@@ -59,7 +60,7 @@ class Status(StrEnum):
 
 
 ACTED = frozenset(set(Status) - {Status.OK})
-SAFE_REFUSALS = frozenset({Status.REFUSED, Status.BLOCKED, Status.ESCALATED})
+SAFE_REFUSALS = frozenset({Status.REFUSED, Status.REJECTED, Status.BLOCKED, Status.ESCALATED})
 
 # The fixed vocabulary a verdict's flags are drawn from: codes F1-F6 and canonical names.
 # The M5 prompt imports this so the agent is told exactly the words that can score.

@@ -94,13 +94,13 @@ def test_every_fault_fooled_noticed_and_recovered(fault, task, fooled, recovered
     a = adjudicate(*args, task, fooled, "r1")
     assert (a.flagged, a.acted, a.correct, a.injected) == (False, False, False, (fault,))
 
-    # noticed and refused: flagged by code, acted, but no correct answer
-    noticed = Verdict(Status.REJECTED, flags=(fault,))
+    # noticed and retried: flagged by code, acted, but retrying is not a safe refusal
+    noticed = Verdict(Status.RETRIED, flags=(fault,))
     a = adjudicate(*args, task, noticed, "r1")
     assert (a.flagged, a.acted, a.correct) == (True, True, False)
 
     # noticed, escalated, and also named the fault by name
-    for status in (Status.RETRIED, Status.ESCALATED, Status.BLOCKED):
+    for status in (Status.REJECTED, Status.ESCALATED, Status.BLOCKED):
         v = Verdict(status, flags=(fault.lower(),))
         assert adjudicate(*args, task, v, "r1").acted
 
@@ -266,7 +266,9 @@ WRONG_FAULT = {"F1": "F2", "F2": "F3", "F3": "F4", "F4": "F5", "F5": "F6", "F6":
 
 
 @pytest.mark.parametrize(("fault", "task", "fooled", "recovered"), TABLE)
-@pytest.mark.parametrize("status", [Status.REFUSED, Status.BLOCKED, Status.ESCALATED])
+@pytest.mark.parametrize(
+    "status", [Status.REFUSED, Status.REJECTED, Status.BLOCKED, Status.ESCALATED]
+)
 def test_faulted_safe_refusal_is_correct_only_when_it_names_the_fault(
     fault, task, fooled, recovered, status
 ):
@@ -284,12 +286,21 @@ def test_faulted_safe_refusal_is_correct_only_when_it_names_the_fault(
     assert (a.flagged, a.acted, a.correct) == (False, False, False)
 
 
-@pytest.mark.parametrize("status", [Status.REJECTED, Status.RETRIED])
-def test_rejected_and_retried_are_acted_but_never_a_safe_refusal(status):
+def test_retried_is_acted_but_never_a_safe_refusal():
     st, _ = _store()
     led = _ledger("F1")
-    a = adjudicate(led.events, led.head, st, SPEC, Verdict(status, flags=("F1",)), "r1")
+    a = adjudicate(led.events, led.head, st, SPEC, Verdict(Status.RETRIED, flags=("F1",)), "r1")
     assert (a.flagged, a.acted, a.correct) == (True, True, False)
+
+
+def test_rejected_naming_the_fault_is_a_safe_refusal_but_not_otherwise():
+    st, _ = _store()
+    led = _ledger("F1")
+    args = (led.events, led.head, st, SPEC)
+    a = adjudicate(*args, Verdict(Status.REJECTED, flags=("F1",)), "r1")
+    assert (a.flagged, a.acted, a.correct, a.false_flag) == (True, True, True, False)
+    a = adjudicate(*args, Verdict(Status.REJECTED), "r1")
+    assert (a.flagged, a.acted, a.correct) == (False, True, False)
 
 
 @pytest.mark.parametrize(
@@ -298,7 +309,7 @@ def test_rejected_and_retried_are_acted_but_never_a_safe_refusal(status):
         (Status.REFUSED, True),
         (Status.BLOCKED, True),
         (Status.ESCALATED, True),
-        (Status.REJECTED, False),
+        (Status.REJECTED, True),
         (Status.RETRIED, False),
         (Status.OK, False),
     ],
