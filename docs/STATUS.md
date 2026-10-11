@@ -45,6 +45,34 @@ produced them.
 3. M1 data contract: every value carries `(value, unit, revision, provenance)`
    using `standards.Unit`; spec-limit records cite a source URL and revision.
 
+## Reuse from sibling repos (proposed, pending owner OK)
+
+Read-only review of `Jott2121/sabot`, `Jott2121/crucible`, `Jott2121/quorum-cal` on
+2026-10-11. None of them states a consumption contract for Tripwire; the reuse below is
+by adoption, with citation.
+
+- **sabot** (`SPEC.md` v0.2.1, `seeds/`, `harness/sabot/{strict,uncertainty,score}.py`):
+  adopt the DETECTED / REACTED / RECOVERED funnel and the hard-tier, anchor-substring
+  adjudication for M3; frame H1 as a cross-lineage replication of sabot's O6 finding
+  (silent write never flagged, 0 of 119); credit sabot for the H2 prompt; copy the
+  exclusion codes (`RUN_ERROR > BASELINE_FAIL > INJECTION_UNVERIFIED`) and the
+  "strict floor and published number quoted as a pair" rule into
+  `docs/PREREGISTRATION.md`; use its replicate-cluster bootstrap for M7 CIs.
+- **crucible** (`action.yml`, `experiments/PROTOCOL-B.md`, `experiments/DEVIATIONS.md`):
+  add the model-free mutation diagnose to CI (`uses: Jott2121/crucible@v1`, `fail-under`)
+  on `standards.py`, `contract.py`, `store.py`, later the adjudicator and the gate;
+  copy the protocol skeleton (integrity gates, stopping rules, append-only deviations
+  log, `assert_protocol_committed` refusal to run on an uncommitted protocol) into
+  `docs/PREREGISTRATION.md`; copy the receipt layout (`meta.json`, `receipt.jsonl`,
+  `result.json`) for M5 run records.
+- **quorum-cal** (`docs/runtime-discipline.md`, `quorumcal/{judges,profile,monitor}.py`):
+  no LLM judge in Tripwire, so the quorum math does not apply; borrow the per-call
+  served-model provenance rule, the cache-and-resume runner, the quota-aware halt and
+  the exit-code contract for M5; model the gate's data contract on the risk profile
+  (expiry, provenance fingerprint, `profile check` exit codes) in M6; run its CUSUM
+  monitor idea over the clean-run false-flag rate during M7; publish a different-
+  lineage adversarial review of the results as a corrections section (its v1.0.1).
+
 ## Open questions
 
 - `TestResult` carries `spec_id`, `parameter`, `spec_revision` but not `applies_to`, so a
