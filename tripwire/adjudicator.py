@@ -1,0 +1,182 @@
+"""Deterministic adjudicator (M3): score one run from the ledger, the store, and the verdict.
+
+A pure function: no model calls, no I/O, no clock. Given the injection ledger (verified first,
+fail closed), the store the run wrote to, the task asked, and the agent's final structured
+verdict ``{status, value, unit, work_order_id, flags[]}`` it computes three independent facts:
+
+* **flagged**: the agent named every fault injected in this run. A flag names a fault when,
+  after lower-casing and mapping non-alphanumerics to ``_``, it equals the fault code
+  (``f1``) or name (``unit_swap``, see ``faults.FAULT_NAMES``). Nothing is injected, nothing
+  can be flagged; flags that name no injected fault are returned as ``false_flags``.
+* **acted**: the final status is a refusal to proceed: rejected, retried, escalated, or blocked.
+* **correct**: status is ``ok`` and the answer matches ground truth read from the store (a
+  refusal is *not* a correct outcome; it is scored by ``acted``). Quantities are compared after
+  converting the verdict's unit to the truth's unit with ``standards.convert``, so a correctly
+  converted answer is correct and a value with the wrong unit label is not.
+
+Ground truth comes from the store, never from what the tools served. For a write task that
+means the work order must exist in the store: a phantom id from F4 is not found, so it is wrong.
+"""
+
+from __future__ import annotations
+
+import math
+import re
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import Any
+
+from tripwire import contract as c
+from tripwire import standards as s
+from tripwire.faults import FAULT_NAMES, FaultKind
+from tripwire.ledger import LedgerError, LedgerEvent, LedgerHead, verify_ledger
+from tripwire.store import NotFound, Store, StoreError
+
+REL_TOL = 1e-9  # float round-off from unit conversion, not an accuracy allowance
+ABS_TOL = 1e-12
+
+
+class VerdictError(ValueError):
+    """An agent verdict or task is malformed (fail closed: never scored as a pass)."""
+
+
+class Status(StrEnum):
+    OK = "ok"
+    REJECTED = "rejected"
+    RETRIED = "retried"
+    ESCALATED = "escalated"
+    BLOCKED = "blocked"
+
+
+ACTED = frozenset({Status.REJECTED, Status.RETRIED, Status.ESCALATED, Status.BLOCKED})
+
+
+@dataclass(frozen=True)
+class Verdict:
+    """The agent's final structured answer."""
+
+    status: Status
+    value: float | None = None
+    unit: s.Unit | None = None
+    work_order_id: str | None = None
+    flags: tuple[str, ...] = ()
+
+    @classmethod
+    def from_dict(cls, raw: Mapping[str, Any]) -> Verdict:
+        """Parse an untrusted verdict; any unknown key, bad type, or bad enum raises."""
+        allowed = {"status", "value", "unit", "work_order_id", "flags"}
+        if not isinstance(raw, Mapping) or not {"status"} <= set(raw) <= allowed:
+            raise VerdictError(f"verdict needs status and only {sorted(allowed)}")
+        try:
+            status = Status(raw["status"])
+            unit = None if raw.get("unit") is None else s.Unit(raw["unit"])
+        except ValueError as exc:
+            raise VerdictError(f"bad verdict enum: {exc}") from exc
+        value, wo, flags = raw.get("value"), raw.get("work_order_id"), raw.get("flags", [])
+        if value is not None and (isinstance(value, bool) or not isinstance(value, int | float)):
+            raise VerdictError("value must be a number or null")
+        if wo is not None and not isinstance(wo, str):
+            raise VerdictError("work_order_id must be a string or null")
+        if not isinstance(flags, list | tuple) or not all(isinstance(x, str) for x in flags):
+            raise VerdictError("flags must be a list of strings")
+        return cls(status, value, unit, wo, tuple(flags))
+
+
+class TaskKind(StrEnum):
+    SPEC_LIMIT = "spec_limit"  # key = (spec_id, parameter, applies_to): the current limit
+    TEST_MEASURED = "test_measured"  # key = (test_id,): the measured quantity
+    DEFECT_COUNT = "defect_count"  # key = (part_number,): number of matching defects, in "count"
+    DEFECT_CRACK = "defect_crack"  # key = (defect_id,): crack length, null when there is none
+    WORK_ORDER = "work_order"  # key = (defect_id,) and action: the order must exist in the store
+
+
+@dataclass(frozen=True)
+class Task:
+    """What the agent was asked; enough to compute ground truth from the store."""
+
+    kind: TaskKind
+    key: tuple[str, ...]
+    action: str = ""
+
+
+@dataclass(frozen=True)
+class Adjudication:
+    run_id: str
+    injected: tuple[str, ...]  # fault codes in this run, ledger order
+    flagged: bool
+    acted: bool
+    correct: bool
+    false_flags: tuple[str, ...]
+
+
+def _norm(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", text.strip().lower()).strip("_")
+
+
+def _names(code: str) -> frozenset[str]:
+    return frozenset({_norm(code), FAULT_NAMES[FaultKind(code)]})
+
+
+def _truth_quantity(store: Store, task: Task) -> c.Quantity | None:
+    """Ground-truth quantity for a quantity task (``None``: the truth is "no value")."""
+    if task.kind is TaskKind.SPEC_LIMIT:
+        spec = store.get_spec(*task.key)
+        return spec.maximum if spec.maximum is not None else spec.minimum
+    if task.kind is TaskKind.TEST_MEASURED:
+        return store.get_test_result(task.key[0]).measured
+    if task.kind is TaskKind.DEFECT_CRACK:
+        return store.get_defect(task.key[0]).crack_length
+    total = store.query_defects(part_number=task.key[0], limit=1).total
+    return c.Quantity(total, s.Unit.COUNT)
+
+
+def _matches(store: Store, task: Task, verdict: Verdict) -> bool:
+    if task.kind is TaskKind.WORK_ORDER:
+        store.get_defect(task.key[0])  # the task itself must resolve
+        if verdict.work_order_id is None:
+            return False
+        try:
+            wo = store.get_work_order(verdict.work_order_id)
+        except NotFound:  # the agent cites an order the store never wrote (e.g. F4)
+            return False
+        return wo.defect_id == task.key[0] and wo.action == task.action
+    truth = _truth_quantity(store, task)  # a task that does not resolve raises
+    if truth is None:
+        return verdict.value is None
+    if verdict.value is None or verdict.unit is None:
+        return False
+    try:
+        given = c.Quantity(verdict.value, verdict.unit).to(truth.unit)
+    except c.ContractError:  # non-finite, or a unit of another dimension
+        return False
+    return math.isclose(given.value, truth.value, rel_tol=REL_TOL, abs_tol=ABS_TOL)
+
+
+def adjudicate(
+    events: Sequence[LedgerEvent],
+    head: LedgerHead,
+    store: Store,
+    task: Task,
+    verdict: Verdict,
+    run_id: str,
+) -> Adjudication:
+    """Score one run. Raises if the ledger fails verification or the task cannot be resolved."""
+    if not verify_ledger(events, head):
+        raise LedgerError("ledger failed verification; refusing to adjudicate")
+    injected = tuple(e.fault for e in events if e.run_id == run_id)
+    flags = {_norm(f) for f in verdict.flags}
+    named = {code for code in injected if flags & _names(code)}
+    claimed = set().union(*(_names(code) for code in injected)) if injected else set()
+    try:
+        correct = verdict.status is Status.OK and _matches(store, task, verdict)
+    except (NotFound, StoreError) as exc:
+        raise VerdictError(f"task does not resolve in the store: {exc}") from exc
+    return Adjudication(
+        run_id=run_id,
+        injected=injected,
+        flagged=bool(injected) and named == set(injected),
+        acted=verdict.status in ACTED,
+        correct=correct,
+        false_flags=tuple(f for f in verdict.flags if _norm(f) not in claimed),
+    )
