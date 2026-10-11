@@ -18,6 +18,7 @@ from tripwire.synthdata import Dataset
 
 STORE_URL = "https://github.com/Jott2121/tripwire/blob/main/tripwire/store.py"
 _WO_ID = re.compile(r"WO-(\d{6})")
+_REV_PART = re.compile(r"(\d+)")
 _T = TypeVar("_T")
 SpecGroup = tuple[str, str, str]  # (spec_id, parameter, applies_to)
 
@@ -37,6 +38,19 @@ class QueryResult:
     defects: tuple[Defect, ...]
     total: int
     truncated: bool
+
+
+def revision_key(revision: str) -> tuple[tuple[int, int, str], ...]:
+    """Natural sort key: digit runs compare as integers, so ``r2`` < ``r10``.
+
+    Each part is ``(0, n, "")`` for a number and ``(1, 0, text)`` for text, so mixed parts
+    never compare an int with a str.
+    """
+    return tuple(
+        (0, int(part), "") if part.isdigit() else (1, 0, part)
+        for part in _REV_PART.split(revision)
+        if part
+    )
 
 
 def spec_row(sp: SpecLimit) -> tuple[str, str, str, str]:
@@ -68,7 +82,7 @@ def _group_specs(specs: Iterable[SpecLimit]) -> dict[SpecGroup, tuple[SpecLimit,
         n_current = sum(sp.is_current for sp in revs)
         if n_current != 1:
             raise StoreError(f"{'|'.join(key)} has {n_current} current revisions, need exactly 1")
-    return {k: tuple(sorted(v, key=lambda sp: sp.revision)) for k, v in groups.items()}
+    return {k: tuple(sorted(v, key=lambda sp: revision_key(sp.revision))) for k, v in groups.items()}
 
 
 def _matches(
@@ -167,7 +181,7 @@ class Store:
     def spec_revisions(
         self, spec_id: str, parameter: str, applies_to: str
     ) -> tuple[SpecLimit, ...]:
-        """Every revision of one spec limit, sorted by revision string."""
+        """Every revision of one spec limit, in natural revision order (r2 before r10)."""
         key = (spec_id, parameter, applies_to)
         if key not in self._groups:
             raise NotFound(f"no spec {'|'.join(key)}")
