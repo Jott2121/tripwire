@@ -48,7 +48,8 @@ A task is not done until lint + tests pass locally (or in the cloud agent VM) an
 
 ## Directory map
 ```
-tripwire/            package (empty scaffold for now)
+tripwire/            package: standards.py (units, field registry, validators; M0)
+docs/                MEASUREMENT_STANDARDS.md (field/unit/source/confidence), STATUS.md (milestones)
 tests/               pytest suite, incl. the blocked-term scanner tests
 scripts/             scan_blocked_terms.py (CI gate), run-brief.sh (headless Claude loop)
 .github/workflows/   ci.yml (ruff, pytest, no-employer-data), claude.yml (@claude Action)
