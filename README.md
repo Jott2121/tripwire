@@ -12,6 +12,8 @@ The plan:
 
 It reuses the planted-fault method from [sabot](https://github.com/Jott2121/sabot). Public or synthetic data only.
 
+Build progress: [docs/STATUS.md](docs/STATUS.md). Units and conventions of the FAA data: [docs/MEASUREMENT_STANDARDS.md](docs/MEASUREMENT_STANDARDS.md).
+
 ## Development
 
 ```bash
