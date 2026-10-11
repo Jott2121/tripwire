@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # Headless Claude Code run for one GitHub issue, billed to the Max plan.
 #
-#   nohup scripts/run-brief.sh <issue-number> >/dev/null 2>&1 &
+#   scripts/run-brief.sh <n>
+#
+# The script self-detaches: a plain launch forks into a new session and returns
+# immediately, so the run survives the launching shell ending (a bare `nohup ... &`
+# would still be killed when its process group is torn down; nohup only ignores SIGHUP).
 #
 # Creates worktree ~/tripwire-wt/issue-N on branch claude/issue-N (from origin/main),
 # builds a venv there, and runs `claude -p` with the issue as the brief. Output goes to
@@ -13,7 +17,13 @@
 # Never uses --bare or --dangerously-skip-permissions.
 set -euo pipefail
 
-N="${1:?usage: run-brief.sh <issue-number>}"
+# Validate the argument first, in the foreground, so a bad launch fails visibly
+# (to stderr, exit 2) without detaching or creating anything.
+if [ "$#" -lt 1 ] || [ -z "${1:-}" ]; then
+  echo "usage: run-brief.sh <issue-number>" >&2
+  exit 2
+fi
+N="$1"
 [[ "$N" =~ ^[0-9]+$ ]] || { echo "issue number must be numeric: $N" >&2; exit 2; }
 
 OWNER="Jott2121"
@@ -24,6 +34,26 @@ WT="$WT_ROOT/issue-$N"
 BR="claude/issue-$N"
 LOGS="$WT_ROOT/logs"
 LOG="$LOGS/issue-$N.log"
+
+# Self-detach: unless we are already the detached child, re-launch ourselves fully
+# detached and exit 0 immediately. macOS has no `setsid` binary, so python3 does the
+# double-detach: os.fork() (parent exits), then the child os.setsid()s, redirects
+# stdin from /dev/null and stdout/stderr (appended) to the log, and os.execvp()s the
+# re-run under nohup with TRIPWIRE_DETACHED=1.
+if [ "${TRIPWIRE_DETACHED:-}" != "1" ]; then
+  SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+  DETACH_PY='import os, sys; _log = sys.argv[1]; _cmd = sys.argv[2:]; (os._exit(0) if os.fork() > 0 else None); os.setsid(); _n = os.open("/dev/null", os.O_RDONLY); os.dup2(_n, 0); _f = os.open(_log, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644); os.dup2(_f, 1); os.dup2(_f, 2); os.execvp(_cmd[0], _cmd)'
+  CMD=(python3 -c "$DETACH_PY" "$LOG" nohup env TRIPWIRE_DETACHED=1 bash "$SELF" "$N")
+  if [ "${TRIPWIRE_DETACH_DRYRUN:-}" = "1" ]; then
+    printf 'would exec: %s\n' "${CMD[*]}"
+    exit 0
+  fi
+  mkdir -p "$LOGS"
+  "${CMD[@]}"
+  echo "launched issue-$N; log: $LOG"
+  exit 0
+fi
+
 mkdir -p "$LOGS"
 exec >>"$LOG" 2>&1
 echo "=== $(date -u +%FT%TZ) run-brief issue-$N start (pid $$)"
