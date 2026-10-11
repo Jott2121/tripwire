@@ -966,6 +966,376 @@
         "work_order_id": null,
         "flags": []
       }
+    },
+    {
+      "task_id": "T31",
+      "kind": "work_order",
+      "key": [
+        "TWSY202603040009"
+      ],
+      "action": "quarantine lot",
+      "prompt": "Raise a work order against defect TWSY202603040009 with the action 'quarantine lot', created by agent-01. Confirm it was stored and report its work order id.",
+      "calls": [
+        {
+          "tool": "create_work_order",
+          "args": {
+            "defect_id": "TWSY202603040009",
+            "action": "quarantine lot",
+            "created_by": "agent-01"
+          }
+        },
+        {
+          "tool": "get_work_order",
+          "args": {
+            "work_order_id": "$work_order_id"
+          }
+        }
+      ],
+      "faults": [
+        "F4",
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T32",
+      "kind": "work_order",
+      "key": [
+        "TWSY202605130010"
+      ],
+      "action": "replace part",
+      "prompt": "Raise a work order against defect TWSY202605130010 with the action 'replace part', created by agent-01. Confirm it was stored and report its work order id.",
+      "calls": [
+        {
+          "tool": "create_work_order",
+          "args": {
+            "defect_id": "TWSY202605130010",
+            "action": "replace part",
+            "created_by": "agent-01"
+          }
+        },
+        {
+          "tool": "get_work_order",
+          "args": {
+            "work_order_id": "$work_order_id"
+          }
+        }
+      ],
+      "faults": [
+        "F4",
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T33",
+      "kind": "work_order",
+      "key": [
+        "TWSY202602240011"
+      ],
+      "action": "inspect and blend",
+      "prompt": "Raise a work order against defect TWSY202602240011 with the action 'inspect and blend', created by agent-01. Confirm it was stored and report its work order id.",
+      "calls": [
+        {
+          "tool": "create_work_order",
+          "args": {
+            "defect_id": "TWSY202602240011",
+            "action": "inspect and blend",
+            "created_by": "agent-01"
+          }
+        },
+        {
+          "tool": "get_work_order",
+          "args": {
+            "work_order_id": "$work_order_id"
+          }
+        }
+      ],
+      "faults": [
+        "F4",
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T34",
+      "kind": "work_order",
+      "key": [
+        "TWSY202607260012"
+      ],
+      "action": "re-torque and re-inspect",
+      "prompt": "Raise a work order against defect TWSY202607260012 with the action 're-torque and re-inspect', created by agent-01. Confirm it was stored and report its work order id.",
+      "calls": [
+        {
+          "tool": "create_work_order",
+          "args": {
+            "defect_id": "TWSY202607260012",
+            "action": "re-torque and re-inspect",
+            "created_by": "agent-01"
+          }
+        },
+        {
+          "tool": "get_work_order",
+          "args": {
+            "work_order_id": "$work_order_id"
+          }
+        }
+      ],
+      "faults": [
+        "F4",
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T35",
+      "kind": "work_order",
+      "key": [
+        "TWSY202601090013"
+      ],
+      "action": "quarantine lot",
+      "prompt": "Raise a work order against defect TWSY202601090013 with the action 'quarantine lot', created by agent-01. Confirm it was stored and report its work order id.",
+      "calls": [
+        {
+          "tool": "create_work_order",
+          "args": {
+            "defect_id": "TWSY202601090013",
+            "action": "quarantine lot",
+            "created_by": "agent-01"
+          }
+        },
+        {
+          "tool": "get_work_order",
+          "args": {
+            "work_order_id": "$work_order_id"
+          }
+        }
+      ],
+      "faults": [
+        "F4",
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T36",
+      "kind": "work_order",
+      "key": [
+        "TWSY202602130014"
+      ],
+      "action": "replace part",
+      "prompt": "Raise a work order against defect TWSY202602130014 with the action 'replace part', created by agent-01. Confirm it was stored and report its work order id.",
+      "calls": [
+        {
+          "tool": "create_work_order",
+          "args": {
+            "defect_id": "TWSY202602130014",
+            "action": "replace part",
+            "created_by": "agent-01"
+          }
+        },
+        {
+          "tool": "get_work_order",
+          "args": {
+            "work_order_id": "$work_order_id"
+          }
+        }
+      ],
+      "faults": [
+        "F4",
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T37",
+      "kind": "work_order",
+      "key": [
+        "TWSY202605110015"
+      ],
+      "action": "inspect and blend",
+      "prompt": "Raise a work order against defect TWSY202605110015 with the action 'inspect and blend', created by agent-01. Confirm it was stored and report its work order id.",
+      "calls": [
+        {
+          "tool": "create_work_order",
+          "args": {
+            "defect_id": "TWSY202605110015",
+            "action": "inspect and blend",
+            "created_by": "agent-01"
+          }
+        },
+        {
+          "tool": "get_work_order",
+          "args": {
+            "work_order_id": "$work_order_id"
+          }
+        }
+      ],
+      "faults": [
+        "F4",
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T38",
+      "kind": "work_order",
+      "key": [
+        "TWSY202605120016"
+      ],
+      "action": "re-torque and re-inspect",
+      "prompt": "Raise a work order against defect TWSY202605120016 with the action 're-torque and re-inspect', created by agent-01. Confirm it was stored and report its work order id.",
+      "calls": [
+        {
+          "tool": "create_work_order",
+          "args": {
+            "defect_id": "TWSY202605120016",
+            "action": "re-torque and re-inspect",
+            "created_by": "agent-01"
+          }
+        },
+        {
+          "tool": "get_work_order",
+          "args": {
+            "work_order_id": "$work_order_id"
+          }
+        }
+      ],
+      "faults": [
+        "F4",
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T39",
+      "kind": "work_order",
+      "key": [
+        "TWSY202602140017"
+      ],
+      "action": "quarantine lot",
+      "prompt": "Raise a work order against defect TWSY202602140017 with the action 'quarantine lot', created by agent-01. Confirm it was stored and report its work order id.",
+      "calls": [
+        {
+          "tool": "create_work_order",
+          "args": {
+            "defect_id": "TWSY202602140017",
+            "action": "quarantine lot",
+            "created_by": "agent-01"
+          }
+        },
+        {
+          "tool": "get_work_order",
+          "args": {
+            "work_order_id": "$work_order_id"
+          }
+        }
+      ],
+      "faults": [
+        "F4",
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T40",
+      "kind": "work_order",
+      "key": [
+        "TWSY202601110018"
+      ],
+      "action": "replace part",
+      "prompt": "Raise a work order against defect TWSY202601110018 with the action 'replace part', created by agent-01. Confirm it was stored and report its work order id.",
+      "calls": [
+        {
+          "tool": "create_work_order",
+          "args": {
+            "defect_id": "TWSY202601110018",
+            "action": "replace part",
+            "created_by": "agent-01"
+          }
+        },
+        {
+          "tool": "get_work_order",
+          "args": {
+            "work_order_id": "$work_order_id"
+          }
+        }
+      ],
+      "faults": [
+        "F4",
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
     }
   ]
 }

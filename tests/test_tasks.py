@@ -51,7 +51,7 @@ def _serve(task, faults=()):
 
 
 def test_task_set_shape():
-    assert 28 <= len(TASKS) <= 32
+    assert 28 <= len(TASKS) <= 40  # T31-T40 are the extra write tasks that give F4 its runs
     assert len({t.task_id for t in TASKS}) == len(TASKS)
     assert {t.kind for t in TASKS} == set(TaskKind)
     assert {k.tool for t in TASKS for k in t.calls} == set(srv.TOOLS)
