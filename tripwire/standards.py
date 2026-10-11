@@ -136,6 +136,8 @@ SRC_SINGLE_SUBMISSION = (
 )
 SRC_BATCH_LAYOUT = "https://sdrs.faa.gov/Documents/Batch%20File%20Layout.pdf"
 SRC_DOWNLOAD_PAGE = "https://www.faa.gov/av-info/download_SDR"
+# The committed profile receipt (PROF): scripts/profile_sdr.py on SDR-2026.csv, 2026-10-11.
+SRC_PROFILE = "https://github.com/Jott2121/tripwire/blob/main/reports/sdr_profile_2026.json"
 SRC_JASC = "https://sdrs.faa.gov/documents/JASC_Code.pdf"
 SRC_CFR_47_15 = "https://www.ecfr.gov/current/title-14/section-47.15"
 SRC_CFR_1_1 = "https://www.ecfr.gov/current/title-14/section-1.1"
@@ -249,13 +251,13 @@ _SDR_SPEC: tuple[tuple, ...] = (
         "mm/dd/yyyy on the form.",
         "%m/%d/%Y",
     ),
-    ("SubmissionDate", _DT, _NONE, _H, SRC_DOWNLOAD_PAGE, _SUB_DT_NOTE, "ISO-8601"),
+    ("SubmissionDate", _DT, _NONE, _H, SRC_PROFILE, _SUB_DT_NOTE, "ISO-8601"),
     ("OperatorDesignator", _ID, _NONE, _H, _FI, _OP_DESIG_NOTE, None, r"[A-Z0-9]{4}"),
     ("SubmitterDesignator", _ID, _NONE, _H, SRC_SINGLE_SUBMISSION, "FAA-assigned; not editable."),
     ("SubmitterTypeCode", _CODE, _NONE, _M, _FI, _STYPE_NOTE, None, r"[A-Z]"),
-    ("ReceivingRegionCode", _CODE, _NONE, _M, SRC_DOWNLOAD_PAGE, _REGION_NOTE, None, r"[A-Z]{2}"),
-    ("ReceivingDistrictOffice", _CODE, _NONE, _M, SRC_DOWNLOAD_PAGE, _FSDO_NOTE, None, r"\d{2}"),
-    ("SDRType", _CODE, _NONE, _M, SRC_DOWNLOAD_PAGE, _SDRTYPE_NOTE, None, r"[A-Z]"),
+    ("ReceivingRegionCode", _CODE, _NONE, _M, SRC_PROFILE, _REGION_NOTE, None, r"[A-Z]{2}"),
+    ("ReceivingDistrictOffice", _CODE, _NONE, _M, SRC_PROFILE, _FSDO_NOTE, None, r"\d{2}"),
+    ("SDRType", _CODE, _NONE, _M, SRC_PROFILE, _SDRTYPE_NOTE, None, r"[A-Z]"),
     ("JASCCode", _CODE, _NONE, _H, SRC_JASC, _JASC_NOTE, None, r"\d{4}"),
     ("NatureOfConditionA", _CODE, _NONE, _M, _FI, "Required; 1-3 codes, A first."),
     ("NatureOfConditionB", _CODE, _NONE, _M, _FI, "Optional second code."),
@@ -328,7 +330,8 @@ SDR_FIELDS: tuple[FieldStandard, ...] = tuple(FieldStandard(*row) for row in _SD
 SDR_COLUMNS: tuple[str, ...] = tuple(f.column for f in SDR_FIELDS)
 SDR_FIELD_BY_NAME: Mapping[str, FieldStandard] = MappingProxyType({f.column: f for f in SDR_FIELDS})
 
-SDR_ENCODING = "utf-8"  # SDR-2026 profile: 0 UTF-8 decode errors, 151 under cp1252.
+SDR_ENCODING = "utf-8"  # PROF: 0 UTF-8 decode errors, 151 under cp1252. Some text is
+# mis-encoded in the FAA file itself (a stray 'Â°'); not loader damage.
 SDR_URL_TEMPLATE = "https://external.apic4e.faa.gov/sdrs/retrieve/SDR-{year}.csv"
 SDR_MISSING_VALUE = ""  # empty field = not reported; no sentinel like 'N/A' or 0 is documented.
 
@@ -376,7 +379,7 @@ SUBMITTER_TYPE = _codes(
     W=_OBS,
     Z=_OBS,
 )
-SDR_TYPE = _codes("SDRType", False, _M, SRC_DOWNLOAD_PAGE, A=_OBS, G=_OBS)
+SDR_TYPE = _codes("SDRType", False, _M, SRC_PROFILE, A=_OBS, G=_OBS)
 NATURE_OF_CONDITION = _codes(
     "NatureOfCondition",
     False,
@@ -430,13 +433,13 @@ STAGE_OF_OPERATION = _codes(
     UK=_OBS,
 )
 HOW_DISCOVERED = _codes(
-    "HowDiscoveredCode", False, _M, SRC_DOWNLOAD_PAGE, **dict.fromkeys("VOCE9UBMXLTDW", _OBS)
+    "HowDiscoveredCode", False, _M, SRC_PROFILE, **dict.fromkeys("VOCE9UBMXLTDW", _OBS)
 )
 RECEIVING_REGION = _codes(
     "ReceivingRegionCode",
     False,
     _M,
-    SRC_DOWNLOAD_PAGE,
+    SRC_PROFILE,
     **dict.fromkeys(("SW", "GL", "SO", "CE", "NM", "EA", "WP", "AL", "FS", "NE"), _OBS),
 )
 SINCE_CODE = _codes(
@@ -448,7 +451,7 @@ SINCE_CODE = _codes(
     R="REPAIR (observed; initial matches the form)",
     I="INSPECTION (observed; initial matches the form)",
 )
-SIDE_CODE = _codes("*Side", False, _M, SRC_DOWNLOAD_PAGE, L=_OBS + "; left", R=_OBS + "; right")
+SIDE_CODE = _codes("*Side", False, _M, SRC_PROFILE, L=_OBS + "; left", R=_OBS + "; right")
 CORROSION_LEVEL = _codes(
     "CorrosionLevel",
     False,
@@ -628,7 +631,8 @@ RESOLVED: tuple[Resolved, ...] = (
     ),
     Resolved(
         "encoding",
-        "UTF-8: 0 decode errors under UTF-8, 151 under cp1252; latin-1 garbles 323 rows.",
+        "UTF-8: 0 decode errors under UTF-8, 151 under cp1252. The file itself carries some "
+        "pre-existing mis-encoded text (e.g. a stray 'Â°'); not loader damage.",
     ),
     Resolved("submission_tz", "Offset fixed at -05:00 in every month Jan-Oct 2026; no DST change."),
     Resolved("whole_hours", "Every hour column is 100% whole numbers."),
