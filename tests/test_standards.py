@@ -81,7 +81,7 @@ def test_unresolved_fields_are_listed_as_open_items():
 def test_unresolved_keys_are_unique_and_actionable():
     assert len(s.UNRESOLVED_KEYS) == len(s.UNRESOLVED)
     assert not (s.UNRESOLVED_KEYS & s.RESOLVED_KEYS)
-    assert len(s.RESOLVED_KEYS) == len(s.RESOLVED) == 6
+    assert len(s.RESOLVED_KEYS) == len(s.RESOLVED) == 7
     assert s.SDR_ENCODING == "utf-8"
     assert s.SDR_FIELD_BY_NAME["SubmissionDate"].confidence is s.Confidence.HIGH
     for u in s.UNRESOLVED:

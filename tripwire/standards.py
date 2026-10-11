@@ -596,6 +596,11 @@ RESOLVED: tuple[Resolved, ...] = (
         "registry_prefix", "0% start with N; 45,621 of 45,663 valid under 14 CFR 47.15 without it."
     ),
     Resolved("control_number_shape", "44,879 of 45,910 match 4+8+sequence; mismatch is a warning."),
+    Resolved(
+        "nasa_8739_4a_table",
+        "Table 12-1 read from the official PDF by the maintainer, 2026-10-11: 11 rows AWG 28-8 "
+        "in tripwire/public_specs.py.",
+    ),
 )
 RESOLVED_KEYS: frozenset[str] = frozenset(r.key for r in RESOLVED)
 
@@ -607,11 +612,6 @@ UNRESOLVED: tuple[Unresolved, ...] = (
         "and the rest of NatureOfCondition / PrecautionaryProcedure / StageOfOperation.",
         "Read the SDRS Look-up Tables and Field Instructions at sdrs.faa.gov (host blocked "
         "from the agent sandbox), or take distinct values from the committed profile report.",
-    ),
-    Unresolved(
-        "nasa_8739_4a_table",
-        "Exact NASA-STD-8739.4A crimp pull-test minimums (Table 12-1) per AWG, in N and lbf.",
-        "Read the PDF at standards.nasa.gov directly; web excerpts were garbled. Needed for M1.",
     ),
     Unresolved(
         "sdrs_2026_upgrade",

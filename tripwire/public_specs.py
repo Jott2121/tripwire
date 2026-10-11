@@ -1,10 +1,10 @@
 """Spec limits transcribed from public standards, each row with its citation.
 
-Only rows whose value appeared in at least two independent excerpts of the
-standard are entered, and each row says how confident we are and whether it
-has been checked against the PDF itself (the agent sandbox could not reach
-``standards.nasa.gov``; see ``docs/MEASUREMENT_STANDARDS.md``). Nothing here is
-invented: a row without a source URL cannot be constructed.
+Each row says how confident we are and whether it was read from the PDF itself.
+The NASA-STD-8739.4A Table 12-1 rows were read from the official PDF by the
+maintainer on 2026-10-11 and relayed to the build (the agent sandbox cannot
+reach ``standards.nasa.gov``). Nothing here is invented: a row without a source
+URL cannot be constructed, and a PDF-verified row must be HIGH confidence.
 """
 
 from __future__ import annotations
@@ -18,11 +18,6 @@ from tripwire.contract import ContractError, Provenance, Quantity, SpecLimit
 NASA_8739_4A = "NASA-STD-8739.4A"
 NASA_8739_4A_REVISION = "chg4"
 NASA_8739_4A_URL = s.SRC_NASA_8739_4A
-# Secondary copies the values were cross-checked against (third party; not authoritative).
-NASA_8739_4A_SECONDARY = (
-    "https://www.checkline.com/res/products/126677/wire_pull_test_standards.pdf",
-    "https://www.slideshare.net/slideshow/nasa-std87394/75196591",
-)
 TRANSCRIBED_AT = datetime(2026, 10, 11, tzinfo=UTC)
 
 
@@ -49,9 +44,8 @@ class PublicSpecRow:
 
 
 _CRIMP_NOTE = (
-    "Table 12-1 crimp tensile strength, minimum, newtons (pounds). Value seen as "
-    "'{n} ({lb})' in two excerpts and mapped to this gauge by the secondary copies; "
-    "not yet read from the PDF."
+    "Table 12-1 crimp tensile strength, minimum, newtons (pounds): '{n} ({lb})'. Read from "
+    "the official PDF by the maintainer, 2026-10-11."
 )
 
 
@@ -64,19 +58,26 @@ def _crimp(awg: int, newtons: float, pounds: float) -> PublicSpecRow:
         newtons,
         s.Unit.NEWTON,
         NASA_8739_4A_URL,
-        s.Confidence.MEDIUM,
-        False,
+        s.Confidence.HIGH,
+        True,
         _CRIMP_NOTE.format(n=int(newtons), lb=int(pounds)),
     )
 
 
-# Only gauges whose newton AND pound figures agreed across excerpts are entered.
-# AWG 20, 18, 16 and 14 appeared with conflicting or unaligned figures: omitted.
+# Full Table 12-1 as read from the official PDF (AWG: N (lb)). Note AWG 26 and 24
+# share 36 N (8 lb); an earlier draft had mis-mapped the AWG 28 value to AWG 26.
 NASA_8739_4A_CRIMP_TENSILE: tuple[PublicSpecRow, ...] = (
-    _crimp(26, 22.0, 5.0),
+    _crimp(28, 22.0, 5.0),
+    _crimp(26, 36.0, 8.0),
     _crimp(24, 36.0, 8.0),
     _crimp(22, 57.0, 13.0),
+    _crimp(20, 92.0, 21.0),
+    _crimp(18, 142.0, 32.0),
+    _crimp(16, 183.0, 41.0),
+    _crimp(14, 290.0, 65.0),
     _crimp(12, 459.0, 103.0),
+    _crimp(10, 707.0, 159.0),
+    _crimp(8, 1281.0, 288.0),
 )
 
 PUBLIC_SPEC_ROWS: tuple[PublicSpecRow, ...] = NASA_8739_4A_CRIMP_TENSILE
