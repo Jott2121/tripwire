@@ -1,6 +1,6 @@
 # Tripwire build status
 
-Updated 2026-10-11. One row per milestone; the assistant directing the build
+Updated 2026-10-11 (evening). One row per milestone; the assistant directing the build
 reads this file first. Numbers never appear here unless a committed command
 produced them.
 
@@ -8,8 +8,8 @@ produced them.
 
 | # | Milestone | State | PR |
 |---|-----------|-------|----|
-| — | SDR loader, synthetic rows, corruption injector + hash-chained ledger (issue #4) | open PR, awaiting review | #6 (`claude/issue-4`) |
-| M0 | Measurement standards: `docs/MEASUREMENT_STANDARDS.md` + `tripwire/standards.py` + tests | **open PR**, CI green | #7 (`claude/m0-measurement-standards`) |
+| — | SDR loader, synthetic rows, corruption injector + hash-chained ledger (issue #4) | open PR; updated 2026-10-11 to UTF-8 and the observed conventions | #6 (`claude/issue-4`) |
+| M0 | Measurement standards: `docs/MEASUREMENT_STANDARDS.md` + `tripwire/standards.py` + tests | **open PR**, CI green; six open items resolved from the maintainer profile (receipt JSON still to commit) | #7 (`claude/m0-measurement-standards`) |
 | M0b | `scripts/profile_sdr.py`: offline profiler that closes the M0 open items from a locally downloaded file | **open PR**, stacked on M0 | #8 (`claude/m0b-profile-sdr`) |
 | M1 | Data contract + store: typed schemas carrying units/revision/provenance; fixed-seed synthetic lots, tests, work orders; spec limits from public standards | part 1 types #9; part 2a generators + public spec rows #10; part 2b in-memory store **open PR** (`claude/m1-store`); all stacked, CI green | #9, #10, `claude/m1-store` |
 | M2 | MCP server (Streamable HTTP, auth header) with `query_defects`, `get_spec`, `get_test_result`, `create_work_order`, `get_work_order`; in-memory store; contract tests | not started | — |
@@ -72,6 +72,26 @@ by adoption, with citation.
   (expiry, provenance fingerprint, `profile check` exit codes) in M6; run its CUSUM
   monitor idea over the clean-run false-flag rate during M7; publish a different-
   lineage adversarial review of the results as a corrections section (its v1.0.1).
+
+## Owner-directed changes, 2026-10-11 (Grok bot review)
+
+- PR #7: six UNRESOLVED items closed from the maintainer profile of SDR-2026
+  (`standards.RESOLVED`); SDR encoding is UTF-8; doc source corrections
+  (crack length wording is from the Single Submission instructions; "whole
+  hours" is stated for component times only; submitter code `M` is real).
+  **Not done:** `reports/sdr_profile_2026.json` is not committed because the
+  agent sandbox cannot reach the FAA host; the doc says so. Observed stage,
+  how-discovered and corrosion code values were not in the relay.
+- PR #10: NASA-STD-8739.4A Table 12-1 replaced with the full 11-row table as
+  read from the official PDF by the maintainer (AWG 26 = 36 N, AWG 28 = 22 N
+  pinned by test), cited only to the PDF, HIGH; generated SubmissionDate at
+  -05:00.
+- PR #6: loader reads UTF-8 and fails closed on bad bytes; synthetic rows
+  use observed code values, two-letter stage codes, designator+YYYYMMDD+seq
+  control numbers, whole-hour times, N-less marks; DATA.md cites the units
+  reference.
+- The stack was merged forward (#7 → #8 → #9 → #10 → #11) with merge
+  commits; no force-push, no new PRs. Build is paused pending owner go-ahead.
 
 ## Open questions
 
