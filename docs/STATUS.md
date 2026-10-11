@@ -104,9 +104,10 @@ by adoption, with citation.
   in M2 whether `TestResult` gains `applies_to` (contract change) before the tools ship.
 
 - See the Open items table in `docs/MEASUREMENT_STANDARDS.md` (keys mirrored in
-  `standards.UNRESOLVED`). The largest: download CSV column count (76 vs 77),
-  `SubmissionDate` zone semantics, full SDRS code tables, and the exact
-  NASA-STD-8739.4A Table 12-1 values needed for M1 spec limits.
+  `standards.UNRESOLVED`). Column count (76) and the `SubmissionDate` zone
+  (fixed -05:00) are resolved by the profile. The largest remaining: full SDRS
+  code tables, and the exact NASA-STD-8739.4A Table 12-1 values needed for M1
+  spec limits.
 - Network: the cloud sandbox's egress policy blocks `sdrs.faa.gov`, `faa.gov`,
   `ecfr.gov`, `govinfo.gov` and `nasa.gov`; M0 was researched through search
   excerpts. Allow-listing those hosts (or running the profiler locally) would

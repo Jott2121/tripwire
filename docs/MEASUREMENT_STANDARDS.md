@@ -38,7 +38,7 @@ that will close it.
 | 1.1 | 14 CFR 1.1, Definitions ("time in service") | https://www.ecfr.gov/current/title-14/section-1.1 |
 | 121.703 | 14 CFR 121.703, Service difficulty reports | https://www.ecfr.gov/current/title-14/section-121.703 |
 | 8300.12 | FAA Order 8300.12 (corrosion level definitions) | https://www.faa.gov/documentLibrary/media/Order/8300.12.pdf |
-| NASA | NASA-STD-8739.4A w/ Change 4, Workmanship Standard for Crimping, Interconnecting Cables, Harnesses, and Wiring | https://standards.nasa.gov/sites/default/files/standards/NASA/A/4/nasa-std-87394a_w_change_4_0.pdf |
+| NASA | NASA-STD-8739.4A w/ Change 4, Workmanship Standard for Crimping, Interconnecting Cables, Harnesses, and Wiring | https://standards.nasa.gov/sites/default/files/standards/NASA/A/4/nasa-std-87394a_w_change_4_0.pdf (Table 12-1 checked against this PDF on 2026-10-11, sha256 83d2038895dfb4e1ac18fd314ae444ff5fea56e7cc2723649ee3aa8388ecc27d.) |
 | ADB | AviationDB SDR query page (third party; used only for a partial code list) | https://www.aviationdb.com/Aviation/SdrQuery.shtm |
 | #4 | Tripwire issue #4 (header and date examples copied from a real SDR-2026.csv) | https://github.com/Jott2121/tripwire/issues/4 |
 | PROF | `reports/sdr_profile_2026.json`: maintainer run of `scripts/profile_sdr.py` on `SDR-2026.csv`, 2026-10-11 (45,910 rows; counts and code values only, no narrative). Committed receipt; every PROF number below is read from it | https://github.com/Jott2121/tripwire/blob/main/reports/sdr_profile_2026.json |
