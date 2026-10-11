@@ -9,7 +9,7 @@ produced them.
 | # | Milestone | State | PR |
 |---|-----------|-------|----|
 | — | SDR loader, synthetic rows, corruption injector + hash-chained ledger (issue #4) | **merged** 2026-10-11 (UTF-8 loader, observed conventions) | #6 |
-| M0 | Measurement standards: `docs/MEASUREMENT_STANDARDS.md` + `tripwire/standards.py` + tests | **open PR**, CI green; seven open items resolved from the committed profile receipt `reports/sdr_profile_2026.json`; main merged in | #7 (`claude/m0-measurement-standards`) |
+| M0 | Measurement standards: `docs/MEASUREMENT_STANDARDS.md` + `tripwire/standards.py` + tests | **ready for review**, CI green; seven open items resolved from the committed profile receipt `reports/sdr_profile_2026.json`; main merged in | #7 (`claude/m0-measurement-standards`) |
 | M0b | `scripts/profile_sdr.py`: offline profiler that closes the M0 open items from a locally downloaded file | **open PR**, stacked on M0 | #8 (`claude/m0b-profile-sdr`) |
 | M1 | Data contract + store: typed schemas carrying units/revision/provenance; fixed-seed synthetic lots, tests, work orders; spec limits from public standards | part 1 types #9; part 2a generators + public spec rows #10; part 2b in-memory store **open PR** (`claude/m1-store`); all stacked, CI green | #9, #10, `claude/m1-store` |
 | M2 | MCP server (Streamable HTTP, auth header) with `query_defects`, `get_spec`, `get_test_result`, `create_work_order`, `get_work_order`; in-memory store; contract tests | not started | — |
