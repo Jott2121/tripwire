@@ -15,6 +15,9 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6"]
 
+[project.scripts]
+tripwire = "tripwire.cli:main"
+
 [tool.setuptools]
 packages = ["tripwire"]
 
