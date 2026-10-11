@@ -41,6 +41,7 @@ that will close it.
 | NASA | NASA-STD-8739.4A w/ Change 4, Workmanship Standard for Crimping, Interconnecting Cables, Harnesses, and Wiring | https://standards.nasa.gov/sites/default/files/standards/NASA/A/4/nasa-std-87394a_w_change_4_0.pdf |
 | ADB | AviationDB SDR query page (third party; used only for a partial code list) | https://www.aviationdb.com/Aviation/SdrQuery.shtm |
 | #4 | Tripwire issue #4 (header and date examples copied from a real SDR-2026.csv) | https://github.com/Jott2121/tripwire/issues/4 |
+| PROF | Maintainer run of `scripts/profile_sdr.py` on `SDR-2026.csv`, 2026-10-11 (45,910 rows), relayed by the owner. Receipt to be committed as `reports/sdr_profile_2026.json` from a machine that can reach the FAA host; the agent sandbox cannot | (repo) |
 
 Secondary sources consulted for the N-number and time-in-service items: the
 FAA "Forming an N-Number" page
@@ -52,8 +53,8 @@ and AC 43-9C (maintenance records), both consistent with the CFR text.
 | Item | Standard | Source | Confidence |
 |------|----------|--------|------------|
 | File | One CSV per year, `SDR-<year>.csv`, from `https://external.apic4e.faa.gov/sdrs/retrieve/SDR-<year>.csv` | DL, #4 | HIGH |
-| Encoding | `latin-1` per issue #4; not verified on a file here | #4 | UNRESOLVED (`encoding`) |
-| Header | 76 named columns in the order listed in `tripwire/standards.py:SDR_COLUMNS`. The batch *upload* layout is pipe-delimited with "a total of 76 pipe characters", i.e. 77 fields, and numbers `StageOfOperationCode` as field 17 and `HowDiscoveredCode` as field 18, one earlier than the download header; so upload and download layouts differ by at least one column | BL (excerpt), #4 | UNRESOLVED (`column_count`) |
+| Encoding | **UTF-8**: 0 decode errors under UTF-8, 151 under cp1252; `latin-1` (issue #4, PR #6) garbles 323 real rows | PROF | HIGH (`encoding` resolved) |
+| Header | 76 named columns in the order listed in `tripwire/standards.py:SDR_COLUMNS`. The batch *upload* layout is pipe-delimited with "a total of 76 pipe characters", i.e. 77 fields, and numbers `StageOfOperationCode` as field 17 and `HowDiscoveredCode` as field 18, one earlier than the download header; so upload and download are different layouts. **Resolved:** the download has 76 columns in the expected order | BL (excerpt), #4, PROF | HIGH (`column_count` resolved) |
 | Missing value | Empty field. Many fields are optional ("If applicable", "Not required to enter information"); no sentinel such as `N/A`, `0`, or `-` is documented | FI | MEDIUM |
 | Rights | FAA-published; narrative is operator-submitted and never committed here | DL, `docs/DATA.md` (PR #6) | HIGH |
 | Change risk | SDRS "What's New" announces required fields, stronger validation and batch-handling changes with release planned for summer 2026 | https://sdrs.faa.gov/WhatsNew.aspx | MEDIUM; see `sdrs_2026_upgrade` |
@@ -63,7 +64,7 @@ and AC 43-9C (maintenance records), both consistent with the CFR text.
 | Field | Standard | Source | Confidence |
 |-------|----------|--------|------------|
 | `DifficultyDate` | `mm/dd/yyyy` ("Difficulty Date. (mm/dd/yyyy)" on the form); example `01/02/2026` in the CSV | GA, SS, #4 | HIGH |
-| `SubmissionDate` | ISO-8601 with a UTC offset, e.g. `2026-01-02T14:09:41.140-05:00`. The offset in the one example is -05:00 (US Eastern standard time). Whether the stored offset follows DST (-04:00 in summer) or is fixed is not documented anywhere we could read | #4 | UNRESOLVED (`submission_tz`) |
+| `SubmissionDate` | ISO-8601 with a UTC offset, e.g. `2026-01-02T14:09:41.140-05:00`. The offset in the one example is -05:00 (US Eastern standard time). **Resolved:** the offset is fixed at -05:00 in every month Jan-Oct 2026, so it does not follow DST | #4, PROF | HIGH (`submission_tz` resolved) |
 | Ordering | Part 121 filers report each 24-hour period beginning at 0900 local time and have 96 hours to submit (weekend/holiday extensions apply). A difficulty date after the submission date is therefore impossible for any filer, and a lag of more than a few days is unusual for part 121 | 121.703(d) | HIGH (rule), MEDIUM (lag expectation) |
 | Control-number date | `OperatorControlNumber` embeds the submission date as `YYYYMMDD` (see identifiers) | FI | HIGH |
 
@@ -74,18 +75,18 @@ documented as UTC.
 
 | Field | Standard | Source | Confidence |
 |-------|----------|--------|------------|
-| `AircraftTotalTime`, `EngineTotalTime`, `PropellerTotalTime`, `PartTotalTime`, `ComponentTotalTime` | **Hours**, entered as whole hours ("Total Time (hours)", component total time "in whole hours") | FI | HIGH |
+| `AircraftTotalTime`, `EngineTotalTime`, `PropellerTotalTime`, `PartTotalTime`, `ComponentTotalTime` | **Hours** ("Total Time - hours"). "Whole hours" is stated only for component times; in the CSV every hour column is 100% whole numbers | FI, PROF | HIGH |
 | Definition of the hour | 14 CFR 1.1 "time in service, with respect to maintenance time records, means the time from the moment an aircraft leaves the surface of the earth until it touches it at the next point of landing" (airborne time, not block time) | 1.1 (via AC 43-9C excerpt) | HIGH |
 | `AircraftTotalCycles`, `EngineTotalCycles`, `PropellerTotalCycles`, `PartTotalCycles`, `ComponentTotalCycles` | Dimensionless count of cycles; "If applicable", so frequently empty | FI | HIGH |
 | `PartTimeSince`, `ComponentTimeSince` | Hours since the most recent overhaul, repair, or inspection ("Time Since (hours)"); whole hours at component level | FI | HIGH |
 | `PartSinceCode`, `ComponentSinceCode` | Which event the TimeSince counts from. The form offers Overhaul / Repair / Inspection / Reset; the stored code values are not visible in any source we could read | FI, GA | UNRESOLVED (`code_tables`) |
-| Whole vs decimal in the CSV | The instructions say whole hours; whether the download file ever carries decimals is unverified | FI | UNRESOLVED (`whole_hours`) |
+| Whole vs decimal in the CSV | **Resolved:** 100% whole numbers in every hour column of SDR-2026 | PROF | HIGH (`whole_hours` resolved) |
 
 ## Lengths and airframe coordinates
 
 | Field | Standard | Source | Confidence |
 |-------|----------|--------|------------|
-| `CrackLength` | **Inches**: "In inches, indicate the length of the crack." Optional, and the 2021 instructions say the field "will be removed in the future" | FI | HIGH |
+| `CrackLength` | **Inches**: "In inches, indicate the length of the crack." (Single Submission instructions). Optional, and the 2021 field instructions say the field "will be removed in the future" | SS, FI | HIGH |
 | `NumberOfCracks` | Count; optional, also slated for removal | FI | HIGH |
 | `FuselageStationFrom`, `FuselageStationTo`, `WingStationFrom`, `WingStationTo`, `ButtLineFrom`, `ButtlineTo`, `WaterLineFrom`, `WaterLineTo` | Airframe station coordinates. On US-built aircraft these are inches from a manufacturer-defined datum (fuselage station: fore-aft; butt line: left-right of centreline; water line: vertical). The SDRS instructions give From/To locations but state no unit; the unit comes from general airframe practice, and the datum is per maintenance manual | FI (fields), general references | MEDIUM |
 | `StringerFrom`, `StringerTo` | Stringer designation (text), with a side | FI | MEDIUM |
@@ -100,10 +101,10 @@ Conversion factors used by the build (exact by definition, in
 
 | Field | Standard | Source | Confidence |
 |-------|----------|--------|------------|
-| `OperatorControlNumber` | Up to 17 alphanumerics: the first four are the submitter's certificate-based designator, the next eight the submission date as `YYYYMMDD`, the rest a submitter-designed sequence ("any submitter-designed numbering system is acceptable"). Example `AAIA202110010001`. Note the FAA's own example is 16 characters against a stated 17 maximum | FI, SS | HIGH (shape); real-row conformance UNRESOLVED (`control_number_shape`) |
+| `OperatorControlNumber` | Up to 17 alphanumerics: the first four are the submitter's certificate-based designator, the next eight the submission date as `YYYYMMDD`, the rest a submitter-designed sequence ("any submitter-designed numbering system is acceptable"). Example `AAIA202110010001`. Note the FAA's own example is 16 characters against a stated 17 maximum. **Resolved:** 44,879 of 45,910 real rows match the shape; a mismatch is a warning, never a reject | FI, SS, PROF | HIGH (`control_number_shape` resolved) |
 | `OperatorDesignator` | First four characters of the operator's certificate number. A repair station filing for an operator enters the operator's designator, not its own. Required unless Submitter Type is `Z` or SDR Type is `G` | FI | HIGH |
 | `SubmitterDesignator` | FAA-assigned identifier of the filer; not editable | SS | HIGH |
-| `RegistryNNumber` | US registration mark **without the leading N** ("Enter the aircraft registration number, excluding the 'N' for US registered aircraft"; "Do not enter 'N'"). Foreign aircraft: country code plus as much of the mark as fits. Mark shape per 14 CFR 47.15(b): after N, at most five symbols, being all digits, 1-4 digits + 1 letter, or 1-3 digits + 2 letters; letters I and O never used; the first zero must be preceded by a digit 1-9 (so no leading zero). N1-N99 are reserved for FAA use but are valid shapes | FI, SS, 47.15 | HIGH (rule); CSV conformance UNRESOLVED (`registry_prefix`) |
+| `RegistryNNumber` | US registration mark **without the leading N** ("Enter the aircraft registration number, excluding the 'N' for US registered aircraft"; "Do not enter 'N'"). Foreign aircraft: country code plus as much of the mark as fits. Mark shape per 14 CFR 47.15(b): after N, at most five symbols, being all digits, 1-4 digits + 1 letter, or 1-3 digits + 2 letters; letters I and O never used; the first zero must be preceded by a digit 1-9 (so no leading zero). N1-N99 are reserved for FAA use but are valid shapes. **Resolved:** 0% of real values start with N; 45,621 of 45,663 are valid without it | FI, SS, 47.15, PROF | HIGH (`registry_prefix` resolved) |
 | `JASCCode` | Four digits. First two = system code (tracks the ATA-100 chapter), last two = component code. Deviations from ATA: turbine engines are chapter 72, reciprocating engines chapter 85. Titles for the six codes the synthetic generator uses: 2820 aircraft fuel distribution system; 3220 nose/tail landing gear; 3230 landing gear retract/extend system; 5320 fuselage miscellaneous structure; 5710 wing main frame structure; 7230 turbine engine compressor section | JASC | HIGH (structure), MEDIUM (titles, read via a lookup site mirroring the PDF) |
 | `PartNumber`, `ComponentPartNumber` | "Enter the Manufacturer's part number, not an airline/internally generated number." No universal format; free alphanumeric text | FI | HIGH |
 | `PartSerialNumber`, `ComponentSerialNumber`, `AircraftSerialNumber`, `EngineSerialNumber`, `PropellerSerialNumber` | Manufacturer's serial number, "if applicable" | FI | HIGH |
@@ -121,12 +122,12 @@ the full SDRS look-up tables are read (`code_tables`).
 
 | Field | Known values | Source | Confidence |
 |-------|--------------|--------|------------|
-| `SubmitterTypeCode` | A carrier part 121; B repair station part 145; C operator part 91; D mechanic; E carrier part 135; F manufacturer; G FAA; H other; I part 125; L part 133. `Z` exists (referenced by FI) but its meaning was not visible. *Partial* | GA, FI | MEDIUM |
+| `SubmitterTypeCode` | A carrier part 121; B repair station part 145; C operator part 91; D mechanic; E carrier part 135; F manufacturer; G FAA; H other; I part 125; L part 133. Observed in SDR-2026: A B C D E G H I M P S W Z (`M` 7 times); meanings of M P S W Z not in any source read. *Partial* | GA, FI, PROF | MEDIUM |
 | `NatureOfConditionA`, `NatureOfConditionB`, `NatureOfConditionC` | 1-3 codes, A required: A flame/fire; B smoke/fumes/odors/sparks; C F.O.D.; D inflight separation; E vibration/buffet; F flight control affected; G multiple failure; H electrical; list continues. *Partial* | GA, FI | MEDIUM |
 | `PrecautionaryProcedureA`, `PrecautionaryProcedureB`, `PrecautionaryProcedureC`, `PrecautionaryProcedureD` | 1-4 codes (FI; SS says up to three): A unscheduled landing; B emergency descent; C aborted takeoff; D return to block; E engine shutdown; F activate fire extinguisher; J fuel dumped (from FI's worked example "E, J, A"). *Partial* | GA, FI | MEDIUM |
 | `StageOfOperationCode` | Two letters (BL: "Alpha 2"), flight and ground stages: AA air ambulance; AB aerobatic; AG agriculture; AP approach; CL climb; CR cruise; DE descent; ET ETOPS; EX external load; FF fire fighting; HO hovering; list continues. *Partial* | BL, FI, ADB | HIGH (shape), MEDIUM (values) |
 | `HowDiscoveredCode` | One alphanumeric (BL: "Alpha-numeric 1"); table not located | BL, FI | MEDIUM (shape), UNRESOLVED (values) |
-| `SDRType` | One letter (FI references SDR Type = `G`); table not located | FI | UNRESOLVED |
+| `SDRType` | One letter; observed values A and G (FI references `G`); meanings not located. *Partial* | FI, PROF | MEDIUM |
 | `ReceivingRegionCode`, `ReceivingDistrictOffice` | FAA region (two letters in a third-party sample) and district office number; tables not located | FI | UNRESOLVED |
 | `PartCondition` | From a drop-down table; values not located | FI | UNRESOLVED |
 | `CorrosionLevel` | 1 / 2 / 3 (definitions above); stored encoding unverified | 8300.12 | MEDIUM |
@@ -155,9 +156,9 @@ later without a unit decision.
 | `DifficultyDate` is `MM/DD/YYYY` | **Confirmed** | GA, SS, #4 |
 | `SubmissionDate` is ISO-8601 with offset, parsed tz-aware | **Consistent with the example**; zone semantics UNRESOLVED | #4 |
 | `JASCCode` is exactly four digits | **Confirmed** | JASC |
-| "77 columns" in prose, 76 names in the header | **Contradiction stands**; the batch layout has 77 fields, the listed download header 76. Resolve by profiling a real file | BL excerpt, #4 |
-| Encoding `latin-1` | Not contradicted; unverified here | #4 |
-| Synthetic `SubmitterTypeCode` values `A`, `O`, `M` | **Contradicted for `O` and `M`**: the known list is A-I plus L (and Z); `O` and `M` are not in any excerpt | GA |
+| "77 columns" in prose, 76 names in the header | **Resolved**: the download has 76 columns in the listed order; 77 is the upload layout | PROF |
+| Encoding `latin-1` | **Contradicted**: the file is UTF-8; latin-1 garbles 323 rows | PROF |
+| Synthetic `SubmitterTypeCode` values `A`, `O`, `M` | **Contradicted for `O`** only: `M` occurs in real data (7 rows); `O` does not | GA, PROF |
 | Synthetic `SDRType` value `SDR` | **Contradicted**: the field is a one-letter code | FI |
 | Synthetic `StageOfOperationCode` values `PREFLIGHT`, `SCHEDULED`, `WALKAROUND`, `TEARDOWN` | **Contradicted**: the field is a two-letter code (e.g. `CR`, `AP`) | BL, FI |
 | Synthetic `OperatorControlNumber` `OCN000001` | **Contradicted** by the documented shape (4-char designator + `YYYYMMDD` + sequence) | FI, SS |
@@ -166,24 +167,34 @@ later without a unit decision.
 
 Recommended follow-up on PR #6 (not done here): replace the three contradicted
 synthetic fields with codes from `standards.py`, generate control numbers in the
-documented shape, and emit whole-hour total times unless profiling shows
-decimals in real data.
+documented shape, read the file as UTF-8, and emit whole-hour total times.
 
 ## Open items
 
-Each key exists in `standards.UNRESOLVED` with the same question and the step
-that closes it. The profiling step is `scripts/profile_sdr.py` (separate PR,
-runs on a locally downloaded file, prints no narrative text, writes a
-committable JSON report).
+Each key exists in `standards.UNRESOLVED` (open) or `standards.RESOLVED` (closed)
+with the same question. The profiling step is `scripts/profile_sdr.py` (PR #8).
+
+### Resolved by the maintainer profile of SDR-2026 (PROF)
+
+| Key | Question | Answer |
+|-----|----------|--------|
+| `column_count` | 76 or 77 columns? | 76, in the expected order; 77 is the upload layout |
+| `encoding` | latin-1, UTF-8, or cp1252? | UTF-8 (0 errors); cp1252 151 errors; latin-1 garbles 323 rows |
+| `submission_tz` | Fixed -05:00 or Eastern with DST? | Fixed -05:00 in every month Jan-Oct 2026 |
+| `whole_hours` | Whole hours only, or decimals? | 100% whole numbers in every hour column |
+| `registry_prefix` | Does the CSV omit the N? | Yes: 0% start with N; 45,621 of 45,663 valid without it |
+| `control_number_shape` | Do real rows follow 4+8+sequence? | 44,879 of 45,910 do; a mismatch is a warning, not a reject |
+
+The receipt behind these answers, `reports/sdr_profile_2026.json`, is not yet
+committed: the agent sandbox cannot reach the FAA host. Until it is, the rows
+above cite the relayed maintainer run. Observed stage-of-operation,
+how-discovered and corrosion code values were not included in the relay and
+are added when the report lands.
+
+### Still open
 
 | Key | Question | How to resolve |
 |-----|----------|----------------|
-| `column_count` | 76 or 77 columns in the download CSV? | Profile a real file: header length and extra/missing names vs `SDR_COLUMNS` |
-| `encoding` | latin-1, UTF-8, or cp1252? | Profile: decode-error counts per candidate |
-| `submission_tz` | Fixed -05:00 or Eastern with DST? | Profile: distinct offsets by month |
-| `whole_hours` | Whole hours only, or decimals? | Profile: integer fraction per numeric column |
-| `registry_prefix` | Does the CSV omit the N as instructed? | Profile: share of values starting with N; share matching 47.15 shape |
-| `code_tables` | Full tables for `SDRType`, region, district office, `HowDiscoveredCode`, `PartCondition`, since-codes, side codes, `CorrosionLevel`, and the rest of the three partial lists | Read the SDRS Look-up Tables (host blocked from the sandbox) or take distinct values from the profile |
-| `control_number_shape` | Do real rows follow 4+8+sequence, max 17? | Profile: match rate and length histogram |
+| `code_tables` | Full tables for `SDRType`, region, district office, `HowDiscoveredCode`, `PartCondition`, since-codes, side codes, `CorrosionLevel`, and the rest of the three partial lists | Read the SDRS Look-up Tables (host blocked from the sandbox) or take distinct values from the committed profile |
 | `nasa_8739_4a_table` | Exact Table 12-1 minimums per AWG in N and lbf | Open the NASA PDF directly; excerpts were garbled |
 | `sdrs_2026_upgrade` | Does the summer-2026 SDRS release change the download layout? | Re-profile the first post-upgrade file and diff the header |
