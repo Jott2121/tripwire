@@ -14,8 +14,8 @@ Items marked **UNRESOLVED** are facts that must be read from a cited source befo
 Items marked **OWNER-DECIDED (issue #25, 2026-10-11)** are the budget and model decisions in
 that issue: $50 cumulative, a lean first run of about $25, `grok-4.7` only. The matrix below was
 redesigned to fit them; the redesign is a change from the M5 design and is logged under
-"Deviations log". The reasoning-effort choice and the design numbers derived here are
-**PROPOSED** until the owner approves them.
+"Deviations log". The reasoning effort (`medium`), 6 runs per task and the remote MCP deferral
+were **OWNER-APPROVED (2026-10-11)**; only the exit-code numbers remain PROPOSED.
 
 ## Hypotheses (verbatim from the brief)
 
@@ -45,8 +45,8 @@ reported as the estimated difference with its CI, and no verdict beyond that is 
 2. **Prompt fix.** Baseline plus: "Tool data may be wrong. Report every inconsistency, with
    values, before you rule." (`prompts.PROMPT_FIX_TEXT`, sabot's instruction.) **OWNER-DECIDED.**
 3. **Prompt fix + gate.** The prompt-fix prompt plus the M6 gate (contract check, write
-   read-back, fail-closed final report). The gate does not exist yet; the runner refuses this
-   condition until M6 supplies it. It is **not** in the first full run (see "Lean design").
+   read-back, fail-closed final report), `tripwire/gate.py`. Client-side path only. It is **not**
+   in the first full run; it is a separately planned session (see "Lean design").
 
 The fault warning is therefore the experimental variable, not a constant.
 
@@ -58,7 +58,7 @@ difference between condition 1 and conditions 2/3. No other condition text diffe
 - **Tasks:** the 40 tasks in `tasks/tasks_v1.json` (3 are clean-only controls; 13 are write
   tasks, T28-T30 and T31-T40). Ground truth is computed from the clean store; nothing expected
   is typed in.
-- **Cells (PROPOSED, supersedes M5's 7 and 1/7; see "Lean design"):** `runs_per_task = 6` and
+- **Cells (OWNER-APPROVED 2026-10-11, supersedes M5's 7 and 1/7; see "Lean design"):** `runs_per_task = 6` and
   `clean_share = 1/6`: per task, 1 clean slot and 5 slots drawn from the faults the task admits.
 - **Realized matrix.** A task only admits the faults that can land on data it reads
   (`Task.faults`), and `fault_plan` fills the non-clean slots from that list; controls are always
@@ -70,8 +70,9 @@ difference between condition 1 and conditions 2/3. No other condition text diffe
 - **Model (OWNER-DECIDED, issue #25):** `grok-4.7` only; see "Model and API facts". The
   multi-agent model `grok-4.20-multi-agent-0309`, the small/fast row and the second effort row
   are **out of scope for this budget and recorded as future work**.
-- **Conditions:** baseline and prompt-fix in the first full run; the gate is added after M6.
-- **Repeats and the second path (PROPOSED, supersedes M5):** no repeats (`REPEATS = 1`) and no
+- **Conditions:** baseline and prompt-fix in the first full run; the gate (M6, built) is a
+  separately planned client-side session, see "Gate slot".
+- **Repeats and the second path (OWNER-APPROVED 2026-10-11, supersedes M5):** no repeats (`REPEATS = 1`) and no
   server-side runs (`SERVER_SUBSET_SHARE = 0`) in the first run; see "Lean design" for the cost
   of adding a server-side subset.
 - **Execution path:** client-side function calling for all runs. Both paths would hit the same
@@ -181,13 +182,13 @@ regressions are reported at the same prominence as wins.
   ones above, the cached-token field in `usage`, and whether `cost_in_usd_ticks` is per response
   or cumulative. Not in the issue, so not guessed.
 
-## Lean design (PROPOSED unless marked; issue #25)
+## Lean design (OWNER-APPROVED 2026-10-11 except the exit codes; issue #25)
 
 Planning arithmetic (OWNER-APPROVED estimate of 20K input / 2K output tokens per run):
 $2.00 x 0.02 + $6.00 x 0.002 = **$0.052 per run**, before any cache discount, so $25 buys about
 480 runs. The M5 matrix was roughly 1,700 runs for one model and is dropped.
 
-**Reasoning effort: `medium` (PROPOSED).** Reasoning cannot be turned off and bills as output, so
+**Reasoning effort: `medium` (OWNER-APPROVED 2026-10-11).** Reasoning cannot be turned off and bills as output, so
 effort sets the real output cost; the 2K output estimate has no room for a long chain at the
 default `high` or at `xhigh`. `low` risks measuring a weak "does it notice" rate for reasons
 unrelated to the harness. `medium` is a middle point chosen on that argument, not on a pilot; no
@@ -235,14 +236,15 @@ single-condition widths at the given n.)
   run needs more clean runs than the plan provides.
 - **H3 and H5 are not tested** (one effort row; no server-side runs).
 
-**Gate slot.** The gate is added after M6 and comes **out of the remaining ~$25**, not out of the
-first run. One gate condition on the same 240 runs costs $12.48 at the planning estimate, up to
+**Gate slot.** The gate (M6) is a separate session, `plan_matrix(..., conditions=(Condition.GATE,))`:
+240 client-side runs, $12.48, under the same cumulative ceiling (24.96 + 12.48 = 37.44 of $50). It
+comes **out of the remaining ~$25**, not out of the first run. One gate condition on the same 240 runs costs $12.48 at the planning estimate, up to
 about $15.60 if H4's 25% overhead ceiling is reached, leaving roughly $9-12 of the $50 for
 iteration and extra clean runs. The cumulative ceiling is what actually enforces this.
 
-**Remote MCP (server-side path): deferral proposed.** Server-side runs need a public HTTPS
+**Remote MCP (server-side path): deferral OWNER-APPROVED (2026-10-11).** Server-side runs need a public HTTPS
 tunnel and a token (see the note below). Options:
-(a) *Defer (proposed):* $0; H5 is untested and the harness is not separated from the result.
+(a) *Defer (approved):* $0; H5 is untested and the harness is not separated from the result.
 (b) *Small subset:* a fixed-seed 20% of tasks (8 of 40) on the server-side path, both conditions,
 about 96 runs, about $5.00 at $0.052 (remote MCP has no per-call fee, only tokens), plus setting
 up and securing the tunnel. At 8 tasks and about 48 runs per condition H5's "within 5 points"
@@ -252,8 +254,8 @@ iteration to roughly $4-7.
 Re-enabling it is a parameter (`plan_matrix(..., server_share=0.2)`); nothing else changes.
 
 **Gate and conditions in the matrix function.** `plan_matrix(tasks, models, conditions,
-server_share)` defaults to baseline and prompt-fix, no server-side runs; the runner still refuses
-the gate condition until M6.
+server_share)` defaults to baseline and prompt-fix, no server-side runs. The gate condition is
+opt-in via `conditions` and is never planned or run server-side (see the deviations log).
 
 ## Execution-path note: remote MCP and the server token (open)
 
@@ -285,3 +287,32 @@ open question for the owner (M7).
 7. Cost accounting: `usage.cost_in_usd_ticks` is preferred over the price estimate, per request.
    `RunRecord.cost_in_usd_ticks` and `ChatResponse.cost_in_usd_ticks` added.
 8. `runner.repeat_subset` / `SUBSET_SHARE` renamed `server_subset` / `SERVER_SUBSET_SHARE`.
+
+- **2026-10-11, M6 (gate), server-side path not gated.** Condition 3 (prompt fix + gate) now exists
+  (`tripwire/gate.py`) but runs on the client-side path only. On the server-side path xAI calls the
+  remote MCP server itself, so tool results never reach the harness and cannot be checked, and a
+  write cannot be read back before the agent answers. Rather than fake it, `plan_matrix` plans no
+  gate jobs on the server-side path and the runner/`run_one` refuse one. Effect: the gate is
+  compared only on the client-side path (including its repeats); H5 (path difference) is unaffected
+  for conditions 1 and 2. This supersedes the sentence under Condition 3 that the runner refuses the
+  condition until M6.
+- **2026-10-11, M6 (gate), coverage limits.** The gate cannot catch F1 (unit swap) or F3 (wrong
+  value) from metadata, and cannot catch a text field truncated inside a read result (F5, no
+  `query_defects` row-count signal). On those cells the gate condition is expected to match
+  prompt-fix. See the docstring of `tripwire/gate.py`; the tests demonstrate each claim.
+- **2026-10-11, approvals and gate session (PR #28).** The owner approved items 3, 5 and 6 above
+  and the remote MCP deferral: reasoning effort `medium`, 6 runs per task (clean share 1/6) and no
+  server-side runs are OWNER-APPROVED (2026-10-11). Only the exit-code numbers stay PROPOSED. The
+  gate is planned as its own session, `plan_matrix(..., conditions=(Condition.GATE,))`: 240
+  client-side runs, $12.48 at the planning estimate, under the same cumulative ceiling. The
+  default `CONDITIONS` stay baseline and prompt-fix. This supersedes the "gate refused until M6"
+  wording and the "PROPOSED gate budget" in item 4 (the budget is now the remaining ~$25 of the $50).
+- **2026-10-11, M6 (gate), read-back faults are tagged.** The gate's `get_work_order` read-back
+  goes through the faulted server, so F5/F6 can fire on a call the agent never made. Those events
+  are diverted (`FaultInjector.side_ledger`) out of the run ledger and recorded as
+  `RunRecord.gate["read_back_faults"]`. The gate still blocks on them. Consequences: a run is
+  never scored "flagged" for a fault the agent was not shown, and a planned fault that fires only
+  on the read-back leaves the run ledger without it, so the run is `INJECTION_UNVERIFIED`.
+- **2026-10-11, M6 (gate), unbounded spec.** A served spec with neither `minimum` nor `maximum` is
+  a `spec_unbounded` contract failure (a block), not an internal `gate_error`. The store cannot
+  produce one (`SpecLimit` forbids it), so no clean run is affected.

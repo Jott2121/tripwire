@@ -26,6 +26,7 @@ from tripwire.runner import (
     Job,
     RunnerRefused,
     SpendLedgerError,
+    _preflight,
     assert_protocol_committed,
     estimate_run_cost,
     init_spend_ledger,
@@ -163,8 +164,18 @@ def test_unresolved_models_prices_and_the_gate_are_refused(repo, tmp_path):
         _run(repo, tmp_path, _jobs(1, model=unresolved), _client(1))
     with pytest.raises(RunnerRefused, match="UNRESOLVED"):
         _run(repo, tmp_path, _jobs(1), _client(1), pricing={sp.MODEL.label: None})
+    server_gate = [replace(_jobs(1, Condition.GATE)[0], path=ExecPath.SERVER_SIDE)]
     with pytest.raises(RunnerRefused, match="gate"):
-        _run(repo, tmp_path, _jobs(1, Condition.GATE), _client(1))
+        _run(repo, tmp_path, server_gate, _client(1))
+
+
+def test_gate_condition_runs_client_side_and_is_never_planned_server_side(repo, tmp_path):
+    assert _run(repo, tmp_path, _jobs(1, Condition.GATE), _client(1)) is ExitCode.OK
+    row = _receipt(tmp_path)[0]
+    assert row["gate"]["blocked"] is False and row["adjudication"]["correct"]
+    planned = plan_matrix(sp.TASKS, [sp.MODEL], server_share=0.2, conditions=tuple(Condition))
+    gated = [j for j in planned if j.condition is Condition.GATE]
+    assert gated and {j.path for j in gated} == {ExecPath.CLIENT_SIDE}
 
 
 def test_a_receipt_directory_is_bound_to_its_protocol_version(repo, tmp_path):
@@ -203,6 +214,22 @@ def test_lean_matrix_fits_the_first_run_budget_and_leaves_the_gate_out():
     assert len(per_cell) == 14
 
 
+def test_gate_only_session_is_client_side_priced_and_accepted_under_the_ceiling():
+    price = xai.PRICING["grok-4.7"]
+    jobs = plan_matrix(sp.TASKS, list(xai.MODEL_CONFIGS), conditions=(Condition.GATE,))
+    assert CONDITIONS == (Condition.BASELINE, Condition.PROMPT_FIX)  # default is unchanged
+    assert len(jobs) == 240 and {j.condition for j in jobs} == {Condition.GATE}
+    assert {j.path for j in jobs} == {ExecPath.CLIENT_SIDE}
+    gate_usd = len(jobs) * estimate_run_cost(price)
+    assert gate_usd == pytest.approx(12.48)
+    first_usd = 480 * estimate_run_cost(price)
+    assert first_usd + gate_usd <= HARD_CEILING_USD  # 24.96 + 12.48 = 37.44 of 50
+    pricing = {m.label: price for m in xai.MODEL_CONFIGS}
+    _preflight(jobs, pricing, gate_usd, 0.0, first_usd, HARD_CEILING_USD)  # accepted
+    with pytest.raises(RunnerRefused, match="cumulative ceiling"):
+        _preflight(jobs, pricing, 50.0, 0.0, HARD_CEILING_USD - 1, HARD_CEILING_USD)
+
+
 def test_matrix_shape_subset_repeats_and_second_path_when_enabled():
     subset = server_subset(sp.TASKS, 0.2)
     assert len(subset) == 8 and subset == server_subset(sp.TASKS, 0.2)
@@ -212,8 +239,11 @@ def test_matrix_shape_subset_repeats_and_second_path_when_enabled():
     assert {j.path for j in jobs if j.plan.task_id not in subset} == {ExecPath.CLIENT_SIDE}
     assert {j.path for j in in_sub} == set(ExecPath)
     # the gate is only planned when asked for, after M6
-    with_gate = plan_matrix(sp.TASKS, [sp.MODEL], conditions=tuple(Condition))
+    with_gate = plan_matrix(sp.TASKS, [sp.MODEL], server_share=0.2, conditions=tuple(Condition))
     assert {j.condition for j in with_gate} == set(Condition)
+    assert not [
+        j for j in with_gate if j.condition is Condition.GATE and j.path is ExecPath.SERVER_SIDE
+    ]  # M6 deviation: the gate is client-side only
 
 
 def test_wilson_interval_matches_known_values():

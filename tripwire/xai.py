@@ -55,8 +55,8 @@ class ModelConfig:
 # Owner decision (issue #25): grok-4.7 only. Model id, 500k context, knowledge cutoff May 2026:
 # https://docs.x.ai/developers/models/grok-4.7 and https://docs.x.ai/developers/grok-4-7
 # (retrieved 2026-10-11). Efforts the API accepts: low | medium | high (default) | xhigh
-# (https://docs.x.ai/developers/model-capabilities/text/reasoning). The effort used here is
-# PROPOSED, not decided: see docs/PREREGISTRATION.md. The multi-agent model
+# (https://docs.x.ai/developers/model-capabilities/text/reasoning). The effort used here
+# (medium) is OWNER-APPROVED (2026-10-11): see docs/PREREGISTRATION.md. The multi-agent model
 # (grok-4.20-multi-agent-0309), the small/fast row and a second effort row are out of scope for
 # this budget (future work).
 EFFORT_LEVELS = ("low", "medium", "high", "xhigh")

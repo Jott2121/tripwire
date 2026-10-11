@@ -27,6 +27,7 @@ from mcp.shared.memory import create_connected_server_and_client_session
 from tripwire import synthdata
 from tripwire.adjudicator import Adjudication, Verdict, VerdictError, adjudicate
 from tripwire.faults import Clock, FaultConfig, FaultInjector, FaultSpec
+from tripwire.gate import Gate
 from tripwire.ledger import Ledger, LedgerError
 from tripwire.prompts import Condition, condition_prompt
 from tripwire.server import build_mcp
@@ -56,7 +57,7 @@ class Exclusion(StrEnum):
 
 
 class GateUnavailable(RuntimeError):
-    """The gate condition was requested before the gate exists (M6): refuse, never fake it."""
+    """The gate cannot run on this path (server-side results never reach the harness): refuse."""
 
 
 @dataclass(frozen=True)
@@ -83,6 +84,7 @@ class RunRecord:
     exclusion: str | None
     error: str | None = None
     turn_cap_hit: bool = False  # the loop ended at MAX_TURNS with no reply: scored incorrect
+    gate: dict[str, Any] | None = None  # gate condition only: checks, failures, block, cost
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True)
@@ -160,13 +162,16 @@ def run_one(
     timer: Callable[[], float] = time.perf_counter,
 ) -> RunRecord:
     """Run and score one agent run. ``QuotaExhausted`` propagates so the runner can halt."""
-    if condition is Condition.GATE:
-        raise GateUnavailable("the gate condition needs the M6 gate")
+    if condition is Condition.GATE and path is ExecPath.SERVER_SIDE:
+        raise GateUnavailable("server-side tool results run at xAI and never reach the gate")
     store = Store.from_dataset(synthdata.generate(TASK_DATA_SEED))
     ledger = Ledger(ledger_path)
     specs = (FaultSpec(plan.fault),) if plan.fault else ()
     injector = FaultInjector(FaultConfig(plan.fault_seed, specs), ledger, run_id, store, clock)
     tools = InProcessTools(store, injector, clock)
+    # the gate reads only the store's spec registry (faults alter what is served, not the store)
+    gate = Gate(store) if condition is Condition.GATE else None
+    gate_cost: dict[str, Any] = {"extra_tool_calls": 0, "latency_s": 0.0, "read_back_faults": []}
     messages: list[Mapping[str, Any]] = [
         {"role": "user", "content": condition_prompt(task, condition)}
     ]
@@ -221,6 +226,10 @@ def run_one(
                 for call in resp.tool_calls:
                     names.append(call.name)
                     out = tools.call(call.name, call.args)
+                    if gate is not None:
+                        began = timer()
+                        _gate_tool(gate, tools, injector, call, out, gate_cost)
+                        gate_cost["latency_s"] += timer() - began
                     messages.append(
                         {
                             "role": "tool",
@@ -233,6 +242,11 @@ def run_one(
     except XaiError as exc:
         error = f"{type(exc).__name__}: {exc}"
 
+    agent_verdict = extract_verdict(final) if final is not None else None
+    if gate is not None and final is not None:
+        began = timer()
+        final = gate.report(final)
+        gate_cost["latency_s"] += timer() - began
     verdict = extract_verdict(final) if final is not None else None
     adj: Adjudication | None = None
     exclusion: Exclusion | None = Exclusion.RUN_ERROR if error else None
@@ -271,7 +285,41 @@ def run_one(
         exclusion=exclusion.value if exclusion else None,
         error=error,
         turn_cap_hit=final is None and error is None and turns >= MAX_TURNS,
+        gate=_gate_dict(gate, gate_cost, agent_verdict) if gate is not None else None,
     )
+
+
+def _gate_tool(
+    gate: Gate,
+    tools: InProcessTools,
+    injector: FaultInjector,
+    call: ToolCallRequest,
+    out: dict[str, Any],
+    cost: dict[str, Any],
+) -> None:
+    """Check one result; read back every write through the same (faultable) server."""
+    gate.observe(call.name, call.args, out)
+    if call.name == "create_work_order" and "error" not in out:
+        wo = out.get("work_order")
+        wo_id = wo.get("work_order_id", "") if isinstance(wo, dict) else ""
+        # a fault the read-back fires was never shown to the agent: keep it out of the run
+        # ledger (it would score as injected) and report it on the receipt instead
+        with injector.side_ledger() as side:
+            back = tools.call("get_work_order", {"work_order_id": wo_id})
+        cost["extra_tool_calls"] += 1
+        cost["read_back_faults"] += side
+        gate.verify_write(call.args, out, back)
+
+
+def _gate_dict(gate: Gate, cost: dict[str, Any], agent: Verdict | None) -> dict[str, Any]:
+    """The gate's receipt. On the client-side path the gate makes no model call, so its added
+    tokens are 0 by construction; its cost is the read-back calls and its own latency."""
+    return {
+        **gate.summary(),
+        **cost,
+        "added_tokens": 0,
+        "agent_verdict": _verdict_dict(agent) if gate.blocked else None,
+    }
 
 
 def _wire(call: ToolCallRequest) -> dict[str, Any]:

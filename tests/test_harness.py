@@ -120,10 +120,10 @@ def test_client_error_is_run_error_and_quota_propagates():
         _run(task, None, ExecPath.CLIENT_SIDE, xai.ScriptedClient([xai.QuotaExhausted("out")]))
 
 
-def test_gate_condition_is_refused_until_the_gate_exists():
+def test_gate_condition_is_refused_on_the_server_side_path():
     task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
     with pytest.raises(GateUnavailable):
-        _run(task, None, ExecPath.CLIENT_SIDE, xai.ScriptedClient([]), Condition.GATE)
+        _run(task, None, ExecPath.SERVER_SIDE, xai.ScriptedClient([]), Condition.GATE)
 
 
 def test_ledger_is_written_when_a_path_is_given(tmp_path):

@@ -34,16 +34,17 @@ from tripwire.xai import ExecPath, ModelConfig, Pricing, QuotaExhausted, XaiClie
 
 # Lean design for the $25 first full run (issue #25; every change from the M5 design is logged as
 # a deviation in docs/PREREGISTRATION.md). 6 cells per task slot-wise = 5 faults drawn from the
-# task's admissible list plus 1 clean (PROPOSED: M5's 7 and 1/7 would cost 560 runs for two
-# conditions, over the 480 the owner's $25 buys). No repeats and no server-side runs for now:
-# ``SERVER_SUBSET_SHARE`` is 0 until a tunnel exists. The two seeds are arbitrary.
+# task's admissible list plus 1 clean (OWNER-APPROVED 2026-10-11: M5's 7 and 1/7 would cost 560
+# runs for two conditions, over the 480 the owner's $25 buys). No repeats and no server-side runs
+# for now (remote MCP deferral OWNER-APPROVED 2026-10-11): ``SERVER_SUBSET_SHARE`` is 0 until a
+# tunnel exists. The two seeds are arbitrary.
 RUNS_PER_TASK = 6
 CLEAN_SHARE = 1 / 6
 REPEATS = 1
 SERVER_SUBSET_SHARE = 0.0
 PLAN_SEED = 1
 SUBSET_SEED = 5
-CONDITIONS = (Condition.BASELINE, Condition.PROMPT_FIX)  # the gate joins after M6
+CONDITIONS = (Condition.BASELINE, Condition.PROMPT_FIX)  # the gate is its own session (M6)
 EST_INPUT_TOKENS = 20_000  # OWNER-APPROVED planning estimate per run, for the budget check only
 EST_OUTPUT_TOKENS = 2_000
 HARD_CEILING_USD = 50.0  # OWNER-DECIDED (issue #25): cumulative across all sessions; lower only
@@ -97,6 +98,8 @@ def plan_matrix(
         for model in models:
             for path in paths:
                 for cond in conditions:
+                    if cond is Condition.GATE and path is ExecPath.SERVER_SIDE:
+                        continue  # not gateable: remote MCP results never reach the harness
                     jobs += [
                         Job(plan, model, path, cond, k + 1) for k in range(REPEATS if extra else 1)
                     ]
@@ -331,8 +334,8 @@ def _preflight(
         price = pricing.get(job.model.label)
         if not job.model.resolved or price is None:
             raise RunnerRefused(f"model or pricing UNRESOLVED for {job.model.label!r}")
-        if job.condition is Condition.GATE:
-            raise RunnerRefused("gate condition requested but the gate (M6) does not exist")
+        if job.condition is Condition.GATE and job.path is ExecPath.SERVER_SIDE:
+            raise RunnerRefused("the gate cannot run on the server-side path")
         total += estimate_run_cost(price)
         projected += estimate_run_cost(price)
     if ledger_spent + projected > ceiling_usd:
