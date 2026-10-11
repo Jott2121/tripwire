@@ -8,8 +8,8 @@ produced them.
 
 | # | Milestone | State | PR |
 |---|-----------|-------|----|
-| — | SDR loader, synthetic rows, corruption injector + hash-chained ledger (issue #4) | open PR; updated 2026-10-11 to UTF-8 and the observed conventions | #6 (`claude/issue-4`) |
-| M0 | Measurement standards: `docs/MEASUREMENT_STANDARDS.md` + `tripwire/standards.py` + tests | **open PR**, CI green; six open items resolved from the maintainer profile (receipt JSON still to commit) | #7 (`claude/m0-measurement-standards`) |
+| — | SDR loader, synthetic rows, corruption injector + hash-chained ledger (issue #4) | **merged** 2026-10-11 (UTF-8 loader, observed conventions) | #6 |
+| M0 | Measurement standards: `docs/MEASUREMENT_STANDARDS.md` + `tripwire/standards.py` + tests | **open PR**, CI green; seven open items resolved from the committed profile receipt `reports/sdr_profile_2026.json`; main merged in | #7 (`claude/m0-measurement-standards`) |
 | M0b | `scripts/profile_sdr.py`: offline profiler that closes the M0 open items from a locally downloaded file | **open PR**, stacked on M0 | #8 (`claude/m0b-profile-sdr`) |
 | M1 | Data contract + store: typed schemas carrying units/revision/provenance; fixed-seed synthetic lots, tests, work orders; spec limits from public standards | part 1 types #9; part 2a generators + public spec rows #10; part 2b in-memory store **open PR** (`claude/m1-store`); all stacked, CI green | #9, #10, `claude/m1-store` |
 | M2 | MCP server (Streamable HTTP, auth header) with `query_defects`, `get_spec`, `get_test_result`, `create_work_order`, `get_work_order`; in-memory store; contract tests | not started | — |
@@ -79,9 +79,11 @@ by adoption, with citation.
   (`standards.RESOLVED`); SDR encoding is UTF-8; doc source corrections
   (crack length wording is from the Single Submission instructions; "whole
   hours" is stated for component times only; submitter code `M` is real).
-  **Not done:** `reports/sdr_profile_2026.json` is not committed because the
-  agent sandbox cannot reach the FAA host; the doc says so. Observed stage,
-  how-discovered and corrosion code values were not in the relay.
+  The owner then committed `reports/sdr_profile_2026.json` to the branch; it
+  matches every relayed number, and the observed code values for every coded
+  column (stage, how-discovered, corrosion, since-codes, sides, region,
+  district office, nature, precautionary) are now in `standards.py` as partial
+  lists. No SDR field is UNRESOLVED; `code_tables` stays open for meanings.
 - PR #10: NASA-STD-8739.4A Table 12-1 replaced with the full 11-row table as
   read from the official PDF by the maintainer (AWG 26 = 36 N, AWG 28 = 22 N
   pinned by test), cited only to the PDF, HIGH; generated SubmissionDate at
@@ -90,8 +92,9 @@ by adoption, with citation.
   use observed code values, two-letter stage codes, designator+YYYYMMDD+seq
   control numbers, whole-hour times, N-less marks; DATA.md cites the units
   reference.
-- The stack was merged forward (#7 → #8 → #9 → #10 → #11) with merge
-  commits; no force-push, no new PRs. Build is paused pending owner go-ahead.
+- PR #6 merged; main was merged into #7 and the stack merged forward
+  (#7 → #8 → #9 → #10 → #11) with merge commits; no force-push, no new PRs.
+  Build is paused pending owner go-ahead.
 
 ## Open questions
 
