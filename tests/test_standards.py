@@ -80,6 +80,10 @@ def test_unresolved_fields_are_listed_as_open_items():
 
 def test_unresolved_keys_are_unique_and_actionable():
     assert len(s.UNRESOLVED_KEYS) == len(s.UNRESOLVED)
+    assert not (s.UNRESOLVED_KEYS & s.RESOLVED_KEYS)
+    assert len(s.RESOLVED_KEYS) == len(s.RESOLVED) == 6
+    assert s.SDR_ENCODING == "utf-8"
+    assert s.SDR_FIELD_BY_NAME["SubmissionDate"].confidence is s.Confidence.HIGH
     for u in s.UNRESOLVED:
         assert u.question.endswith("?") or u.question.endswith(".")
         assert u.how_to_resolve
@@ -90,7 +94,9 @@ def test_unresolved_keys_are_unique_and_actionable():
 
 def test_code_list_check_is_tri_state():
     assert s.SUBMITTER_TYPE.check("A") is True
-    assert s.SUBMITTER_TYPE.check("Z") is None  # partial list: unknown, not rejected
+    assert s.SUBMITTER_TYPE.check("Q") is None  # partial list: unknown, not rejected
+    assert set("ABCDEGHIMPSWZ") <= set(s.SUBMITTER_TYPE.codes)  # all observed in SDR-2026
+    assert set(s.SDR_TYPE.codes) == {"A", "G"} and s.SDR_TYPE.check("S") is None
     complete = s.CodeList("x", {"1": "one"}, True, s.Confidence.HIGH, "https://example.invalid")
     assert complete.check("1") is True
     assert complete.check("2") is False
@@ -200,5 +206,8 @@ def test_doc_mentions_every_column_source_and_open_item():
         assert url in text, url
     for u in s.UNRESOLVED:
         assert f"`{u.key}`" in text, u.key
+    for r in s.RESOLVED:
+        assert f"`{r.key}`" in text, r.key
+    assert "reports/sdr_profile_2026.json" in text
     for level in s.Confidence:
         assert level.value in text
