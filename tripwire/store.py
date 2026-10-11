@@ -82,7 +82,9 @@ def _group_specs(specs: Iterable[SpecLimit]) -> dict[SpecGroup, tuple[SpecLimit,
         n_current = sum(sp.is_current for sp in revs)
         if n_current != 1:
             raise StoreError(f"{'|'.join(key)} has {n_current} current revisions, need exactly 1")
-    return {k: tuple(sorted(v, key=lambda sp: revision_key(sp.revision))) for k, v in groups.items()}
+    return {
+        k: tuple(sorted(v, key=lambda sp: revision_key(sp.revision))) for k, v in groups.items()
+    }
 
 
 def _matches(
