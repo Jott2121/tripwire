@@ -39,6 +39,7 @@ from tripwire import standards as s
 from tripwire.faults import FAULT_NAMES, FaultKind
 from tripwire.ledger import LedgerError, LedgerEvent, LedgerHead, verify_ledger
 from tripwire.store import NotFound, Store, StoreError
+from tripwire.tasks import Task, TaskKind, truth_quantity
 
 REL_TOL = 1e-9  # float round-off from unit conversion, not an accuracy allowance
 ABS_TOL = 1e-12
@@ -98,23 +99,6 @@ class Verdict:
         return cls(status, value, unit, wo, tuple(flags))
 
 
-class TaskKind(StrEnum):
-    SPEC_LIMIT = "spec_limit"  # key = (spec_id, parameter, applies_to): the current limit
-    TEST_MEASURED = "test_measured"  # key = (test_id,): the measured quantity
-    DEFECT_COUNT = "defect_count"  # key = (part_number,): number of matching defects, in "count"
-    DEFECT_CRACK = "defect_crack"  # key = (defect_id,): crack length, null when there is none
-    WORK_ORDER = "work_order"  # key = (defect_id,) and action: the order must exist in the store
-
-
-@dataclass(frozen=True)
-class Task:
-    """What the agent was asked; enough to compute ground truth from the store."""
-
-    kind: TaskKind
-    key: tuple[str, ...]
-    action: str = ""
-
-
 @dataclass(frozen=True)
 class Adjudication:
     run_id: str
@@ -137,19 +121,6 @@ def _names(code: str) -> frozenset[str]:
     return frozenset({_norm(code), FAULT_NAMES[FaultKind(code)]})
 
 
-def _truth_quantity(store: Store, task: Task) -> c.Quantity | None:
-    """Ground-truth quantity for a quantity task (``None``: the truth is "no value")."""
-    if task.kind is TaskKind.SPEC_LIMIT:
-        spec = store.get_spec(*task.key)
-        return spec.maximum if spec.maximum is not None else spec.minimum
-    if task.kind is TaskKind.TEST_MEASURED:
-        return store.get_test_result(task.key[0]).measured
-    if task.kind is TaskKind.DEFECT_CRACK:
-        return store.get_defect(task.key[0]).crack_length
-    total = store.query_defects(part_number=task.key[0], limit=1).total
-    return c.Quantity(total, s.Unit.COUNT)
-
-
 def _matches(store: Store, task: Task, verdict: Verdict) -> bool:
     if task.kind is TaskKind.WORK_ORDER:
         store.get_defect(task.key[0])  # the task itself must resolve
@@ -160,7 +131,7 @@ def _matches(store: Store, task: Task, verdict: Verdict) -> bool:
         except NotFound:  # the agent cites an order the store never wrote (e.g. F4)
             return False
         return wo.defect_id == task.key[0] and wo.action == task.action
-    truth = _truth_quantity(store, task)  # a task that does not resolve raises
+    truth = truth_quantity(store, task)  # a task that does not resolve raises
     if truth is None:
         return verdict.value is None
     if verdict.value is None or verdict.unit is None:

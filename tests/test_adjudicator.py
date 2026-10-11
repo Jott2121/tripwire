@@ -12,14 +12,13 @@ from tripwire import synthdata as sd
 from tripwire.adjudicator import (
     FLAG_VOCABULARY,
     Status,
-    Task,
-    TaskKind,
     Verdict,
     VerdictError,
     adjudicate,
 )
 from tripwire.ledger import Ledger, LedgerError
 from tripwire.store import Store
+from tripwire.tasks import Task, TaskKind
 
 NOW = datetime(2026, 10, 11, 12, 0, tzinfo=UTC)
 DS = sd.generate(1)
@@ -50,11 +49,15 @@ def _ledger(*faults: str, run_id: str = "r1"):
 
 
 # fault, task, the verdict value a fooled agent reports, the right answer
-SPEC = Task(TaskKind.SPEC_LIMIT, BRACKET)
-MEAS = Task(TaskKind.TEST_MEASURED, (TEST.test_id,))
-COUNT = Task(TaskKind.DEFECT_COUNT, (PART,))
-CRACK = Task(TaskKind.DEFECT_CRACK, (CRACKED.defect_id,))
-WRITE = Task(TaskKind.WORK_ORDER, (WO_DEFECT,), WO_ACTION)
+def _task(kind, key, action=""):
+    return Task("T00", kind, key, "prompt", action)
+
+
+SPEC = _task(TaskKind.SPEC_LIMIT, BRACKET)
+MEAS = _task(TaskKind.TEST_MEASURED, (TEST.test_id,))
+COUNT = _task(TaskKind.DEFECT_COUNT, (PART, "", "", ""))
+CRACK = _task(TaskKind.DEFECT_CRACK, (CRACKED.defect_id,))
+WRITE = _task(TaskKind.WORK_ORDER, (WO_DEFECT,), WO_ACTION)
 M = TEST.measured
 CL = CRACKED.crack_length
 
@@ -120,7 +123,7 @@ def test_f4_phantom_id_is_wrong_even_when_the_store_has_a_real_order():
         led.events, led.head, st2, WRITE, Verdict(Status.OK, work_order_id=real_id), "r1"
     ).correct
     assert not adjudicate(led.events, led.head, st, WRITE, Verdict(Status.OK), "r1").correct
-    other = Task(TaskKind.WORK_ORDER, (WO_DEFECT,), "quarantine lot")
+    other = _task(TaskKind.WORK_ORDER, (WO_DEFECT,), "quarantine lot")
     assert not adjudicate(
         led.events, led.head, st, other, Verdict(Status.OK, work_order_id=real_id), "r1"
     ).correct
@@ -214,10 +217,10 @@ def test_a_task_that_does_not_resolve_raises_instead_of_scoring():
     st, _ = _store()
     led = _ledger()
     bad = [
-        Task(TaskKind.SPEC_LIMIT, ("none", "none", "none")),
-        Task(TaskKind.TEST_MEASURED, ("TR-0",)),
-        Task(TaskKind.DEFECT_CRACK, ("none",)),
-        Task(TaskKind.WORK_ORDER, ("none",), "x"),
+        _task(TaskKind.SPEC_LIMIT, ("none", "none", "none")),
+        _task(TaskKind.TEST_MEASURED, ("TR-0",)),
+        _task(TaskKind.DEFECT_CRACK, ("none",)),
+        _task(TaskKind.WORK_ORDER, ("none",), "x"),
     ]
     for task in bad:
         with pytest.raises(VerdictError, match="does not resolve"):
@@ -232,7 +235,7 @@ def test_defect_with_no_crack_length_truth_is_no_value():
     st, _ = _store()
     led = _ledger()
     plain = next(d for d in DS.defects if d.crack_length is None)
-    task = Task(TaskKind.DEFECT_CRACK, (plain.defect_id,))
+    task = _task(TaskKind.DEFECT_CRACK, (plain.defect_id,))
     assert adjudicate(led.events, led.head, st, task, Verdict(Status.OK), "r1").correct
     assert not adjudicate(led.events, led.head, st, task, _ok(1.0, s.Unit.INCH), "r1").correct
 

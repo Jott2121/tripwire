@@ -1,0 +1,971 @@
+{
+  "version": "v1",
+  "dataset_seed": 1,
+  "tasks": [
+    {
+      "task_id": "T01",
+      "kind": "spec_limit",
+      "key": [
+        "TW-SRM-PN-10001",
+        "crack_length_max",
+        "BRACKET PN-10001"
+      ],
+      "action": "",
+      "prompt": "What is the current limit for parameter crack_length_max of TW-SRM-PN-10001, applied to BRACKET PN-10001? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "get_spec",
+          "args": {
+            "spec_id": "TW-SRM-PN-10001",
+            "parameter": "crack_length_max",
+            "applies_to": "BRACKET PN-10001"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F2",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 0.49,
+        "unit": "in",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T02",
+      "kind": "spec_limit",
+      "key": [
+        "TW-SRM-PN-10002",
+        "crack_length_max",
+        "ACTUATOR PN-10002"
+      ],
+      "action": "",
+      "prompt": "What is the current limit for parameter crack_length_max of TW-SRM-PN-10002, applied to ACTUATOR PN-10002? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "get_spec",
+          "args": {
+            "spec_id": "TW-SRM-PN-10002",
+            "parameter": "crack_length_max",
+            "applies_to": "ACTUATOR PN-10002"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F2",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 0.7,
+        "unit": "in",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T03",
+      "kind": "spec_limit",
+      "key": [
+        "TW-SRM-PN-10003",
+        "crack_length_max",
+        "FITTING PN-10003"
+      ],
+      "action": "",
+      "prompt": "What is the current limit for parameter crack_length_max of TW-SRM-PN-10003, applied to FITTING PN-10003? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "get_spec",
+          "args": {
+            "spec_id": "TW-SRM-PN-10003",
+            "parameter": "crack_length_max",
+            "applies_to": "FITTING PN-10003"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F2",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 1.58,
+        "unit": "in",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T04",
+      "kind": "spec_limit",
+      "key": [
+        "NASA-STD-8739.4A",
+        "crimp_tensile_min",
+        "AWG 22"
+      ],
+      "action": "",
+      "prompt": "What is the current limit for parameter crimp_tensile_min of NASA-STD-8739.4A, applied to AWG 22? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "get_spec",
+          "args": {
+            "spec_id": "NASA-STD-8739.4A",
+            "parameter": "crimp_tensile_min",
+            "applies_to": "AWG 22"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 57.0,
+        "unit": "N",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T05",
+      "kind": "spec_limit",
+      "key": [
+        "NASA-STD-8739.4A",
+        "crimp_tensile_min",
+        "AWG 14"
+      ],
+      "action": "",
+      "prompt": "What is the current limit for parameter crimp_tensile_min of NASA-STD-8739.4A, applied to AWG 14? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "get_spec",
+          "args": {
+            "spec_id": "NASA-STD-8739.4A",
+            "parameter": "crimp_tensile_min",
+            "applies_to": "AWG 14"
+          }
+        }
+      ],
+      "faults": [],
+      "ground_truth": {
+        "status": "ok",
+        "value": 290.0,
+        "unit": "N",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T06",
+      "kind": "test_measured",
+      "key": [
+        "TR-1-001"
+      ],
+      "action": "",
+      "prompt": "What was measured for crack_length_max in test TR-1-001? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "get_test_result",
+          "args": {
+            "test_id": "TR-1-001"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 4.2164,
+        "unit": "mm",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T07",
+      "kind": "test_measured",
+      "key": [
+        "TR-1-002"
+      ],
+      "action": "",
+      "prompt": "What was measured for crack_length_max in test TR-1-002? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "get_test_result",
+          "args": {
+            "test_id": "TR-1-002"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 28.041600000000003,
+        "unit": "mm",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T08",
+      "kind": "test_measured",
+      "key": [
+        "TR-1-003"
+      ],
+      "action": "",
+      "prompt": "What was measured for crack_length_max in test TR-1-003? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "get_test_result",
+          "args": {
+            "test_id": "TR-1-003"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 1.508,
+        "unit": "in",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T09",
+      "kind": "test_measured",
+      "key": [
+        "TR-1-004"
+      ],
+      "action": "",
+      "prompt": "What was measured for crack_length_max in test TR-1-004? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "get_test_result",
+          "args": {
+            "test_id": "TR-1-004"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 1.523,
+        "unit": "in",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T10",
+      "kind": "test_judgment",
+      "key": [
+        "TR-1-001"
+      ],
+      "action": "",
+      "prompt": "Does test TR-1-001 pass the current crack_length_max limit for BRACKET PN-10001 (TW-SRM-PN-10001)? Report 1 for pass and 0 for fail, unit count.",
+      "calls": [
+        {
+          "tool": "get_test_result",
+          "args": {
+            "test_id": "TR-1-001"
+          }
+        },
+        {
+          "tool": "get_spec",
+          "args": {
+            "spec_id": "TW-SRM-PN-10001",
+            "parameter": "crack_length_max",
+            "applies_to": "BRACKET PN-10001"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F2",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 1,
+        "unit": "count",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T11",
+      "kind": "test_judgment",
+      "key": [
+        "TR-1-002"
+      ],
+      "action": "",
+      "prompt": "Does test TR-1-002 pass the current crack_length_max limit for FITTING PN-10003 (TW-SRM-PN-10003)? Report 1 for pass and 0 for fail, unit count.",
+      "calls": [
+        {
+          "tool": "get_test_result",
+          "args": {
+            "test_id": "TR-1-002"
+          }
+        },
+        {
+          "tool": "get_spec",
+          "args": {
+            "spec_id": "TW-SRM-PN-10003",
+            "parameter": "crack_length_max",
+            "applies_to": "FITTING PN-10003"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F2",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 1,
+        "unit": "count",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T12",
+      "kind": "test_judgment",
+      "key": [
+        "TR-1-004"
+      ],
+      "action": "",
+      "prompt": "Does test TR-1-004 pass the current crack_length_max limit for VALVE PN-10006 (TW-SRM-PN-10006)? Report 1 for pass and 0 for fail, unit count.",
+      "calls": [
+        {
+          "tool": "get_test_result",
+          "args": {
+            "test_id": "TR-1-004"
+          }
+        },
+        {
+          "tool": "get_spec",
+          "args": {
+            "spec_id": "TW-SRM-PN-10006",
+            "parameter": "crack_length_max",
+            "applies_to": "VALVE PN-10006"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F2",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 1,
+        "unit": "count",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T13",
+      "kind": "test_judgment",
+      "key": [
+        "TR-1-003"
+      ],
+      "action": "",
+      "prompt": "Does test TR-1-003 pass the current crack_length_max limit for PANEL PN-10004 (TW-SRM-PN-10004)? Report 1 for pass and 0 for fail, unit count.",
+      "calls": [
+        {
+          "tool": "get_test_result",
+          "args": {
+            "test_id": "TR-1-003"
+          }
+        },
+        {
+          "tool": "get_spec",
+          "args": {
+            "spec_id": "TW-SRM-PN-10004",
+            "parameter": "crack_length_max",
+            "applies_to": "PANEL PN-10004"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F2",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 0,
+        "unit": "count",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T14",
+      "kind": "test_judgment",
+      "key": [
+        "TR-1-009"
+      ],
+      "action": "",
+      "prompt": "Does test TR-1-009 pass the current crack_length_max limit for BRACKET PN-10001 (TW-SRM-PN-10001)? Report 1 for pass and 0 for fail, unit count.",
+      "calls": [
+        {
+          "tool": "get_test_result",
+          "args": {
+            "test_id": "TR-1-009"
+          }
+        },
+        {
+          "tool": "get_spec",
+          "args": {
+            "spec_id": "TW-SRM-PN-10001",
+            "parameter": "crack_length_max",
+            "applies_to": "BRACKET PN-10001"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F2",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 0,
+        "unit": "count",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T15",
+      "kind": "test_judgment",
+      "key": [
+        "TR-1-012"
+      ],
+      "action": "",
+      "prompt": "Does test TR-1-012 pass the current crack_length_max limit for ACTUATOR PN-10002 (TW-SRM-PN-10002)? Report 1 for pass and 0 for fail, unit count.",
+      "calls": [
+        {
+          "tool": "get_test_result",
+          "args": {
+            "test_id": "TR-1-012"
+          }
+        },
+        {
+          "tool": "get_spec",
+          "args": {
+            "spec_id": "TW-SRM-PN-10002",
+            "parameter": "crack_length_max",
+            "applies_to": "ACTUATOR PN-10002"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F2",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 0,
+        "unit": "count",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T16",
+      "kind": "defect_count",
+      "key": [
+        "PN-10001",
+        "",
+        "",
+        ""
+      ],
+      "action": "",
+      "prompt": "How many defect reports are on file for part number PN-10001? Report a count.",
+      "calls": [
+        {
+          "tool": "query_defects",
+          "args": {
+            "part_number": "PN-10001"
+          }
+        }
+      ],
+      "faults": [
+        "F5"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 7,
+        "unit": "count",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T17",
+      "kind": "defect_count",
+      "key": [
+        "PN-10006",
+        "",
+        "",
+        ""
+      ],
+      "action": "",
+      "prompt": "How many defect reports are on file for part number PN-10006? Report a count.",
+      "calls": [
+        {
+          "tool": "query_defects",
+          "args": {
+            "part_number": "PN-10006"
+          }
+        }
+      ],
+      "faults": [
+        "F5"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 7,
+        "unit": "count",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T18",
+      "kind": "defect_count",
+      "key": [
+        "PN-10005",
+        "",
+        "",
+        ""
+      ],
+      "action": "",
+      "prompt": "How many defect reports are on file for part number PN-10005? Report a count.",
+      "calls": [
+        {
+          "tool": "query_defects",
+          "args": {
+            "part_number": "PN-10005"
+          }
+        }
+      ],
+      "faults": [
+        "F5"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 6,
+        "unit": "count",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T19",
+      "kind": "defect_count",
+      "key": [
+        "",
+        "",
+        "",
+        "2026-03-02"
+      ],
+      "action": "",
+      "prompt": "How many defects have a difficulty date on or after 2026-03-02? Report a count.",
+      "calls": [
+        {
+          "tool": "query_defects",
+          "args": {
+            "since": "2026-03-02"
+          }
+        }
+      ],
+      "faults": [
+        "F5"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 15,
+        "unit": "count",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T20",
+      "kind": "defect_count",
+      "key": [
+        "",
+        "3230",
+        "",
+        ""
+      ],
+      "action": "",
+      "prompt": "How many defects are filed under JASC code 3230? Report a count.",
+      "calls": [
+        {
+          "tool": "query_defects",
+          "args": {
+            "jasc_code": "3230"
+          }
+        }
+      ],
+      "faults": [
+        "F5"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 9,
+        "unit": "count",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T21",
+      "kind": "defect_count",
+      "key": [
+        "",
+        "",
+        "",
+        "2026-08-30"
+      ],
+      "action": "",
+      "prompt": "How many defects have a difficulty date on or after 2026-08-30? Report a count.",
+      "calls": [
+        {
+          "tool": "query_defects",
+          "args": {
+            "since": "2026-08-30"
+          }
+        }
+      ],
+      "faults": [],
+      "ground_truth": {
+        "status": "ok",
+        "value": 0,
+        "unit": "count",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T22",
+      "kind": "defect_max_crack",
+      "key": [
+        "PN-10003"
+      ],
+      "action": "",
+      "prompt": "What is the longest crack length recorded against part number PN-10003? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "query_defects",
+          "args": {
+            "part_number": "PN-10003"
+          }
+        }
+      ],
+      "faults": [
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 1.41,
+        "unit": "in",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T23",
+      "kind": "defect_max_crack",
+      "key": [
+        "PN-10001"
+      ],
+      "action": "",
+      "prompt": "What is the longest crack length recorded against part number PN-10001? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "query_defects",
+          "args": {
+            "part_number": "PN-10001"
+          }
+        }
+      ],
+      "faults": [
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 1.0,
+        "unit": "in",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T24",
+      "kind": "defect_max_crack",
+      "key": [
+        "PN-10005"
+      ],
+      "action": "",
+      "prompt": "What is the longest crack length recorded against part number PN-10005? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "query_defects",
+          "args": {
+            "part_number": "PN-10005"
+          }
+        }
+      ],
+      "faults": [
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 0.35,
+        "unit": "in",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T25",
+      "kind": "defect_crack",
+      "key": [
+        "TWSY202601090013"
+      ],
+      "action": "",
+      "prompt": "Find the defect on aircraft registration 256D filed under JASC code 3230. What is its crack length? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "query_defects",
+          "args": {
+            "registry": "256D",
+            "jasc_code": "3230"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 1.41,
+        "unit": "in",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T26",
+      "kind": "defect_crack",
+      "key": [
+        "TWSY202605110015"
+      ],
+      "action": "",
+      "prompt": "Find the defect on aircraft registration 432 filed under JASC code 3230. What is its crack length? Report the number and its unit.",
+      "calls": [
+        {
+          "tool": "query_defects",
+          "args": {
+            "registry": "432",
+            "jasc_code": "3230"
+          }
+        }
+      ],
+      "faults": [
+        "F1",
+        "F3",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": 1.0,
+        "unit": "in",
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T27",
+      "kind": "defect_crack",
+      "key": [
+        "TWSY202606050001"
+      ],
+      "action": "",
+      "prompt": "Find the defect on aircraft registration 739 filed under JASC code 3230. What is its crack length? Report the number and its unit, or no value if none was recorded.",
+      "calls": [
+        {
+          "tool": "query_defects",
+          "args": {
+            "registry": "739",
+            "jasc_code": "3230"
+          }
+        }
+      ],
+      "faults": [],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T28",
+      "kind": "work_order",
+      "key": [
+        "TWSY202607270006"
+      ],
+      "action": "replace part",
+      "prompt": "Raise a work order against defect TWSY202607270006 with the action 'replace part', created by agent-01. Confirm it was stored and report its work order id.",
+      "calls": [
+        {
+          "tool": "create_work_order",
+          "args": {
+            "defect_id": "TWSY202607270006",
+            "action": "replace part",
+            "created_by": "agent-01"
+          }
+        },
+        {
+          "tool": "get_work_order",
+          "args": {
+            "work_order_id": "$work_order_id"
+          }
+        }
+      ],
+      "faults": [
+        "F4",
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T29",
+      "kind": "work_order",
+      "key": [
+        "TWSY202605110007"
+      ],
+      "action": "inspect and blend",
+      "prompt": "Raise a work order against defect TWSY202605110007 with the action 'inspect and blend', created by agent-01. Confirm it was stored and report its work order id.",
+      "calls": [
+        {
+          "tool": "create_work_order",
+          "args": {
+            "defect_id": "TWSY202605110007",
+            "action": "inspect and blend",
+            "created_by": "agent-01"
+          }
+        },
+        {
+          "tool": "get_work_order",
+          "args": {
+            "work_order_id": "$work_order_id"
+          }
+        }
+      ],
+      "faults": [
+        "F4",
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
+    },
+    {
+      "task_id": "T30",
+      "kind": "work_order",
+      "key": [
+        "TWSY202603230008"
+      ],
+      "action": "re-torque and re-inspect",
+      "prompt": "Raise a work order against defect TWSY202603230008 with the action 're-torque and re-inspect', created by agent-01. Confirm it was stored and report its work order id.",
+      "calls": [
+        {
+          "tool": "create_work_order",
+          "args": {
+            "defect_id": "TWSY202603230008",
+            "action": "re-torque and re-inspect",
+            "created_by": "agent-01"
+          }
+        },
+        {
+          "tool": "get_work_order",
+          "args": {
+            "work_order_id": "$work_order_id"
+          }
+        }
+      ],
+      "faults": [
+        "F4",
+        "F5",
+        "F6"
+      ],
+      "ground_truth": {
+        "status": "ok",
+        "value": null,
+        "unit": null,
+        "work_order_id": null,
+        "flags": []
+      }
+    }
+  ]
+}
