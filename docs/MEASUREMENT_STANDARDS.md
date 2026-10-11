@@ -139,8 +139,9 @@ tabulated in **newtons with pounds-force in parentheses**. The agent sandbox
 cannot open the PDF; the maintainer read the table from the official PDF on
 2026-10-11 and relayed it. `tripwire/public_specs.py` carries the full table,
 cites only the official PDF, and marks every row HIGH with
-`verified_against_pdf=True` in its provenance string (a test refuses a
-PDF-verified row that is not HIGH):
+`verified_against_pdf=True`, `checked_on=2026-10-11` and the PDF's sha256
+(`83d2038895dfb4e1ac18fd314ae444ff5fea56e7cc2723649ee3aa8388ecc27d`) in its
+provenance string (a test refuses a PDF-verified row that is not HIGH):
 
 | AWG | 28 | 26 | 24 | 22 | 20 | 18 | 16 | 14 | 12 | 10 | 8 |
 |-----|----|----|----|----|----|----|----|----|----|----|---|

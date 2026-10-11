@@ -18,6 +18,9 @@ from tripwire.contract import ContractError, Provenance, Quantity, SpecLimit
 NASA_8739_4A = "NASA-STD-8739.4A"
 NASA_8739_4A_REVISION = "chg4"
 NASA_8739_4A_URL = s.SRC_NASA_8739_4A
+# sha256 of the official PDF the table was checked against on 2026-10-11 (owner-supplied).
+NASA_8739_4A_PDF_SHA256 = "83d2038895dfb4e1ac18fd314ae444ff5fea56e7cc2723649ee3aa8388ecc27d"
+NASA_8739_4A_CHECKED_ON = "2026-10-11"
 TRANSCRIBED_AT = datetime(2026, 10, 11, tzinfo=UTC)
 
 
@@ -44,8 +47,12 @@ class PublicSpecRow:
 
 
 _CRIMP_NOTE = (
-    "Table 12-1 crimp tensile strength, minimum, newtons (pounds): '{n} ({lb})'. Read from "
-    "the official PDF by the maintainer, 2026-10-11."
+    "Table 12-1 crimp tensile strength, minimum, newtons (pounds): '{n} ({lb})'. Checked "
+    "against the official PDF on "
+    + NASA_8739_4A_CHECKED_ON
+    + " (sha256 "
+    + NASA_8739_4A_PDF_SHA256
+    + ")."
 )
 
 
@@ -91,7 +98,8 @@ def public_spec_limits(rows: tuple[PublicSpecRow, ...] = PUBLIC_SPEC_ROWS) -> tu
             source="public-standard",
             source_url=r.source_url,
             revision=f"{r.spec_id} {r.revision}; confidence={r.confidence.value}; "
-            f"verified_against_pdf={str(r.verified_against_pdf).lower()}",
+            f"verified_against_pdf={str(r.verified_against_pdf).lower()}; "
+            f"pdf_sha256={NASA_8739_4A_PDF_SHA256}; checked_on={NASA_8739_4A_CHECKED_ON}",
             retrieved_at=TRANSCRIBED_AT,
         )
         out.append(
