@@ -127,7 +127,14 @@ by adoption, with citation.
   URL and retrieval date. The brief's multi-agent variant and the "Grok 4.7" id are unverified.
 - M5 proposals pending owner OK (marked in the preregistration): server-side path only on the
   20% subset, `MAX_TURNS = 12`, planning token estimates for the budget check, bootstrap CIs,
-  exit-code numbers. `AGENTS.md` still says `docs/PREREG.md`; the file is `PREREGISTRATION.md`.
+  exit-code numbers. All of these stay flagged PROPOSED in the preregistration; none was resolved.
+- M5 review fixes: `AGENTS.md` and `.cursor/rules/30-benchmarks-and-claims.mdc` now point to
+  `docs/PREREGISTRATION.md` (the `PREREG.md` strings in `tests/test_runner.py` are a temp-repo
+  fixture file, not a doc reference). `tests/test_harness.py` gained ScriptedClient-only tests
+  (malformed tool calls, error after tool calls, server-side error, per-path request shape,
+  server-side and bad-ledger INJECTION_UNVERIFIED, RUN_ERROR precedence); `harness.py` coverage
+  went from 83% to 92%. The lines still reported missing (199-203, 211-214, 222, 238-239) include
+  ones the tests do execute, so the figure understates it; no cause found, not worked around.
 - Does `query_defects.since` filter on `difficulty_date` (as `Store` does) or on
   `submission_date`? Documented as the former; confirm.
 

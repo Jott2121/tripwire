@@ -119,6 +119,83 @@ def test_ledger_is_written_when_a_path_is_given(tmp_path):
     assert (tmp_path / "l.jsonl").read_text().strip()
 
 
+def test_malformed_tool_calls_come_back_as_errors_and_the_loop_continues():
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    good = sp.read_calls(task)[0]
+    bad = (
+        xai.ToolCallRequest("b0", "no_such_tool", {}),
+        xai.ToolCallRequest("b1", good.name, {"bogus": 1}),
+    )
+    client = sp.client_for([sp.resp(calls=bad), sp.resp(sp.refusal_json())])
+    rec = _run(task, None, ExecPath.CLIENT_SIDE, client)
+    assert rec.tool_calls == ("no_such_tool", good.name)
+    assert rec.turns == 2 and rec.error is None and rec.exclusion is None
+    tool_msgs = [m for m in client.requests[1].messages if m["role"] == "tool"]
+    assert [m["tool_call_id"] for m in tool_msgs] == ["b0", "b1"]
+    assert all("error" in json.loads(m["content"]) for m in tool_msgs)
+    assistant = next(m for m in client.requests[1].messages if m["role"] == "assistant")
+    assert assistant["tool_calls"][0]["function"]["name"] == "no_such_tool"
+
+
+def test_error_after_tool_calls_is_run_error_and_keeps_the_partial_record():
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    client = xai.ScriptedClient([sp.resp(calls=sp.read_calls(task)), xai.XaiError("dropped")])
+    rec = _run(task, None, ExecPath.CLIENT_SIDE, client)
+    assert rec.exclusion == Exclusion.RUN_ERROR.value and "dropped" in rec.error
+    assert rec.turns == 1 and rec.tool_calls == tuple(c.name for c in sp.read_calls(task))
+    assert rec.adjudication is None and rec.verdict is None
+
+
+def test_server_side_error_is_run_error():
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    rec = _run(task, None, ExecPath.SERVER_SIDE, xai.ScriptedClient([xai.XaiError("mcp down")]))
+    assert rec.exclusion == Exclusion.RUN_ERROR.value and rec.tool_calls == ()
+
+
+def test_server_side_request_carries_the_remote_spec_and_no_function_tools():
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    client = sp.client_for(sp.agent_script(task, ExecPath.SERVER_SIDE, sp.truth_json(task)))
+    _run(task, None, ExecPath.SERVER_SIDE, client, mcp_url="https://example.invalid/mcp")
+    (req,) = client.requests
+    assert req.tools == () and req.remote_mcp.url == "https://example.invalid/mcp"
+    assert req.remote_mcp.token_env == "TRIPWIRE_SERVER_TOKEN"
+
+
+def test_client_side_requests_carry_function_specs_and_no_remote():
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    client = sp.client_for(sp.agent_script(task, ExecPath.CLIENT_SIDE, sp.truth_json(task)))
+    _run(task, None, ExecPath.CLIENT_SIDE, client)
+    assert all(len(r.tools) == 5 and r.remote_mcp is None for r in client.requests)
+
+
+def test_server_side_fault_that_never_fires_is_injection_unverified():
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT, FaultKind.F1)
+    client = sp.client_for([sp.resp(sp.truth_json(task))])
+    rec = _run(task, FaultKind.F1, ExecPath.SERVER_SIDE, client)
+    assert rec.exclusion == Exclusion.INJECTION_UNVERIFIED.value and rec.error is None
+
+
+def test_bad_ledger_is_injection_unverified(monkeypatch):
+    import tripwire.harness as hs
+    from tripwire.ledger import LedgerError
+
+    def broken(*args, **kwargs):
+        raise LedgerError("tampered")
+
+    monkeypatch.setattr(hs, "adjudicate", broken)
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    client = sp.client_for(sp.agent_script(task, ExecPath.CLIENT_SIDE, sp.truth_json(task)))
+    rec = _run(task, None, ExecPath.CLIENT_SIDE, client)
+    assert rec.exclusion == Exclusion.INJECTION_UNVERIFIED.value
+    assert rec.adjudication is None and rec.error is None
+
+
+def test_run_error_outranks_injection_unverified():
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT, FaultKind.F1)
+    rec = _run(task, FaultKind.F1, ExecPath.CLIENT_SIDE, xai.ScriptedClient([xai.XaiError("x")]))
+    assert rec.exclusion == Exclusion.RUN_ERROR.value
+
+
 def test_tools_expose_five_specs_and_return_errors_as_data():
     task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
     from tripwire.faults import FaultConfig, FaultInjector

@@ -5,7 +5,7 @@ alwaysApply: false
 ---
 # Benchmarks and public claims
 
-- Pre-register before comparing: hypothesis, metric, n, decision rule → `docs/PREREG.md`, committed before the run.
+- Pre-register before comparing: hypothesis, metric, n, decision rule → `docs/PREREGISTRATION.md`, committed before the run.
 - Every published number links to: the command, the commit SHA, the raw artifact, and the date.
 - Include the baseline and the null. If a result is not significant, say so in the headline, not a footnote.
 - State limits up front (n, single run per cell, prompt shape, model versions, cost).
