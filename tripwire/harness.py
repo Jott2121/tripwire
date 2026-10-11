@@ -34,6 +34,7 @@ from tripwire.server import build_mcp
 from tripwire.store import Store
 from tripwire.tasks import TASK_DATA_SEED, PlannedRun, Task
 from tripwire.xai import (
+    TICKS_PER_USD,
     ChatRequest,
     ChatResponse,
     ExecPath,
@@ -72,7 +73,8 @@ class RunRecord:
     served_models: tuple[str, ...]  # one per API call, in order: provenance, never assumed
     input_tokens: int
     output_tokens: int
-    cost_usd: float | None  # None = pricing UNRESOLVED
+    cost_usd: float | None  # per request: provider ticks when present, else the price estimate
+    cost_in_usd_ticks: int | None  # sum of usage.cost_in_usd_ticks over requests that had it
     latency_s: float
     timestamp: str
     turns: int
@@ -176,6 +178,8 @@ def run_one(
     served: list[str] = []
     names: list[str] = []
     tokens = [0, 0]
+    ticks: list[int] = []
+    costs: list[float | None] = []
     latency = 0.0
     turns = 0
     final: str | None = None
@@ -190,6 +194,11 @@ def run_one(
         served.append(resp.served_model)
         tokens[0] += resp.input_tokens
         tokens[1] += resp.output_tokens
+        if resp.cost_in_usd_ticks is not None:  # the provider's figure beats our estimate
+            ticks.append(resp.cost_in_usd_ticks)
+            costs.append(resp.cost_in_usd_ticks / TICKS_PER_USD)
+        else:
+            costs.append(pricing.cost(resp.input_tokens, resp.output_tokens) if pricing else None)
         return resp
 
     try:
@@ -265,7 +274,8 @@ def run_one(
         served_models=tuple(served),
         input_tokens=tokens[0],
         output_tokens=tokens[1],
-        cost_usd=pricing.cost(tokens[0], tokens[1]) if pricing else None,
+        cost_usd=None if None in costs else sum(c for c in costs if c is not None),
+        cost_in_usd_ticks=sum(ticks) if ticks else None,
         latency_s=latency,
         timestamp=_iso(clock()),
         turns=turns,

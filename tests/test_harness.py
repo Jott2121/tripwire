@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 
 import pytest
 import support as sp
@@ -47,6 +48,19 @@ def test_clean_run_is_correct_on_both_paths_with_every_required_field(path):
     assert rec.timestamp == sp.NOW.isoformat() and rec.latency_s >= 0
     assert rec.tool_calls == tuple(c.name for c in sp.read_calls(task))
     assert json.loads(rec.to_json())["run_id"] == "run-1"
+
+
+def test_provider_ticks_are_preferred_per_request_over_the_price_estimate():
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    first, last = sp.agent_script(task, ExecPath.CLIENT_SIDE, sp.truth_json(task))
+    ticks = 3 * 10**8  # 0.03 USD; the estimate for this request would be 0.0005
+    client = xai.ScriptedClient([replace(first, cost_in_usd_ticks=ticks), last])
+    rec = _run(task, None, ExecPath.CLIENT_SIDE, client)
+    assert rec.cost_in_usd_ticks == ticks
+    assert rec.cost_usd == pytest.approx(0.03 + 10 * 50 / 1e6)  # ticks + estimate for the rest
+    plain = _run(task, None, ExecPath.CLIENT_SIDE, sp.client_for(sp.agent_script(
+        task, ExecPath.CLIENT_SIDE, sp.truth_json(task))))  # fmt: skip
+    assert plain.cost_in_usd_ticks is None
 
 
 def test_the_two_paths_produce_the_same_score():
@@ -227,9 +241,16 @@ def test_only_the_warned_conditions_say_data_may_be_wrong():
     assert condition_prompt(task, Condition.GATE) == condition_prompt(task, Condition.PROMPT_FIX)
 
 
-def test_xai_placeholders_are_unresolved_and_live_calls_refused():
-    assert all(not m.resolved for m in xai.MODEL_CONFIGS)
-    assert all(p is None for p in xai.PRICING.values())
+def test_grok_4_7_facts_are_pinned_and_live_calls_refused():
+    (model,) = xai.MODEL_CONFIGS  # the owner's budget allows grok-4.7 only
+    assert (model.model_id, model.resolved) == ("grok-4.7", True)
+    assert model.effort in xai.EFFORT_LEVELS
+    price = xai.PRICING["grok-4.7"]
+    assert price is not None and "docs.x.ai" in price.source
+    assert (price.input_per_mtok, price.cached_input_per_mtok, price.output_per_mtok) == (2, 0.5, 6)
+    assert price.cost(20_000, 2_000) == pytest.approx(0.052)  # the planning estimate
+    assert price.cost(200_000, 1_000_000) == pytest.approx(0.8 + 12.0)  # 200k+: $4 / $12 for all
+    assert price.cost(199_999, 0) == pytest.approx(199_999 * 2 / 1e6)
     req = xai.ChatRequest("m", None, ())
     with pytest.raises(xai.LiveCallsDisabled):
         xai.LiveClient().chat(req)
