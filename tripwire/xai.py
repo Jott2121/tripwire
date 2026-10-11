@@ -4,10 +4,9 @@ The harness talks to xAI only through :class:`XaiClient`. Tests use :class:`Scri
 :class:`LiveClient` refuses every call until M7 wires a real one, so a live call cannot happen
 by accident. ``XAI_API_KEY`` is never read here.
 
-Model ids, reasoning-effort levels, and prices could not be read from docs.x.ai when this was
-written (the fetch was not permitted), so each is :data:`UNRESOLVED` rather than a guess. A run
-against an UNRESOLVED model or price is refused by the runner. Fill them from the docs, with the
-URL and the retrieval date, before M7.
+The model id, effort levels and prices below were supplied by the owner in issue #25, retrieved
+from docs.x.ai on 2026-10-11 (sources next to each value). Anything not in that issue stays
+:data:`UNRESOLVED`, and a run against an UNRESOLVED model or price is refused by the runner.
 """
 
 from __future__ import annotations
@@ -46,36 +45,70 @@ class ModelConfig:
     label: str
     model_id: str
     effort: str | None  # None = the model takes no effort setting
-    role: str  # flagship-high | flagship-low | small-fast | multi-agent
+    role: str  # flagship (the only row in this budget)
 
     @property
     def resolved(self) -> bool:
         return UNRESOLVED not in (self.model_id, self.effort)
 
 
-# Targets from the M5 brief; every id and level is UNRESOLVED until read from xAI's docs.
+# Owner decision (issue #25): grok-4.7 only. Model id, 500k context, knowledge cutoff May 2026:
+# https://docs.x.ai/developers/models/grok-4.7 and https://docs.x.ai/developers/grok-4-7
+# (retrieved 2026-10-11). Efforts the API accepts: low | medium | high (default) | xhigh
+# (https://docs.x.ai/developers/model-capabilities/text/reasoning). The effort used here is
+# PROPOSED, not decided: see docs/PREREGISTRATION.md. The multi-agent model
+# (grok-4.20-multi-agent-0309), the small/fast row and a second effort row are out of scope for
+# this budget (future work).
+EFFORT_LEVELS = ("low", "medium", "high", "xhigh")
 MODEL_CONFIGS: tuple[ModelConfig, ...] = (
-    ModelConfig("flagship-high", UNRESOLVED, UNRESOLVED, "flagship-high"),
-    ModelConfig("flagship-low", UNRESOLVED, UNRESOLVED, "flagship-low"),
-    ModelConfig("small-fast", UNRESOLVED, None, "small-fast"),
-    ModelConfig("multi-agent", UNRESOLVED, None, "multi-agent"),
+    ModelConfig("grok-4.7", "grok-4.7", "medium", "flagship"),
 )
 
 
 @dataclass(frozen=True)
 class Pricing:
-    """USD per million tokens, with the page it came from."""
+    """USD per million tokens, with the page it came from.
+
+    A request whose prompt is ``long_context_tokens`` or more bills every token at the
+    ``long_*`` rates. ``cached_input_per_mtok`` is recorded for the docs; the planning cost
+    ignores caching, so it is an upper bound. The authoritative cost is the provider's
+    ``cost_in_usd_ticks`` when the response carries it.
+    """
 
     input_per_mtok: float
     output_per_mtok: float
     source: str
+    cached_input_per_mtok: float | None = None
+    long_context_tokens: int | None = None
+    long_input_per_mtok: float | None = None
+    long_output_per_mtok: float | None = None
 
     def cost(self, input_tokens: int, output_tokens: int) -> float:
-        return (input_tokens * self.input_per_mtok + output_tokens * self.output_per_mtok) / 1e6
+        """Estimated cost of one request."""
+        long_ = self.long_context_tokens is not None and input_tokens >= self.long_context_tokens
+        if long_ and self.long_input_per_mtok is not None and self.long_output_per_mtok is not None:
+            rin, rout = self.long_input_per_mtok, self.long_output_per_mtok
+        else:
+            rin, rout = self.input_per_mtok, self.output_per_mtok
+        return (input_tokens * rin + output_tokens * rout) / 1e6
 
+
+GROK_4_7_PRICING = Pricing(
+    2.00,
+    6.00,
+    "https://docs.x.ai/developers/models/grok-4.7 and https://docs.x.ai/docs/models "
+    "(retrieved 2026-10-11)",
+    cached_input_per_mtok=0.50,
+    long_context_tokens=200_000,
+    long_input_per_mtok=4.00,
+    long_output_per_mtok=12.00,
+)
+
+# usage.cost_in_usd_ticks / 1e10 = USD (https://docs.x.ai/developers/cost-tracking)
+TICKS_PER_USD = 1e10
 
 # model label -> Pricing; None = UNRESOLVED. No price is invented.
-PRICING: Mapping[str, Pricing | None] = {m.label: None for m in MODEL_CONFIGS}
+PRICING: Mapping[str, Pricing | None] = {"grok-4.7": GROK_4_7_PRICING}
 
 
 @dataclass(frozen=True)
@@ -115,6 +148,7 @@ class ChatResponse:
     output_tokens: int
     tool_calls: tuple[ToolCallRequest, ...] = ()  # to execute (client-side path)
     remote_calls: tuple[ToolCallRequest, ...] = ()  # xAI executed these (server-side path)
+    cost_in_usd_ticks: int | None = None  # usage.cost_in_usd_ticks, when the response has it
 
 
 class XaiClient(Protocol):
