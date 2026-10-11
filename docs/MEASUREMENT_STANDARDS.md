@@ -41,7 +41,7 @@ that will close it.
 | NASA | NASA-STD-8739.4A w/ Change 4, Workmanship Standard for Crimping, Interconnecting Cables, Harnesses, and Wiring | https://standards.nasa.gov/sites/default/files/standards/NASA/A/4/nasa-std-87394a_w_change_4_0.pdf |
 | ADB | AviationDB SDR query page (third party; used only for a partial code list) | https://www.aviationdb.com/Aviation/SdrQuery.shtm |
 | #4 | Tripwire issue #4 (header and date examples copied from a real SDR-2026.csv) | https://github.com/Jott2121/tripwire/issues/4 |
-| PROF | `reports/sdr_profile_2026.json`: maintainer run of `scripts/profile_sdr.py` on `SDR-2026.csv`, 2026-10-11 (45,910 rows; counts and code values only, no narrative). Committed receipt; every PROF number below is read from it | (repo) |
+| PROF | `reports/sdr_profile_2026.json`: maintainer run of `scripts/profile_sdr.py` on `SDR-2026.csv`, 2026-10-11 (45,910 rows; counts and code values only, no narrative). Committed receipt; every PROF number below is read from it | https://github.com/Jott2121/tripwire/blob/main/reports/sdr_profile_2026.json |
 
 Secondary sources consulted for the N-number and time-in-service items: the
 FAA "Forming an N-Number" page
@@ -53,7 +53,7 @@ and AC 43-9C (maintenance records), both consistent with the CFR text.
 | Item | Standard | Source | Confidence |
 |------|----------|--------|------------|
 | File | One CSV per year, `SDR-<year>.csv`, from `https://external.apic4e.faa.gov/sdrs/retrieve/SDR-<year>.csv` | DL, #4 | HIGH |
-| Encoding | **UTF-8**: 0 decode errors under UTF-8, 151 under cp1252; `latin-1` (issue #4, PR #6) garbles 323 real rows | PROF | HIGH (`encoding` resolved) |
+| Encoding | **UTF-8**: 0 decode errors under UTF-8, 151 under cp1252 (issue #4's `latin-1` was wrong). The FAA file itself contains some pre-existing mis-encoded text (e.g. a stray `Â°`); later stages must not treat that as loader damage | PROF | HIGH (`encoding` resolved) |
 | Header | 76 named columns in the order listed in `tripwire/standards.py:SDR_COLUMNS`. The batch *upload* layout is pipe-delimited with "a total of 76 pipe characters", i.e. 77 fields, and numbers `StageOfOperationCode` as field 17 and `HowDiscoveredCode` as field 18, one earlier than the download header; so upload and download are different layouts. **Resolved:** the download has 76 columns in the expected order | BL (excerpt), #4, PROF | HIGH (`column_count` resolved) |
 | Missing value | Empty field. Many fields are optional ("If applicable", "Not required to enter information"); no sentinel such as `N/A`, `0`, or `-` is documented | FI | MEDIUM |
 | Rights | FAA-published; narrative is operator-submitted and never committed here | DL, `docs/DATA.md` (PR #6) | HIGH |
@@ -64,7 +64,7 @@ and AC 43-9C (maintenance records), both consistent with the CFR text.
 | Field | Standard | Source | Confidence |
 |-------|----------|--------|------------|
 | `DifficultyDate` | `mm/dd/yyyy` ("Difficulty Date. (mm/dd/yyyy)" on the form); example `01/02/2026` in the CSV | GA, SS, #4 | HIGH |
-| `SubmissionDate` | ISO-8601 with a UTC offset, e.g. `2026-01-02T14:09:41.140-05:00`. The offset in the one example is -05:00 (US Eastern standard time). **Resolved:** the offset is fixed at -05:00 in every month Jan-Oct 2026, so it does not follow DST | #4, PROF | HIGH (`submission_tz` resolved) |
+| `SubmissionDate` | ISO-8601 with a UTC offset, e.g. `2026-01-02T14:09:41.140-05:00`. The offset in the one example is -05:00 (US Eastern standard time). **Resolved:** the offset is fixed at -05:00 in every month Jan-Oct 2026, so it does not follow DST | PROF | HIGH (`submission_tz` resolved) |
 | Ordering | Part 121 filers report each 24-hour period beginning at 0900 local time and have 96 hours to submit (weekend/holiday extensions apply). A difficulty date after the submission date is therefore impossible for any filer. In SDR-2026: 0 negative lags, median 3 days, 95th percentile 58 days, maximum 264 | 121.703(d), PROF | HIGH |
 | Control-number date | `OperatorControlNumber` embeds the submission date as `YYYYMMDD` (see identifiers) | FI | HIGH |
 
@@ -154,10 +154,10 @@ later without a unit decision.
 | `AircraftTotalTime` is in hours (`aircraft_total_time_hours`; UNIT_SWAP factor 60) | **Confirmed** | FI: whole hours; 14 CFR 1.1 definition. The synthetic generator emits one decimal place (`f"{...:.1f}"`), which contradicts "whole hours"; profile a real file before deciding whether decimals ever occur |
 | `AircraftTotalCycles` is a dimensionless count | **Confirmed** | FI |
 | `DifficultyDate` is `MM/DD/YYYY` | **Confirmed** | GA, SS, #4 |
-| `SubmissionDate` is ISO-8601 with offset, parsed tz-aware | **Consistent with the example**; zone semantics UNRESOLVED | #4 |
+| `SubmissionDate` is ISO-8601 with offset, parsed tz-aware | **Confirmed**; the offset is fixed at -05:00 in every month of 2026 | #4, PROF |
 | `JASCCode` is exactly four digits | **Confirmed** | JASC |
 | "77 columns" in prose, 76 names in the header | **Resolved**: the download has 76 columns in the listed order; 77 is the upload layout | PROF |
-| Encoding `latin-1` | **Contradicted**: the file is UTF-8; latin-1 garbles 323 rows | PROF |
+| Encoding `latin-1` | **Contradicted**: the file is UTF-8 (0 decode errors; cp1252 151) | PROF |
 | Synthetic `SubmitterTypeCode` values `A`, `O`, `M` | **Contradicted for `O`** only: `M` occurs in real data (7 rows); `O` does not | GA, PROF |
 | Synthetic `SDRType` value `SDR` | **Contradicted**: the field is a one-letter code | FI |
 | Synthetic `StageOfOperationCode` values `PREFLIGHT`, `SCHEDULED`, `WALKAROUND`, `TEARDOWN` | **Contradicted**: the field is a two-letter code (e.g. `CR`, `AP`) | BL, FI |
@@ -179,7 +179,7 @@ with the same question. The profiling step is `scripts/profile_sdr.py` (PR #8).
 | Key | Question | Answer |
 |-----|----------|--------|
 | `column_count` | 76 or 77 columns? | 76, in the expected order; 77 is the upload layout |
-| `encoding` | latin-1, UTF-8, or cp1252? | UTF-8 (0 errors); cp1252 151 errors; latin-1 garbles 323 rows |
+| `encoding` | latin-1, UTF-8, or cp1252? | UTF-8 (0 errors); cp1252 151 errors |
 | `submission_tz` | Fixed -05:00 or Eastern with DST? | Fixed -05:00 in every month Jan-Oct 2026 |
 | `whole_hours` | Whole hours only, or decimals? | 100% whole numbers in every hour column |
 | `registry_prefix` | Does the CSV omit the N? | Yes: 0% start with N; 45,621 of 45,663 valid without it |

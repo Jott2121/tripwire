@@ -14,10 +14,12 @@ problems found on aircraft.
 
 ## Format
 
-- Encoding: UTF-8. A profile of `SDR-2026.csv` (45,910 rows, 2026-10-11) found
-  0 UTF-8 decode errors, while decoding it as latin-1 garbles 323 rows. The
-  loader fails closed with `SDRFormatError` (naming the byte offset) on any byte
-  that is not valid UTF-8.
+- Encoding: UTF-8. The committed profile `reports/sdr_profile_2026.json`
+  (`scripts/profile_sdr.py` on `SDR-2026.csv`, 45,910 rows, 2026-10-11) found
+  0 decode errors under UTF-8 and 151 under cp1252. The loader fails closed
+  with `SDRFormatError` (naming the byte offset) on any byte that is not valid
+  UTF-8. The FAA file itself contains some pre-existing mis-encoded text (e.g.
+  a stray `Â°`); later stages must not treat that as loader damage.
 - 76 columns, in the order recorded in `tripwire/sdr.SDR_COLUMNS` (77 is the
   separate batch *upload* layout, not the download). The header line is
   reproduced below; the loader maps columns by name and reads each file's own
