@@ -11,7 +11,7 @@ produced them.
 | — | SDR loader, synthetic rows, corruption injector + hash-chained ledger (issue #4) | open PR, awaiting review | #6 (`claude/issue-4`) |
 | M0 | Measurement standards: `docs/MEASUREMENT_STANDARDS.md` + `tripwire/standards.py` + tests | **open PR**, CI green | #7 (`claude/m0-measurement-standards`) |
 | M0b | `scripts/profile_sdr.py`: offline profiler that closes the M0 open items from a locally downloaded file | **open PR**, stacked on M0 | #8 (`claude/m0b-profile-sdr`) |
-| M1 | Data contract + store: typed schemas carrying units/revision/provenance; fixed-seed synthetic lots, tests, work orders; spec limits from public standards | part 1 (`tripwire/contract.py` types) **open PR**, stacked on M0b; part 2 (generators, store) next | `claude/m1-contract` |
+| M1 | Data contract + store: typed schemas carrying units/revision/provenance; fixed-seed synthetic lots, tests, work orders; spec limits from public standards | part 1 types **open PR** #9; part 2a generators + public spec rows **open PR** (`claude/m1-synth`); part 2b store next | #9, `claude/m1-synth` |
 | M2 | MCP server (Streamable HTTP, auth header) with `query_defects`, `get_spec`, `get_test_result`, `create_work_order`, `get_work_order`; in-memory store; contract tests | not started | — |
 | M3 | Fault middleware F1-F6 + append-only hash-chained ledger with separately stored tail hash + deterministic adjudicator | not started (PR #6's injector and chain are the seed) | — |
 | M4 | Task set (~30) with ground truth computed from the clean store | not started | — |

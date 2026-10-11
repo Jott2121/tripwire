@@ -133,17 +133,30 @@ the full SDRS look-up tables are read (`code_tables`).
 
 ## Spec-limit sources for M1
 
-M1 needs public limit tables with units. The candidate named in the brief,
-NASA-STD-8739.4A (crimp pull-test minimums by wire gauge, Table 12-1), is
-tabulated in **newtons with pounds-force in parentheses** per every excerpt
-seen, and the standard forbids pulling beyond 80 percent of the specified
-minimum during a non-destructive pull test. Change 1 of the standard "removed
-ambiguous, duplicate information from Table 12-1", so values must be taken from
-the current change, not from third-party copies. The excerpts we could reach
-were garbled (rows did not align with gauges), so **no value from that table is
-recorded here**; see `nasa_8739_4a_table`. `standards.py` fixes the canonical
-force unit as newton with the exact lbf factor so the table can be entered
-later without a unit decision.
+M1 needs public limit tables with units. NASA-STD-8739.4A Table 12-1 (crimp
+tensile strength by wire gauge) is tabulated in **newtons with pounds-force in
+parentheses** per every excerpt seen, and the standard forbids pulling beyond
+80 percent of the specified minimum during a non-destructive pull test. Change
+1 "removed ambiguous, duplicate information from Table 12-1", so values must be
+taken from the current change, not from third-party copies.
+
+The agent sandbox could not open the PDF. `tripwire/public_specs.py` therefore
+transcribes **only the four rows whose newton and pound figures agreed across
+two independent excerpts** (the NASA text as indexed by search, and the
+third-party copies at
+https://www.checkline.com/res/products/126677/wire_pull_test_standards.pdf and
+https://www.slideshare.net/slideshow/nasa-std87394/75196591): AWG 26 = 22 N
+(5 lb), AWG 24 = 36 N (8 lb), AWG 22 = 57 N (13 lb), AWG 12 = 459 N (103 lb).
+Each row is MEDIUM confidence and carries `verified_against_pdf=False` in its
+provenance. AWG 20, 18, 16 and 14 appeared with conflicting or unaligned
+figures and are **not entered**; see `nasa_8739_4a_table`. Promoting a row to
+HIGH requires reading it from the PDF and flipping the flag; a test refuses a
+PDF-verified row that is not HIGH.
+
+Synthetic spec limits (`TW-SRM-<part>`, crack-length maxima per fictional part,
+revision `r1` superseded by `r2`) come from `tripwire/synthdata.py` and cite
+the generator, never a standard; they exist so stale-revision faults have a
+history to be stale against.
 
 ## PR #6 assumptions: verdicts
 
