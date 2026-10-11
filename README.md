@@ -1,6 +1,6 @@
 # tripwire
 
-**Status: work in progress. Nothing here is measured yet, so there are no results to report.** A typed SDR loader (`tripwire/sdr.py`), a seeded synthetic-row generator (`tripwire/synth.py`), and a deterministic corruption injector with a ground-truth ledger (`tripwire/corrupt.py`) exist, as do an MCP server with a seeded fault middleware (six planted faults) and a hash-chained injection ledger with tail-hash protection (`tripwire/server.py`, `tripwire/faults.py`, `tripwire/ledger.py`; no agent has been run against them); see [docs/DATA.md](docs/DATA.md) for the data source.
+**Status: work in progress. Nothing here is measured yet, so there are no results to report.** A typed SDR loader (`tripwire/sdr.py`), a seeded synthetic-row generator (`tripwire/synth.py`), and a deterministic corruption injector with a ground-truth ledger (`tripwire/corrupt.py`) exist, as do an MCP server with a seeded fault middleware (six planted faults) and a hash-chained injection ledger with tail-hash protection and a deterministic adjudicator (`tripwire/server.py`, `tripwire/faults.py`, `tripwire/ledger.py`, `tripwire/adjudicator.py`; no agent has been run against them); see [docs/DATA.md](docs/DATA.md) for the data source.
 
 Tripwire feeds a Grok agent deliberately corrupted engineering data, measures whether it notices, and ships a fail-closed check.
 
