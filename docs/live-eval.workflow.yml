@@ -1,0 +1,75 @@
+# PROPOSED workflow. Copy to .github/workflows/live-eval.yml in a PR you review yourself: the
+# bot that wrote this cannot push to .github/workflows. Nothing below has run.
+#
+# Manual only (workflow_dispatch). Never on push, pull_request or schedule.
+# Spend ledger: the committed file runs/spend_ledger.jsonl is the source of truth. The job reads
+# it, refuses if its row count differs from `ledger_rows`, appends each run's cost to a COPY,
+# and uploads the copy. Nothing is committed. After a paid run, download the artifact and commit
+# the new ledger in a PR BEFORE the next run; the next dispatch must pass the new row count, so a
+# forgotten commit (a stale ledger that under-counts spend) is refused, not trusted.
+name: live-eval
+on:
+  workflow_dispatch:
+    inputs:
+      condition_set:
+        description: "baseline-prompt-fix (the lean run) or gate (its own session)"
+        type: choice
+        options: [baseline-prompt-fix, gate]
+        default: baseline-prompt-fix
+      budget_usd:
+        description: "Cap for this run in USD; must fit the room left under the $50 ceiling"
+        type: string
+        default: "25"
+      ledger_rows:
+        description: "Spend rows in the committed runs/spend_ledger.jsonl (0 before the first run)"
+        type: string
+        required: true
+      confirm:
+        description: "Type I-APPROVE-LIVE-SPEND to spend money"
+        type: string
+        required: true
+      dry_run:
+        description: "Scripted client, no secret, no spend (leave ticked until you mean it)"
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: live-eval
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with: { python-version: "3.11" }
+      - run: pip install -e .
+      - name: Run (the secret is only visible to the live step)
+        env:
+          XAI_API_KEY: ${{ inputs.dry_run && '' || secrets.XAI_API_KEY }}
+          CONDITION_SET: ${{ inputs.condition_set }}
+          BUDGET_USD: ${{ inputs.budget_usd }}
+          LEDGER_ROWS: ${{ inputs.ledger_rows }}
+          CONFIRM: ${{ inputs.confirm }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          mkdir -p out
+          cp runs/spend_ledger.jsonl out/spend_ledger.jsonl
+          flags=""
+          if [ "$DRY_RUN" = "true" ]; then flags="--dry-run"; fi
+          python -m tripwire.live_eval --condition-set "$CONDITION_SET" \
+            --budget-usd "$BUDGET_USD" --ledger-rows "$LEDGER_ROWS" --confirm "$CONFIRM" \
+            --spend-ledger out/spend_ledger.jsonl --out out/run $flags
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2 (verify the pin)
+        with:
+          name: live-eval-${{ github.run_id }}
+          path: |
+            out/run/meta.json
+            out/run/receipt.jsonl
+            out/run/result.json
+            out/run/ledgers/
+            out/spend_ledger.jsonl
+            out/run/dry_run_spend_ledger.jsonl

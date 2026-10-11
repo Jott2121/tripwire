@@ -1,8 +1,9 @@
 """xAI client interface, model configs, and pricing (M5). No network, no environment reads.
 
 The harness talks to xAI only through :class:`XaiClient`. Tests use :class:`ScriptedClient`;
-:class:`LiveClient` refuses every call until M7 wires a real one, so a live call cannot happen
-by accident. ``XAI_API_KEY`` is never read here.
+:class:`LiveClient` (M7) is a Responses API client over an injectable transport. It refuses every
+call while :data:`WIRE_CONFIRMED` is False, so a live call cannot happen by accident.
+``XAI_API_KEY`` is never read here: the caller passes the key in.
 
 The model id, effort levels and prices below were supplied by the owner in issue #25, retrieved
 from docs.x.ai on 2026-10-11 (sources next to each value). Anything not in that issue stays
@@ -11,6 +12,9 @@ from docs.x.ai on 2026-10-11 (sources next to each value). Anything not in that 
 
 from __future__ import annotations
 
+import json
+import urllib.error
+import urllib.request
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
@@ -149,6 +153,9 @@ class ChatResponse:
     tool_calls: tuple[ToolCallRequest, ...] = ()  # to execute (client-side path)
     remote_calls: tuple[ToolCallRequest, ...] = ()  # xAI executed these (server-side path)
     cost_in_usd_ticks: int | None = None  # usage.cost_in_usd_ticks, when the response has it
+    # the provider's output items, verbatim, echoed back next turn (encrypted reasoning must be
+    # passed back unchanged); empty for scripted responses
+    output_items: tuple[Mapping[str, Any], ...] = ()
 
 
 class XaiClient(Protocol):
@@ -182,8 +189,150 @@ class ScriptedClient:
         return step
 
 
+# --- live client (M7) -------------------------------------------------------------------------
+# CONFIRMED by the owner in issue #25 (docs.x.ai, retrieved 2026-10-11): Responses API at
+# POST https://api.x.ai/v1/responses; ``reasoning.effort``; ``usage.cost_in_usd_ticks``;
+# encrypted reasoning items are passed back unchanged each turn.
+# NOT CONFIRMED (docs.x.ai could not be read when this was written; the names below follow the
+# OpenAI-style Responses shape and are a guess): the function-tool entry (flat ``name`` /
+# ``parameters``), the ``function_call`` / ``function_call_output`` / ``message`` / ``output_text``
+# items and their fields, ``usage.input_tokens`` / ``output_tokens``, and the HTTP status for
+# quota. Until the owner checks each against docs.x.ai and flips this to True in a reviewed PR,
+# the live client refuses every call (fail closed). Unresolved even then: whether
+# ``cost_in_usd_ticks`` is per response or cumulative (treated as per response), and the
+# cached-token usage field (ignored; the ticks figure already includes discounts).
+WIRE_CONFIRMED = False
+API_URL = "https://api.x.ai/v1/responses"
+
+# (url, headers, body, timeout) -> (status, body bytes). Tests pass a recorded fake.
+Transport = Callable[[str, Mapping[str, str], bytes, float], tuple[int, bytes]]
+
+
+class UsageUnrecognised(QuotaExhausted):
+    """A response lacked a usage figure we need. Halts the runner: cost is never guessed."""
+
+
+def urllib_transport(
+    url: str, headers: Mapping[str, str], body: bytes, timeout: float
+) -> tuple[int, bytes]:  # pragma: no cover - the only network code; tests inject a fake
+    req = urllib.request.Request(url, data=body, headers=dict(headers), method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as res:
+            return res.status, res.read()
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.read()
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        raise XaiError(f"transport failure: {type(exc).__name__}") from exc
+
+
+def _to_input(messages: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
+    items: list[Mapping[str, Any]] = []
+    for m in messages:
+        role = m.get("role")
+        if role == "user":
+            items.append({"role": "user", "content": m["content"]})
+        elif role == "assistant":
+            if not m.get("output_items"):
+                raise XaiError("assistant turn has no provider output items to echo back")
+            items.extend(m["output_items"])
+        elif role == "tool":
+            call_id, out = m["tool_call_id"], m["content"]
+            items.append({"type": "function_call_output", "call_id": call_id, "output": out})
+        else:
+            raise XaiError(f"unsupported message role {role!r}")
+    return items
+
+
+def _count(value: Any, what: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise UsageUnrecognised(f"usage.{what} missing or not a non-negative integer")
+    return value
+
+
+def parse_response(body: Mapping[str, Any]) -> ChatResponse:
+    """Strict parse of one Responses API body; anything unexpected raises (never guessed)."""
+    if body.get("error"):
+        raise XaiError("API returned an error object")
+    if body.get("status", "completed") != "completed":
+        raise XaiError(f"response status {body.get('status')!r}")
+    usage = body.get("usage")
+    if not isinstance(usage, dict):
+        raise UsageUnrecognised("response has no usage object")
+    n_in = _count(usage.get("input_tokens"), "input_tokens")
+    n_out = _count(usage.get("output_tokens"), "output_tokens")
+    ticks = _count(usage.get("cost_in_usd_ticks"), "cost_in_usd_ticks")
+    served, output = body.get("model"), body.get("output")
+    if not isinstance(served, str) or not served or not isinstance(output, list):
+        raise XaiError("response lacks a model id or output list")
+    text: list[str] = []
+    calls: list[ToolCallRequest] = []
+    for item in output:
+        kind = item.get("type") if isinstance(item, dict) else None
+        if kind == "message":
+            for part in item.get("content", []):
+                if part.get("type") != "output_text":
+                    raise XaiError(f"unknown message part {part.get('type')!r}")
+                text.append(str(part["text"]))
+        elif kind == "function_call":
+            try:
+                args = json.loads(item["arguments"])
+                call = ToolCallRequest(item["call_id"], item["name"], args)
+            except (KeyError, TypeError, ValueError) as exc:
+                raise XaiError("malformed function_call item") from exc
+            if not isinstance(args, dict):
+                raise XaiError("function_call arguments are not an object")
+            calls.append(call)
+        elif kind != "reasoning":
+            raise XaiError(f"unknown output item type {kind!r}")
+    return ChatResponse(served, "".join(text), n_in, n_out, tuple(calls), (), ticks, tuple(output))
+
+
 class LiveClient:
-    """Placeholder for the real client (M7). Every call is refused."""
+    """Responses API client for the client-side function-calling path. Refuses while the wire
+    format is unconfirmed, on the server-side path (deferred), and on any unexpected reply.
+
+    HTTP 429 raises :class:`QuotaExhausted` (the runner halts, resumable): the docs read here do
+    not say whether 429 means quota or rate limit, and halting is the safe reading.
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        transport: Transport = urllib_transport,
+        timeout_s: float = 600.0,
+        wire_confirmed: bool | None = None,
+    ) -> None:
+        if not api_key:
+            raise LiveCallsDisabled("no API key supplied")
+        self._key = api_key
+        self._transport, self._timeout = transport, timeout_s
+        self._confirmed = WIRE_CONFIRMED if wire_confirmed is None else wire_confirmed
+
+    def __repr__(self) -> str:  # never show the key
+        return "LiveClient(<redacted>)"
 
     def chat(self, request: ChatRequest) -> ChatResponse:
-        raise LiveCallsDisabled("live xAI calls are not enabled before M7")
+        if not self._confirmed:
+            raise LiveCallsDisabled("Responses API wire format is UNRESOLVED (xai.WIRE_CONFIRMED)")
+        if request.remote_mcp is not None:
+            raise LiveCallsDisabled("server-side remote MCP is deferred")
+        body: dict[str, Any] = {
+            "model": request.model,
+            "input": _to_input(request.messages),
+            "tools": [{"type": "function", **t["function"]} for t in request.tools],
+        }
+        if request.effort is not None:
+            body["reasoning"] = {"effort": request.effort}
+        headers = {"Authorization": f"Bearer {self._key}", "Content-Type": "application/json"}
+        status, raw = self._transport(API_URL, headers, json.dumps(body).encode(), self._timeout)
+        if status == 429:
+            raise QuotaExhausted("HTTP 429")
+        if status != 200:
+            raise XaiError(f"HTTP {status}")  # the body is not echoed: it could carry anything
+        try:
+            parsed = json.loads(raw)
+        except ValueError as exc:
+            raise XaiError("response is not JSON") from exc
+        if not isinstance(parsed, dict):
+            raise XaiError("response is not a JSON object")
+        return parse_response(parsed)

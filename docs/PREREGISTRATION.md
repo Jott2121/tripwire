@@ -316,3 +316,26 @@ open question for the owner (M7).
 - **2026-10-11, M6 (gate), unbounded spec.** A served spec with neither `minimum` nor `maximum` is
   a `spec_unbounded` contract failure (a block), not an internal `gate_error`. The store cannot
   produce one (`SpecLimit` forbids it), so no clean run is affected.
+- **2026-10-11, M7 (live eval machinery, issue #29), no live call made.** `xai.LiveClient` is now a
+  Responses API client (injectable transport, strict parser, per-request served model and
+  `usage.cost_in_usd_ticks`). docs.x.ai could not be read while writing it, so the wire names
+  beyond issue #25 (function tool entry, `function_call` / `function_call_output` / `message` /
+  `output_text` items, `usage.input_tokens` / `output_tokens`, the HTTP status for quota) follow
+  the OpenAI-style shape and are **UNRESOLVED**. `xai.WIRE_CONFIRMED = False` makes the client
+  and `tripwire.live_eval` refuse live runs until the owner checks each name against docs.x.ai and
+  flips it in a reviewed PR. Fail-closed rules: a response without `input_tokens`,
+  `output_tokens` or an integer `cost_in_usd_ticks` raises `UsageUnrecognised`, a
+  `QuotaExhausted`, so the runner halts rather than guessing a cost (that paid request's cost is
+  then missing from the ledger; the operator must add it by hand before the next run); HTTP 429
+  is treated as quota (halt, resumable); `cost_in_usd_ticks` is assumed per response, not
+  cumulative (UNRESOLVED). `prompt_cache_key` is not sent (it affects cost only). Provider output
+  items are echoed back verbatim each turn (`ChatResponse.output_items`, harness assistant
+  messages).
+- **2026-10-11, M7, workflow and ledger persistence.** `tripwire/live_eval.py` is the entry point
+  (`--dry-run` uses a scripted client and a throwaway ledger copy, no secret). The spend ledger is
+  the committed `runs/spend_ledger.jsonl`; a run appends to a copy that is uploaded as an artifact
+  and committed by a human PR before the next run. Every dispatch states the expected ledger row
+  count and the driver refuses a mismatch, so a stale ledger is refused rather than trusted.
+  The budget must be within (0, $50 minus the ledger total]. The bot cannot write
+  `.github/workflows`, so the workflow is proposed at `docs/live-eval.workflow.yml` for the owner
+  to copy. The results report (`python -m tripwire.report`) is the next step, not in this change.

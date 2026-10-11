@@ -221,6 +221,7 @@ def run_one(
                         "role": "assistant",
                         "content": resp.content,
                         "tool_calls": [_wire(c) for c in resp.tool_calls],
+                        **({"output_items": list(resp.output_items)} if resp.output_items else {}),
                     }
                 )
                 for call in resp.tool_calls:
