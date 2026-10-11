@@ -196,19 +196,21 @@ class TestResult:
     parameter: str
     measured: Quantity
     spec_id: str
+    applies_to: str  # the spec row key, e.g. "AWG 22": one test maps to exactly one spec row
     spec_revision: str  # the revision the test was judged against
     tested_at: datetime  # tz-aware
     provenance: Provenance
 
     def __post_init__(self) -> None:
-        for name in ("test_id", "lot_id", "parameter", "spec_id", "spec_revision"):
+        for name in ("test_id", "lot_id", "parameter", "spec_id", "applies_to", "spec_revision"):
             _nonempty(getattr(self, name), name)
         _aware(self.tested_at, "tested_at")
 
     def judge(self, spec: SpecLimit) -> bool:
         """Pass/fail against ``spec``; refuses a mismatched or stale spec (fail closed)."""
-        if spec.spec_id != self.spec_id or spec.parameter != self.parameter:
-            raise ContractError("spec does not match this test's spec_id/parameter")
+        row = (spec.spec_id, spec.parameter, spec.applies_to)
+        if row != (self.spec_id, self.parameter, self.applies_to):
+            raise ContractError("spec does not match this test's spec_id/parameter/applies_to")
         if spec.revision != self.spec_revision:
             raise ContractError(
                 f"spec revision {spec.revision} differs from the test's {self.spec_revision}"

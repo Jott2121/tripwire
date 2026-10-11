@@ -9,10 +9,10 @@ produced them.
 | # | Milestone | State | PR |
 |---|-----------|-------|----|
 | — | SDR loader, synthetic rows, corruption injector + hash-chained ledger (issue #4) | **merged** 2026-10-11 (UTF-8 loader, observed conventions) | #6 |
-| M0 | Measurement standards: `docs/MEASUREMENT_STANDARDS.md` + `tripwire/standards.py` + tests | **ready for review**, CI green; seven open items resolved from the committed profile receipt `reports/sdr_profile_2026.json`; main merged in | #7 (`claude/m0-measurement-standards`) |
-| M0b | `scripts/profile_sdr.py`: offline profiler that closes the M0 open items from a locally downloaded file | **open PR**, stacked on M0 | #8 (`claude/m0b-profile-sdr`) |
-| M1 | Data contract + store: typed schemas carrying units/revision/provenance; fixed-seed synthetic lots, tests, work orders; spec limits from public standards | part 1 types #9; part 2a generators + public spec rows #10; part 2b in-memory store **open PR** (`claude/m1-store`); all stacked, CI green | #9, #10, `claude/m1-store` |
-| M2 | MCP server (Streamable HTTP, auth header) with `query_defects`, `get_spec`, `get_test_result`, `create_work_order`, `get_work_order`; in-memory store; contract tests | not started | — |
+| M0 | Measurement standards: `docs/MEASUREMENT_STANDARDS.md` + `tripwire/standards.py` + tests | **done**, merged; seven open items resolved from the committed profile receipt `reports/sdr_profile_2026.json` | #7 |
+| M0b | `scripts/profile_sdr.py`: offline profiler that closes the M0 open items from a locally downloaded file | **merged** | #8 |
+| M1 | Data contract + store: typed schemas carrying units/revision/provenance; fixed-seed synthetic lots, tests, work orders; spec limits from public standards | **done**, merged (types, generators + public spec rows, in-memory store) | #9, #10, #11 |
+| M2 | MCP server (Streamable HTTP, auth header) with `query_defects`, `get_spec`, `get_test_result`, `create_work_order`, `get_work_order`; in-memory store; contract tests | **open PR** (`claude/m2-mcp-server`); `TestResult.applies_to` added | issue #12 |
 | M3 | Fault middleware F1-F6 + append-only hash-chained ledger with separately stored tail hash + deterministic adjudicator | not started (PR #6's injector and chain are the seed) | — |
 | M4 | Task set (~30) with ground truth computed from the clean store | not started | — |
 | M5 | Harness: xAI client (mocked in tests), server-side remote MCP and client-side function-calling paths, run records, cost tracking; `docs/PREREGISTRATION.md` committed before any scored run | not started | — |
@@ -94,14 +94,19 @@ by adoption, with citation.
   reference.
 - PR #6 merged; main was merged into #7 and the stack merged forward
   (#7 → #8 → #9 → #10 → #11) with merge commits; no force-push, no new PRs.
-  Build is paused pending owner go-ahead.
+  #6–#11 are all merged to `main`.
+- Owner decision (M2): `TestResult` gains a validated, non-empty `applies_to`, so a test
+  result maps to exactly one spec row `(spec_id, parameter, applies_to, spec_revision)`.
+  `TestResult.judge` refuses a spec with a different `applies_to`; `Store` raises
+  `StoreError` for a test that does not resolve to one spec row.
 
 ## Open questions
 
-- `TestResult` carries `spec_id`, `parameter`, `spec_revision` but not `applies_to`, so a
-  test result alone cannot name a spec row when one spec id covers several `applies_to`
-  values (the NASA crimp rows). Synthetic specs are one id per part, so M1 works; decide
-  in M2 whether `TestResult` gains `applies_to` (contract change) before the tools ship.
+- M2 auth is a single shared bearer token from `TRIPWIRE_SERVER_TOKEN`, localhost by
+  default. Is that enough for M5's server-side remote MCP path (where xAI calls the server
+  from outside), or does that path need a tunnel and per-run tokens?
+- Does `query_defects.since` filter on `difficulty_date` (as `Store` does) or on
+  `submission_date`? Documented as the former; confirm.
 
 - See the Open items table in `docs/MEASUREMENT_STANDARDS.md` (keys mirrored in
   `standards.UNRESOLVED`). Column count (76) and the `SubmissionDate` zone

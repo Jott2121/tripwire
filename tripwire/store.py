@@ -39,9 +39,14 @@ class QueryResult:
     truncated: bool
 
 
+def spec_row(sp: SpecLimit) -> tuple[str, str, str, str]:
+    """(spec_id, parameter, applies_to, revision): the identity of one spec row."""
+    return (sp.spec_id, sp.parameter, sp.applies_to, sp.revision)
+
+
 def spec_key(sp: SpecLimit) -> str:
     """Snapshot key of one spec limit revision."""
-    return f"{sp.spec_id}|{sp.parameter}|{sp.applies_to}|{sp.revision}"
+    return "|".join(spec_row(sp))
 
 
 def _typed(records: Iterable[object], cls: type[_T]) -> tuple[_T, ...]:
@@ -130,13 +135,14 @@ class Store:
 
     def _check_references(self) -> None:
         """Every test resolves to a lot and a spec revision; every work order to a defect."""
-        revisions = {(sp.spec_id, sp.parameter, sp.revision) for sp in self._specs.values()}
+        # Spec keys are unique (a duplicate fails in _claim), so membership means exactly one row.
+        rows = {spec_row(sp) for sp in self._specs.values()}
         for t in self._tests.values():
             if t.lot_id not in self._lots:
                 raise StoreError(f"test {t.test_id} references unknown lot {t.lot_id!r}")
-            if (t.spec_id, t.parameter, t.spec_revision) not in revisions:
-                spec = f"{t.spec_id}|{t.parameter}|{t.spec_revision}"
-                raise StoreError(f"test {t.test_id} references unknown spec {spec}")
+            row = (t.spec_id, t.parameter, t.applies_to, t.spec_revision)
+            if row not in rows:
+                raise StoreError(f"test {t.test_id} resolves to no spec row: {'|'.join(row)}")
         for wo in self._orders.values():
             if wo.defect_id not in self._defects:
                 raise StoreError(f"work order {wo.work_order_id} references unknown defect")

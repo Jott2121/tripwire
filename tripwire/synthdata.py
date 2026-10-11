@@ -164,6 +164,7 @@ def generate(seed: int, n_defects: int = 30, n_lots: int = 12, n_work_orders: in
                 spec.parameter,
                 measured,
                 spec.spec_id,
+                spec.applies_to,
                 spec.revision,
                 datetime.combine(lot.received_on, datetime.min.time(), tzinfo=UTC)
                 + timedelta(days=rng.randint(1, 10), hours=rng.randint(8, 17)),
