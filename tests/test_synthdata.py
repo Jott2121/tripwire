@@ -102,6 +102,8 @@ def test_public_spec_rows_are_the_full_table_cited_to_the_official_pdf():
         assert row.confidence is s.Confidence.HIGH and row.verified_against_pdf is True
         assert sp.source_url == s.SRC_NASA_8739_4A and sp.minimum.unit is s.Unit.NEWTON
         assert "verified_against_pdf=true" in sp.provenance.revision
+        assert f"pdf_sha256={ps.NASA_8739_4A_PDF_SHA256}" in sp.provenance.revision
+        assert ps.NASA_8739_4A_PDF_SHA256 in row.note and len(ps.NASA_8739_4A_PDF_SHA256) == 64
         assert sp.is_current and sp.parameter == "crimp_tensile_min"
         # the pound figure agrees with the newton value via the exact factor (rounding only)
         lb = int(re.search(r"'\d+ \((\d+)\)'", row.note).group(1))
