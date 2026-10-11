@@ -186,7 +186,11 @@ class Gate:
                     f"served {spec['revision']}, store {want.revision}",
                 )
             )
-        unit = [q["unit"] for q in (spec["minimum"], spec["maximum"]) if q][0]
+        bounds = [q["unit"] for q in (spec["minimum"], spec["maximum"]) if q]
+        if not bounds:  # SpecLimit forbids this shape: a served spec like it is a contract fault
+            out.append(Failure("spec_unbounded", None, "spec has neither minimum nor maximum"))
+            return out
+        unit = bounds[0]
         if s.UNIT_DIMENSION[s.Unit(unit)] is not s.UNIT_DIMENSION[want.unit]:
             out.append(Failure("unit_dimension", FaultKind.F1, f"{unit} vs {want.unit.value}"))
         return out

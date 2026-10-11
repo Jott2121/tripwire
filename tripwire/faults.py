@@ -24,6 +24,7 @@ from __future__ import annotations
 import copy
 import random
 from collections.abc import Callable, Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
@@ -251,6 +252,22 @@ class FaultInjector:
         self._clock = clock
         self._rng = random.Random(config.seed)
         self._phantoms = 0
+        self._side: list[dict[str, Any]] | None = None
+
+    @contextmanager
+    def side_ledger(self) -> Iterator[list[dict[str, Any]]]:
+        """Divert faults that fire inside the block to a list instead of the run ledger.
+
+        The gate's own read-back goes through this injector; a fault it fires was never shown
+        to the agent, so it must not count as an injected fault for scoring. The diverted events
+        are plain dicts (tool, fault, field, original, served) for the gate's receipt.
+        """
+        events: list[dict[str, Any]] = []
+        self._side = events
+        try:
+            yield events
+        finally:
+            self._side = None
 
     @property
     def head(self) -> LedgerHead:
@@ -300,6 +317,17 @@ class FaultInjector:
         return served
 
     def _record(self, tool: str, kind: FaultKind, inj: _Injection) -> None:
+        if self._side is not None:
+            self._side.append(
+                {
+                    "tool": tool,
+                    "fault": kind.value,
+                    "field": inj.field,
+                    "original": inj.original,
+                    "served": inj.served,
+                }
+            )
+            return
         self.ledger.append(
             run_id=self.run_id,
             tool=tool,

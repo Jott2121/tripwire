@@ -26,6 +26,7 @@ from tripwire.runner import (
     Job,
     RunnerRefused,
     SpendLedgerError,
+    _preflight,
     assert_protocol_committed,
     estimate_run_cost,
     init_spend_ledger,
@@ -211,6 +212,22 @@ def test_lean_matrix_fits_the_first_run_budget_and_leaves_the_gate_out():
     )
     assert set(per_cell.values()) == {55, 21, 13, 22, 20, 48, 61}  # every cell, both conditions
     assert len(per_cell) == 14
+
+
+def test_gate_only_session_is_client_side_priced_and_accepted_under_the_ceiling():
+    price = xai.PRICING["grok-4.7"]
+    jobs = plan_matrix(sp.TASKS, list(xai.MODEL_CONFIGS), conditions=(Condition.GATE,))
+    assert CONDITIONS == (Condition.BASELINE, Condition.PROMPT_FIX)  # default is unchanged
+    assert len(jobs) == 240 and {j.condition for j in jobs} == {Condition.GATE}
+    assert {j.path for j in jobs} == {ExecPath.CLIENT_SIDE}
+    gate_usd = len(jobs) * estimate_run_cost(price)
+    assert gate_usd == pytest.approx(12.48)
+    first_usd = 480 * estimate_run_cost(price)
+    assert first_usd + gate_usd <= HARD_CEILING_USD  # 24.96 + 12.48 = 37.44 of 50
+    pricing = {m.label: price for m in xai.MODEL_CONFIGS}
+    _preflight(jobs, pricing, gate_usd, 0.0, first_usd, HARD_CEILING_USD)  # accepted
+    with pytest.raises(RunnerRefused, match="cumulative ceiling"):
+        _preflight(jobs, pricing, 50.0, 0.0, HARD_CEILING_USD - 1, HARD_CEILING_USD)
 
 
 def test_matrix_shape_subset_repeats_and_second_path_when_enabled():

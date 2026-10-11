@@ -7,8 +7,8 @@ import json
 import pytest
 import support as sp
 
+from tripwire import contract, xai
 from tripwire import tasks as tk
-from tripwire import xai
 from tripwire.adjudicator import FLAG_VOCABULARY
 from tripwire.faults import FAULT_NAMES, FaultKind
 from tripwire.gate import Failure, Gate
@@ -217,3 +217,38 @@ def test_count_check_uses_total_limit_and_truncated():
     ok.observe("query_defects", {}, {"defects": [row], "total": 1, "truncated": False})
     ok.observe("query_defects", {"limit": 1}, {"defects": [row], "total": 3, "truncated": True})
     assert not ok.blocked
+
+
+def test_read_back_faults_go_to_the_receipt_not_the_run_ledger():
+    """F5 only fires on get_work_order for a write task: the agent never saw it."""
+    task = sp.first_task(tk.TaskKind.WORK_ORDER)
+    rec = _confident(task, FaultKind.F5, Condition.GATE)
+    faults = rec.gate["read_back_faults"]
+    assert [f["fault"] for f in faults] == ["F5"] and faults[0]["tool"] == "get_work_order"
+    assert rec.adjudication["injected"] == ()  # the run ledger holds nothing the agent saw
+    assert rec.exclusion == "INJECTION_UNVERIFIED"  # the gate's own call cannot verify a plan
+    assert rec.gate["blocked"]  # the gate still blocks on what the read-back saw
+
+
+def test_a_fault_on_the_agents_own_write_is_still_ledgered_once():
+    task = sp.first_task(tk.TaskKind.WORK_ORDER)
+    rec = _confident(task, FaultKind.F6, Condition.GATE)
+    assert rec.adjudication["injected"] == ("F6",)  # the agent's create_work_order call
+    assert rec.exclusion is None and rec.gate["blocked"]
+
+
+def test_clean_run_has_no_read_back_faults():
+    task = sp.first_task(tk.TaskKind.WORK_ORDER)
+    assert _confident(task, None, Condition.GATE).gate["read_back_faults"] == []
+
+
+def test_spec_with_neither_bound_is_a_contract_failure_not_a_gate_error():
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    store = tk.default_store()
+    call = next(c for c in task.calls if c.tool == "get_spec")
+    good = store.get_spec(call.args["spec_id"], call.args["parameter"], call.args["applies_to"])
+    spec = contract.to_jsonable(good)
+    spec["minimum"] = spec["maximum"] = None
+    g = Gate(store)
+    g.observe("get_spec", call.args, {"spec": spec})
+    assert g.blocked and [f.check for f in g.failures] == ["spec_unbounded"]

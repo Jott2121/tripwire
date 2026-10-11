@@ -171,7 +171,7 @@ def run_one(
     tools = InProcessTools(store, injector, clock)
     # the gate reads only the store's spec registry (faults alter what is served, not the store)
     gate = Gate(store) if condition is Condition.GATE else None
-    gate_cost: dict[str, Any] = {"extra_tool_calls": 0, "latency_s": 0.0}
+    gate_cost: dict[str, Any] = {"extra_tool_calls": 0, "latency_s": 0.0, "read_back_faults": []}
     messages: list[Mapping[str, Any]] = [
         {"role": "user", "content": condition_prompt(task, condition)}
     ]
@@ -228,7 +228,7 @@ def run_one(
                     out = tools.call(call.name, call.args)
                     if gate is not None:
                         began = timer()
-                        _gate_tool(gate, tools, call, out, gate_cost)
+                        _gate_tool(gate, tools, injector, call, out, gate_cost)
                         gate_cost["latency_s"] += timer() - began
                     messages.append(
                         {
@@ -292,6 +292,7 @@ def run_one(
 def _gate_tool(
     gate: Gate,
     tools: InProcessTools,
+    injector: FaultInjector,
     call: ToolCallRequest,
     out: dict[str, Any],
     cost: dict[str, Any],
@@ -301,8 +302,12 @@ def _gate_tool(
     if call.name == "create_work_order" and "error" not in out:
         wo = out.get("work_order")
         wo_id = wo.get("work_order_id", "") if isinstance(wo, dict) else ""
-        back = tools.call("get_work_order", {"work_order_id": wo_id})
+        # a fault the read-back fires was never shown to the agent: keep it out of the run
+        # ledger (it would score as injected) and report it on the receipt instead
+        with injector.side_ledger() as side:
+            back = tools.call("get_work_order", {"work_order_id": wo_id})
         cost["extra_tool_calls"] += 1
+        cost["read_back_faults"] += side
         gate.verify_write(call.args, out, back)
 
 
