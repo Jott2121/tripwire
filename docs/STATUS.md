@@ -123,15 +123,15 @@ by adoption, with citation.
   reachable HTTPS URL (tunnel) and ideally per-run tokens. The path is implemented behind
   `xai.RemoteMcp(url, token_env)` and tested with an in-process stand-in; no tunnel or secret
   was set up. Still open for the owner before M7.
-- M5 could not read docs.x.ai (fetch not permitted), so model ids, reasoning-effort levels and
-  prices are UNRESOLVED in `tripwire/xai.py`; the runner refuses to run on them. Fill them with
-  URL and retrieval date. The brief's multi-agent variant and the "Grok 4.7" id are unverified.
+- M5 could not read docs.x.ai (fetch not permitted); the owner supplied the `grok-4.7` facts in
+  issue #25 (retrieved 2026-10-11) and they are now in `tripwire/xai.py`. Superseded below.
 - M5 decisions OWNER-APPROVED (2026-10-11), marked so in the preregistration: F4 sample size
   (write tasks T31-T40), no numeric "much more" threshold in H2/H3, server-side path only on the
   fixed-seed 20% subset, `MAX_TURNS = 12` (cap hit scores incorrect, recorded as
   `RunRecord.turn_cap_hit`), 20K/2K planning token estimates, replicate-cluster bootstrap CIs.
-  Still PROPOSED: the exit-code numbers. Still UNRESOLVED: model ids, effort levels, prices and
-  the budget cap (the owner supplies them).
+  Still PROPOSED: the exit-code numbers. Model, prices and budget were then supplied in issue
+  #25 (see below), which also changes the matrix size from the M5 figures quoted here (210/280
+  runs per condition, 20% subset, 3 repeats).
 - M5 follow-up fixes: (A) resume after a quota halt no longer crashes; a stale ledger and its
   `.head` are moved to `ledgers/superseded/<job_id>.<n>.jsonl[.head]`, never deleted. (B)
   `INJECTION_UNVERIFIED` is `set(injected) != {planned}`, so re-reading the faulted tool no
@@ -145,6 +145,24 @@ by adoption, with citation.
   server-side and bad-ledger INJECTION_UNVERIFIED, RUN_ERROR precedence); `harness.py` coverage
   went from 83% to 92%. The lines still reported missing (199-203, 211-214, 222, 238-239) include
   ones the tests do execute, so the figure understates it; no cause found, not worked around.
+- **Owner decisions, issue #25 (2026-10-11), implemented on branch `claude/budget-lean`:**
+  - Budget: $50 cumulative across all scored runs; a lean first full run of about $25.
+    `runner.py` enforces a persisted spend ledger (`init_spend_ledger`, `read_spend`;
+    `HARD_CEILING_USD = 50.0`, lower only), refuses to start or halts before a job that would
+    cross it, and fails closed on a missing or corrupt ledger. `usage.cost_in_usd_ticks`
+    (USD = ticks / 1e10) is recorded per request and preferred over the estimate.
+  - Model: `grok-4.7` only (`tripwire/xai.py`: id, `GROK_4_7_PRICING` $2.00 / $0.50 / $6.00 per
+    1M under 200k, $4 / $1 / $12 at 200k+; sources docs.x.ai, retrieved 2026-10-11). Facts
+    (effort values, Responses API, remote-MCP request shape) are in `docs/PREREGISTRATION.md`.
+    Out of scope for this budget, future work: `grok-4.20-multi-agent-0309`, the small/fast row,
+    the second effort row.
+  - Lean matrix (PROPOSED): 6 runs per task, 240 per condition, baseline and prompt-fix, client-side,
+    no repeats, no server-side subset: 480 runs, $24.96 at the planning estimate. Effort `medium`
+    (PROPOSED, no pilot). The gate comes out of the remaining ~$25 after M6. Server-side
+    remote MCP deferred (about $5 for an 8-task subset plus a tunnel). Underpowered: H1 and H4
+    cannot be confirmed by interval, H3 and H5 are not tested. See the preregistration.
+  - Still UNRESOLVED: live Responses API field names beyond the issue, the cached-token usage
+    field, whether the ticks figure is per response or cumulative, the live client itself (M7).
 - Does `query_defects.since` filter on `difficulty_date` (as `Store` does) or on
   `submission_date`? Documented as the former; confirm.
 
@@ -157,6 +175,5 @@ by adoption, with citation.
   `ecfr.gov`, `govinfo.gov` and `nasa.gov`; M0 was researched through search
   excerpts. Allow-listing those hosts (or running the profiler locally) would
   let the next pass promote MEDIUM items to HIGH.
-- xAI model IDs for M5: current docs name `grok-4.7`, `grok-4.6`, `grok-4.5`
-  as accepting `reasoning_effort`; the exact effort levels per model differ
-  between sources and must be read from docs.x.ai when M5 starts.
+- xAI model IDs: resolved by issue #25 to `grok-4.7` only (efforts low | medium | high |
+  xhigh); no other model is in scope for this budget.
