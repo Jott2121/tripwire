@@ -175,7 +175,10 @@ _NUM, _INT, _DATE, _DT, _CODE, _ID, _TXT = (
     _K.TEXT,
 )
 _NONE, _HOUR, _CYC, _INCH, _CNT = Unit.NONE, Unit.HOUR, Unit.CYCLE, Unit.INCH, Unit.COUNT
-_WHOLE_HOURS = "Whole hours of time in service (14 CFR 1.1: airborne time, takeoff to landing)."
+_WHOLE_HOURS = (
+    "Hours of time in service (14 CFR 1.1: airborne time). 'Whole hours' is stated for "
+    "component times; the SDR-2026 profile found every hour column 100% whole numbers."
+)
 _CYCLES = "Count of cycles; entered only when applicable, so often empty."
 _SINCE = "Hours since the most recent overhaul, repair, or inspection; see the SinceCode."
 _SINCE_CODE = (
@@ -192,11 +195,12 @@ _MFR_PN = "Manufacturer's part number, never an operator-internal number. No uni
 _MFR_SN = "Manufacturer's serial number."
 _CN_NOTE = (
     "Up to 17 alphanumerics: 4-char submitter designator + YYYYMMDD submission date "
-    "+ submitter-defined sequence."
+    "+ submitter-defined sequence. SDR-2026 profile: 44,879 of 45,910 match; treat a "
+    "mismatch as a warning, not a reject."
 )
 _SUB_DT_NOTE = (
-    "ISO-8601 with a UTC offset in the issue #4 example (-05:00). Which zone the "
-    "offset tracks (server-local Eastern, DST or not) is unresolved."
+    "ISO-8601 with a UTC offset. The SDR-2026 profile found the offset fixed at -05:00 "
+    "in every month Jan-Oct 2026 (no DST change)."
 )
 _OP_DESIG_NOTE = (
     "First four characters of the operator's certificate number (not the repair "
@@ -204,11 +208,12 @@ _OP_DESIG_NOTE = (
 )
 _REG_NOTE = (
     "US registration WITHOUT the leading 'N' ('Do not enter N'); foreign aircraft "
-    "carry a country code plus as much of the mark as fits. Shape per 14 CFR 47.15."
+    "carry a country code plus as much of the mark as fits. Shape per 14 CFR 47.15. "
+    "SDR-2026 profile: 0% start with N; 45,621 of 45,663 valid without it."
 )
 _CRACK_NOTE = (
-    "'In inches, indicate the length of the crack.' Optional; the 2021 instructions say "
-    "the field will be removed in a future release."
+    "'In inches, indicate the length of the crack.' (Single Submission instructions). "
+    "Optional; the 2021 field instructions say the field will be removed in a future release."
 )
 _CORR_NOTE = (
     "Levels 1/2/3 as defined for corrosion prevention and control programs "
@@ -217,16 +222,15 @@ _CORR_NOTE = (
 _SOO_NOTE = "Two-letter code (batch layout: Alpha 2); flight and ground stages. List partial."
 _HOW_NOTE = "One alphanumeric (batch layout: Alpha-numeric 1); code table not located."
 _STYPE_NOTE = "One letter from the submitter-type look-up (see SUBMITTER_TYPE; list partial)."
-_SDRTYPE_NOTE = "One-letter code (field instructions mention SDR Type = 'G'); table not located."
+_SDRTYPE_NOTE = "One-letter code; A and G observed in SDR-2026 (FI mentions 'G'). Meanings unknown."
 _JASC_NOTE = "Four digits: first two = system (ATA-100-like chapter), last two = component."
 _REGION_NOTE = "FAA region code (two letters in one third-party sample); table not located."
 _DISC_NOTE = "Operator-submitted narrative. Never committed to this repo (docs/DATA.md)."
 
 # (column, kind, unit, confidence, source, note[, fmt[, pattern]])
-# All 76 named columns of the annual SDR-<year>.csv header, in file order, as
-# given in issue #4. The batch upload layout is pipe-delimited with 76 pipes
-# (77 fields) per the Batch File Layout excerpt; whether the download CSV has
-# 76 or 77 columns is UNRESOLVED (see UNRESOLVED below).
+# All 76 columns of the annual SDR-<year>.csv header, in file order. Confirmed by
+# the SDR-2026 profile (76 columns, expected order, 45,910 rows). The batch
+# *upload* layout has 77 fields; it is a different layout from the download.
 _SDR_SPEC: tuple[tuple, ...] = (
     ("OperatorControlNumber", _ID, _NONE, _H, _FI, _CN_NOTE, None, r"[A-Z0-9]{1,17}"),
     (
@@ -238,13 +242,13 @@ _SDR_SPEC: tuple[tuple, ...] = (
         "mm/dd/yyyy on the form.",
         "%m/%d/%Y",
     ),
-    ("SubmissionDate", _DT, _NONE, _U, SRC_ISSUE_4, _SUB_DT_NOTE, "ISO-8601"),
+    ("SubmissionDate", _DT, _NONE, _H, SRC_DOWNLOAD_PAGE, _SUB_DT_NOTE, "ISO-8601"),
     ("OperatorDesignator", _ID, _NONE, _H, _FI, _OP_DESIG_NOTE, None, r"[A-Z0-9]{4}"),
     ("SubmitterDesignator", _ID, _NONE, _H, SRC_SINGLE_SUBMISSION, "FAA-assigned; not editable."),
     ("SubmitterTypeCode", _CODE, _NONE, _M, _FI, _STYPE_NOTE, None, r"[A-Z]"),
     ("ReceivingRegionCode", _CODE, _NONE, _U, _FI, _REGION_NOTE),
     ("ReceivingDistrictOffice", _CODE, _NONE, _U, _FI, "FAA district office; table not located."),
-    ("SDRType", _CODE, _NONE, _U, _FI, _SDRTYPE_NOTE),
+    ("SDRType", _CODE, _NONE, _M, SRC_DOWNLOAD_PAGE, _SDRTYPE_NOTE, None, r"[A-Z]"),
     ("JASCCode", _CODE, _NONE, _H, SRC_JASC, _JASC_NOTE, None, r"\d{4}"),
     ("NatureOfConditionA", _CODE, _NONE, _M, _FI, "Required; 1-3 codes, A first."),
     ("NatureOfConditionB", _CODE, _NONE, _M, _FI, "Optional second code."),
@@ -307,7 +311,7 @@ _SDR_SPEC: tuple[tuple, ...] = (
     ("ButtlineToSide", _CODE, _NONE, _U, _FI, _SIDE),
     ("WaterLineFrom", _NUM, _INCH, _M, _FI, _STATION),
     ("WaterLineTo", _NUM, _INCH, _M, _FI, _STATION),
-    ("CrackLength", _NUM, _INCH, _H, _FI, _CRACK_NOTE),
+    ("CrackLength", _NUM, _INCH, _H, SRC_SINGLE_SUBMISSION, _CRACK_NOTE),
     ("NumberOfCracks", _INT, _CNT, _H, _FI, "Count of cracks found. Optional; slated for removal."),
     ("CorrosionLevel", _CODE, _NONE, _M, SRC_ORDER_8300_12, _CORR_NOTE),
     ("StructuralOther", _TXT, _NONE, _M, _FI, _FREE),
@@ -317,7 +321,7 @@ SDR_FIELDS: tuple[FieldStandard, ...] = tuple(FieldStandard(*row) for row in _SD
 SDR_COLUMNS: tuple[str, ...] = tuple(f.column for f in SDR_FIELDS)
 SDR_FIELD_BY_NAME: Mapping[str, FieldStandard] = MappingProxyType({f.column: f for f in SDR_FIELDS})
 
-SDR_ENCODING = "latin-1"  # per issue #4; UNRESOLVED until profiled on a real file.
+SDR_ENCODING = "utf-8"  # SDR-2026 profile: 0 UTF-8 decode errors, 151 under cp1252.
 SDR_URL_TEMPLATE = "https://external.apic4e.faa.gov/sdrs/retrieve/SDR-{year}.csv"
 SDR_MISSING_VALUE = ""  # empty field = not reported; no sentinel like 'N/A' or 0 is documented.
 
@@ -343,6 +347,7 @@ def _codes(name: str, complete: bool, conf: Confidence, source: str, **codes: st
     return CodeList(name, MappingProxyType(dict(codes)), complete, conf, source)
 
 
+_OBS = "observed in SDR-2026 (meaning not in any source read)"
 SUBMITTER_TYPE = _codes(
     "SubmitterTypeCode",
     False,
@@ -358,7 +363,13 @@ SUBMITTER_TYPE = _codes(
     H="OTHER",
     I="PART 125",
     L="PART 133",
+    M=_OBS,
+    P=_OBS,
+    S=_OBS,
+    W=_OBS,
+    Z=_OBS,
 )
+SDR_TYPE = _codes("SDRType", False, _M, SRC_DOWNLOAD_PAGE, A=_OBS, G=_OBS)
 NATURE_OF_CONDITION = _codes(
     "NatureOfCondition",
     False,
@@ -431,6 +442,7 @@ JASC_TITLES = _codes(
 )
 CODE_LISTS: tuple[CodeList, ...] = (
     SUBMITTER_TYPE,
+    SDR_TYPE,
     NATURE_OF_CONDITION,
     PRECAUTIONARY_PROCEDURE,
     STAGE_OF_OPERATION,
@@ -560,50 +572,46 @@ class Unresolved:
     how_to_resolve: str
 
 
-_PROFILE = "Run scripts/profile_sdr.py on a downloaded SDR-<year>.csv (data never committed)."
-UNRESOLVED: tuple[Unresolved, ...] = (
-    Unresolved(
-        "column_count",
-        "Does the download CSV have 76 columns (issue #4 header) or 77 (batch layout: 76 pipes)?",
-        _PROFILE,
+@dataclass(frozen=True)
+class Resolved:
+    key: str
+    answer: str
+
+
+# Closed by a maintainer run of scripts/profile_sdr.py on SDR-2026.csv (2026-10-11,
+# 45,910 rows), relayed by the owner. The JSON receipt is to be committed as
+# reports/sdr_profile_2026.json by a machine that can reach the FAA host.
+PROFILE_SOURCE = "maintainer run of scripts/profile_sdr.py on SDR-2026.csv, 2026-10-11"
+RESOLVED: tuple[Resolved, ...] = (
+    Resolved(
+        "column_count", "76 columns in the expected order; the 77-field count is the upload layout."
     ),
-    Unresolved(
+    Resolved(
         "encoding",
-        "Is the download CSV really latin-1, or UTF-8/cp1252?",
-        _PROFILE + " It reports decode errors under each candidate encoding.",
+        "UTF-8: 0 decode errors under UTF-8, 151 under cp1252; latin-1 garbles 323 rows.",
     ),
-    Unresolved(
-        "submission_tz",
-        "What zone does the SubmissionDate offset track (fixed -05:00, or Eastern with DST)?",
-        _PROFILE + " It tabulates the distinct offsets seen by month.",
+    Resolved("submission_tz", "Offset fixed at -05:00 in every month Jan-Oct 2026; no DST change."),
+    Resolved("whole_hours", "Every hour column is 100% whole numbers."),
+    Resolved(
+        "registry_prefix", "0% start with N; 45,621 of 45,663 valid under 14 CFR 47.15 without it."
     ),
-    Unresolved(
-        "whole_hours",
-        "Are TotalTime fields stored as whole hours in the CSV, or with decimals?",
-        _PROFILE + " It reports the integer fraction of each numeric column.",
+    Resolved("control_number_shape", "44,879 of 45,910 match 4+8+sequence; mismatch is a warning."),
+    Resolved(
+        "nasa_8739_4a_table",
+        "Table 12-1 read from the official PDF by the maintainer, 2026-10-11: 11 rows AWG 28-8 "
+        "in tripwire/public_specs.py.",
     ),
-    Unresolved(
-        "registry_prefix",
-        "Does the CSV RegistryNNumber field omit the N as the form instructs?",
-        _PROFILE + " It reports the share of values starting with N.",
-    ),
+)
+RESOLVED_KEYS: frozenset[str] = frozenset(r.key for r in RESOLVED)
+
+UNRESOLVED: tuple[Unresolved, ...] = (
     Unresolved(
         "code_tables",
         "Full code tables for SDRType, ReceivingRegionCode, ReceivingDistrictOffice, "
         "HowDiscoveredCode, PartCondition, Part/ComponentSinceCode, *Side, CorrosionLevel, "
         "and the rest of NatureOfCondition / PrecautionaryProcedure / StageOfOperation.",
         "Read the SDRS Look-up Tables and Field Instructions at sdrs.faa.gov (host blocked "
-        "from the agent sandbox), or take distinct values from the profile report.",
-    ),
-    Unresolved(
-        "control_number_shape",
-        "Do real OperatorControlNumber values follow the 4+8+seq shape (max 17)?",
-        _PROFILE + " It reports the share matching CONTROL_NUMBER_RE and the length histogram.",
-    ),
-    Unresolved(
-        "nasa_8739_4a_table",
-        "Exact NASA-STD-8739.4A crimp pull-test minimums (Table 12-1) per AWG, in N and lbf.",
-        "Read the PDF at standards.nasa.gov directly; web excerpts were garbled. Needed for M1.",
+        "from the agent sandbox), or take distinct values from the committed profile report.",
     ),
     Unresolved(
         "sdrs_2026_upgrade",

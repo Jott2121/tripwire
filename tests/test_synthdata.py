@@ -2,9 +2,11 @@
 
 import json
 import re
+from datetime import timedelta
 
 import pytest
 
+from tripwire import contract as c
 from tripwire import public_specs as ps
 from tripwire import standards as s
 from tripwire import synthdata as sd
@@ -40,6 +42,7 @@ def test_defects_follow_the_measurement_standards():
         if d.crack_length is not None:
             assert d.crack_length.unit is s.Unit.INCH
         assert d.provenance.revision == "seed=3" and d.provenance.source_url == sd.GENERATOR_URL
+        assert d.submission_date.utcoffset() == timedelta(hours=-5)  # as in real files
 
 
 def test_synthetic_specs_have_a_current_revision_and_a_looser_superseded_one():
@@ -87,25 +90,23 @@ def test_no_real_names_only_fictional_vocabulary():
     assert "BOEING" not in text and "AIRBUS" not in text
 
 
-def test_public_spec_rows_are_cited_and_marked_unverified():
+def test_public_spec_rows_are_the_full_table_cited_to_the_official_pdf():
     limits = ps.public_spec_limits()
-    assert len(limits) == len(ps.PUBLIC_SPEC_ROWS) == 4
-    gauges = {sp.applies_to for sp in limits}
-    assert gauges == {
-        "AWG 26",
-        "AWG 24",
-        "AWG 22",
-        "AWG 12",
-    }  # AWG 20/18/16/14 omitted: conflicting
+    assert len(limits) == len(ps.PUBLIC_SPEC_ROWS) == 11
+    by_gauge = {sp.applies_to: sp for sp in limits}
+    assert set(by_gauge) == {f"AWG {g}" for g in (28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8)}
+    assert by_gauge["AWG 26"].minimum == c.Quantity(36.0, s.Unit.NEWTON)
+    assert by_gauge["AWG 28"].minimum == c.Quantity(22.0, s.Unit.NEWTON)
+    assert by_gauge["AWG 8"].minimum.value == 1281.0
     for row, sp in zip(ps.PUBLIC_SPEC_ROWS, limits, strict=True):
-        assert row.confidence is s.Confidence.MEDIUM and row.verified_against_pdf is False
+        assert row.confidence is s.Confidence.HIGH and row.verified_against_pdf is True
         assert sp.source_url == s.SRC_NASA_8739_4A and sp.minimum.unit is s.Unit.NEWTON
-        assert "verified_against_pdf=false" in sp.provenance.revision
+        assert "verified_against_pdf=true" in sp.provenance.revision
         assert sp.is_current and sp.parameter == "crimp_tensile_min"
-    # the pound figures in the notes agree with the newton values via the exact factor
-    for row in ps.PUBLIC_SPEC_ROWS:
+        # the pound figure agrees with the newton value via the exact factor (rounding only)
         lb = int(re.search(r"'\d+ \((\d+)\)'", row.note).group(1))
-        assert abs(s.convert(lb, s.Unit.POUND_FORCE, s.Unit.NEWTON) - row.minimum_value) < 1.0
+        assert abs(s.convert(lb, s.Unit.POUND_FORCE, s.Unit.NEWTON) - row.minimum_value) < 1.5
+    assert not hasattr(ps, "NASA_8739_4A_SECONDARY")  # only the official PDF is cited
 
 
 def test_public_spec_row_fails_closed_without_citation_or_with_false_verification():

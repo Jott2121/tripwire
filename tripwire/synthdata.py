@@ -17,7 +17,7 @@ import argparse
 import random
 import sys
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta, timezone
 from pathlib import Path
 
 from tripwire import standards as s
@@ -35,6 +35,7 @@ from tripwire.public_specs import public_spec_limits
 
 GENERATOR_URL = "https://github.com/Jott2121/tripwire/blob/main/tripwire/synthdata.py"
 EPOCH = datetime(2026, 1, 1, tzinfo=UTC)  # fixed so provenance is deterministic
+SDR_OFFSET = timezone(timedelta(hours=-5))  # SubmissionDate offset in real files (fixed -05:00)
 DESIGNATOR = "TWSY"  # fictional 4-char submitter designator
 MAKES = ("ACME AERO", "ZENITH AERO", "ORION AERO", "VEGA AERO")
 SUPPLIERS = ("NORTHWIND PARTS", "BLUE MESA SUPPLY", "HARBORLIGHT AEROSPACE")
@@ -109,9 +110,9 @@ def generate(seed: int, n_defects: int = 30, n_lots: int = 12, n_work_orders: in
     for i in range(n_defects):
         name, pn = rng.choice(PARTS)
         difficulty = date(2026, 1, 1) + timedelta(days=rng.randint(0, 240))
-        submission = datetime.combine(difficulty, datetime.min.time(), tzinfo=UTC) + timedelta(
-            days=rng.randint(0, 3), hours=rng.randint(6, 20)
-        )
+        submission = datetime.combine(
+            difficulty, datetime.min.time(), tzinfo=SDR_OFFSET
+        ) + timedelta(days=rng.randint(0, 3), hours=rng.randint(6, 20))
         condition = rng.choice(CONDITIONS)
         crack = (
             Quantity(round(rng.uniform(0.1, 3.0), 2), s.Unit.INCH)
