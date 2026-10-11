@@ -50,6 +50,7 @@ def _test(**over):
         parameter="pull_min",
         measured=c.Quantity(15.0, s.Unit.POUND_FORCE),
         spec_id="SPEC-A",
+        applies_to="AWG 22",
         spec_revision="r2",
         tested_at=NOW,
         provenance=PROV,
@@ -149,6 +150,10 @@ def test_test_result_judges_only_against_the_matching_current_revision():
         _test().judge(_spec(superseded_by="r3"))
     with pytest.raises(c.ContractError):
         _test().judge(_spec(parameter="other"))
+    with pytest.raises(c.ContractError):
+        _test().judge(_spec(applies_to="AWG 20"))  # a different row of the same spec
+    with pytest.raises(c.ContractError):
+        _test(applies_to=" ")
     with pytest.raises(c.ContractError):
         _test(tested_at=datetime(2026, 1, 1))
 

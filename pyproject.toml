@@ -10,7 +10,10 @@ readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Jeff Otterson" }]
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    # Official MCP Python SDK: Streamable HTTP server transport and in-memory client sessions.
+    "mcp>=1.9,<2",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6"]
