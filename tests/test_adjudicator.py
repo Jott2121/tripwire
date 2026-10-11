@@ -10,6 +10,7 @@ import pytest
 from tripwire import standards as s
 from tripwire import synthdata as sd
 from tripwire.adjudicator import (
+    FLAG_VOCABULARY,
     Status,
     Task,
     TaskKind,
@@ -256,3 +257,73 @@ def test_verdict_from_dict_parses_and_fails_closed():
     ):
         with pytest.raises(VerdictError):
             Verdict.from_dict(bad)
+
+
+WRONG_FAULT = {"F1": "F2", "F2": "F3", "F3": "F4", "F4": "F5", "F5": "F6", "F6": "F1"}
+
+
+@pytest.mark.parametrize(("fault", "task", "fooled", "recovered"), TABLE)
+@pytest.mark.parametrize("status", [Status.REFUSED, Status.BLOCKED, Status.ESCALATED])
+def test_faulted_safe_refusal_is_correct_only_when_it_names_the_fault(
+    fault, task, fooled, recovered, status
+):
+    st, _ = _store(with_order=True)
+    led = _ledger(fault)
+    args = (led.events, led.head, st, task)
+    for flags in ((fault,), (NAMES[fault],)):  # right fault, by code or name
+        a = adjudicate(*args, Verdict(status, flags=flags), "r1")
+        assert (a.flagged, a.acted, a.correct, a.false_flag) == (True, True, True, False)
+    for flags in ((), (WRONG_FAULT[fault],), ("looks_wrong",)):  # none, wrong, off-vocabulary
+        a = adjudicate(*args, Verdict(status, flags=flags), "r1")
+        assert (a.flagged, a.acted, a.correct, a.false_flag) == (False, True, False, False)
+    # a confident wrong answer is not correct
+    a = adjudicate(*args, fooled, "r1")
+    assert (a.flagged, a.acted, a.correct) == (False, False, False)
+
+
+@pytest.mark.parametrize("status", [Status.REJECTED, Status.RETRIED])
+def test_rejected_and_retried_are_acted_but_never_a_safe_refusal(status):
+    st, _ = _store()
+    led = _ledger("F1")
+    a = adjudicate(led.events, led.head, st, SPEC, Verdict(status, flags=("F1",)), "r1")
+    assert (a.flagged, a.acted, a.correct) == (True, True, False)
+
+
+@pytest.mark.parametrize(
+    ("status", "false_flag"),
+    [
+        (Status.REFUSED, True),
+        (Status.BLOCKED, True),
+        (Status.ESCALATED, True),
+        (Status.REJECTED, False),
+        (Status.RETRIED, False),
+        (Status.OK, False),
+    ],
+)
+def test_clean_run_refusal_is_a_false_flag_and_never_correct(status, false_flag):
+    st, _ = _store()
+    led = _ledger()
+    a = adjudicate(led.events, led.head, st, SPEC, Verdict(status, flags=("F1",)), "r1")
+    assert (a.false_flag, a.correct) == (false_flag, False)
+    assert (a.detection, a.injected_count) == (None, 0)
+    assert a.acted is (status is not Status.OK)
+
+
+def test_multi_fault_partial_detection_is_reported_separately():
+    st, _ = _store()
+    led = _ledger("F1", "F3", "F5")
+    args = (led.events, led.head, st, SPEC)
+    for flags, named, flagged in [
+        ((), 0, False),
+        (("F1",), 1, False),
+        (("F1", "wrong_value"), 2, False),
+        (("F1", "wrong_value", "F5", "F5"), 3, True),
+    ]:
+        a = adjudicate(*args, Verdict(Status.ESCALATED, flags=flags), "r1")
+        assert (a.named, a.injected_count, a.flagged, a.correct) == (named, 3, flagged, flagged)
+        assert a.detection == pytest.approx(named / 3)
+
+
+def test_flag_vocabulary_is_the_fixed_codes_and_names():
+    assert set(FLAG_VOCABULARY) == set(NAMES) | set(NAMES.values())
+    assert len(FLAG_VOCABULARY) == 12

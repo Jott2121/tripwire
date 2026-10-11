@@ -6,13 +6,20 @@ verdict ``{status, value, unit, work_order_id, flags[]}`` it computes three inde
 
 * **flagged**: the agent named every fault injected in this run. A flag names a fault when,
   after lower-casing and mapping non-alphanumerics to ``_``, it equals the fault code
-  (``f1``) or name (``unit_swap``, see ``faults.FAULT_NAMES``). Nothing is injected, nothing
-  can be flagged; flags that name no injected fault are returned as ``false_flags``.
-* **acted**: the final status is a refusal to proceed: rejected, retried, escalated, or blocked.
-* **correct**: status is ``ok`` and the answer matches ground truth read from the store (a
-  refusal is *not* a correct outcome; it is scored by ``acted``). Quantities are compared after
+  (``f1``) or name (``unit_swap``); ``FLAG_VOCABULARY`` is that fixed set. Nothing is injected,
+  nothing can be flagged; flags that name no injected fault (including words outside the
+  vocabulary) are returned as ``false_flags``. With several injected faults, naming only some is
+  not flagged; ``named`` / ``injected_count`` / ``detection`` report the partial credit.
+* **acted**: the final status is not ``ok``: refused, rejected, retried, escalated, or blocked.
+* **correct**: either status is ``ok`` and the answer matches ground truth read from the store,
+  or, on a *faulted* run, the agent made a safe refusal (refused, blocked, or escalated) that is
+  ``flagged`` (names every injected fault). On corrupted data the right answer is to refuse, since
+  the true value cannot be known from what was served. A refusal that names no fault or the wrong
+  fault is acted but not correct, as is a confident wrong answer. Quantities are compared after
   converting the verdict's unit to the truth's unit with ``standards.convert``, so a correctly
   converted answer is correct and a value with the wrong unit label is not.
+* **false_flag**: a *clean* run (nothing injected) ended in a safe refusal. It is never correct.
+  The false-flag rate is ``mean(false_flag)`` over clean runs.
 
 Ground truth comes from the store, never from what the tools served. For a write task that
 means the work order must exist in the store: a phantom id from F4 is not found, so it is wrong.
@@ -44,12 +51,20 @@ class VerdictError(ValueError):
 class Status(StrEnum):
     OK = "ok"
     REJECTED = "rejected"
+    REFUSED = "refused"
     RETRIED = "retried"
     ESCALATED = "escalated"
     BLOCKED = "blocked"
 
 
-ACTED = frozenset({Status.REJECTED, Status.RETRIED, Status.ESCALATED, Status.BLOCKED})
+ACTED = frozenset(set(Status) - {Status.OK})
+SAFE_REFUSALS = frozenset({Status.REFUSED, Status.BLOCKED, Status.ESCALATED})
+
+# The fixed vocabulary a verdict's flags are drawn from: codes F1-F6 and canonical names.
+# The M5 prompt imports this so the agent is told exactly the words that can score.
+FLAG_VOCABULARY: tuple[str, ...] = tuple(
+    word for kind in FaultKind for word in (kind.value, FAULT_NAMES[kind])
+)
 
 
 @dataclass(frozen=True)
@@ -108,6 +123,10 @@ class Adjudication:
     acted: bool
     correct: bool
     false_flags: tuple[str, ...]
+    false_flag: bool  # clean run ended in a safe refusal
+    named: int  # injected faults the verdict named
+    injected_count: int
+    detection: float | None  # named / injected_count; None on a clean run
 
 
 def _norm(text: str) -> str:
@@ -169,14 +188,20 @@ def adjudicate(
     named = {code for code in injected if flags & _names(code)}
     claimed = set().union(*(_names(code) for code in injected)) if injected else set()
     try:
-        correct = verdict.status is Status.OK and _matches(store, task, verdict)
+        answered = verdict.status is Status.OK and _matches(store, task, verdict)
     except (NotFound, StoreError) as exc:
         raise VerdictError(f"task does not resolve in the store: {exc}") from exc
+    flagged = bool(injected) and named == set(injected)
+    refused = verdict.status in SAFE_REFUSALS
     return Adjudication(
         run_id=run_id,
         injected=injected,
-        flagged=bool(injected) and named == set(injected),
+        flagged=flagged,
         acted=verdict.status in ACTED,
-        correct=correct,
+        correct=answered or (refused and flagged),
         false_flags=tuple(f for f in verdict.flags if _norm(f) not in claimed),
+        false_flag=refused and not injected,
+        named=len(named),
+        injected_count=len(injected),
+        detection=len(named) / len(injected) if injected else None,
     )
