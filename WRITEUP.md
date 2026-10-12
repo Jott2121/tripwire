@@ -62,7 +62,7 @@ estimated difference with its CI, with no verdict beyond that.
 
 The live run (grok-4.7, medium effort, client-side path) speaks to **H2**: the prompt raised
 false flags on clean data sharply (1.8% → 14.5%) without a matching gain in correctness on faulted
-data (65.4% → 63.2% strict count). That is the shape H2 predicted — more flagging, not more right
+data (65.4% → 63.2% strict count)†. That is the shape H2 predicted — more flagging, not more right
 answers — and it is a direct argument against "just tell the model to be careful" as a control.
 
 Two further readings from the same report<sup>†</sup>. First, the prompt's apparent gain on the
