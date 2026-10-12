@@ -32,6 +32,13 @@
 # Pilot: set pilot_jobs to 10..20 (budget_usd must be <= 2). A deterministic stratified subset of
 # the matrix runs into its own directory, meta.json / result.json say pilot: true, and its spend
 # still goes to the ledger. 0 runs the full matrix.
+#
+# Resume: set resume_from_run to the id of a paid run (artifact live-eval-paid-<id>). Its run/
+# directory is fetched into out/run and the driver gets --resume-from out/run, which re-attempts
+# ONLY the jobs whose newest receipt record is RUN_ERROR. Spend already in that folder counts
+# against budget_usd (so budget_usd is the cap for the whole folder, not just this session), and
+# every retry is still bounded by the cumulative $50 ledger ceiling. The artifact's own ledger is
+# NOT used: the committed ledger stays the source of truth. Not combinable with pilot_jobs.
 name: live-eval
 on:
   workflow_dispatch:
@@ -53,6 +60,10 @@ on:
         description: "0 = full matrix; 10-20 = stratified pilot (live needs budget_usd <= 2)"
         type: string
         default: "0"
+      resume_from_run:
+        description: "Run id of a paid run (live-eval-paid-<id>) whose RUN_ERROR jobs to re-attempt; blank = fresh run"
+        type: string
+        default: ""
       confirm:
         description: "Type I-APPROVE-LIVE-SPEND to spend money"
         type: string
@@ -110,6 +121,24 @@ jobs:
             exit 1
           fi
           echo "PRIOR_FLAG=--prior-ledger $(find prior -name spend_ledger.jsonl)" >> "$GITHUB_ENV"
+      - name: Fetch the run to resume (fail closed)
+        if: ${{ inputs.resume_from_run != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RESUME_ID: ${{ inputs.resume_from_run }}
+          PILOT_JOBS: ${{ inputs.pilot_jobs }}
+        run: |
+          set -euo pipefail
+          case "$RESUME_ID" in *[!0-9]*) echo "REFUSED: resume_from_run must be a run id" >&2; exit 1;; esac
+          if [ "$PILOT_JOBS" != "0" ]; then echo "REFUSED: resume excludes pilot_jobs" >&2; exit 1; fi
+          mkdir -p out resume-dl
+          gh run download "$RESUME_ID" --repo "$REPO" --name "live-eval-paid-$RESUME_ID" --dir resume-dl
+          if [ ! -f resume-dl/run/receipt.jsonl ] || [ ! -f resume-dl/run/meta.json ]; then
+            echo "REFUSED: artifact has no run/receipt.jsonl and run/meta.json" >&2
+            exit 1
+          fi
+          cp -r resume-dl/run out/run
       - name: Run (the secret is only visible to a live run)
         env:
           XAI_API_KEY: ${{ !inputs.dry_run && secrets.XAI_API_KEY || '' }}
@@ -120,6 +149,7 @@ jobs:
           CONFIRM: ${{ inputs.confirm }}
           DRY_RUN: ${{ inputs.dry_run }}
           RUN_ID: ${{ github.run_id }}
+          RESUME_ID: ${{ inputs.resume_from_run }}
         run: |
           mkdir -p out
           cp runs/spend_ledger.jsonl out/spend_ledger.jsonl
@@ -130,10 +160,14 @@ jobs:
             flags="$flags --pilot-jobs $PILOT_JOBS"
             outdir="out/pilot-$RUN_ID"
           fi
+          if [ -n "$RESUME_ID" ]; then
+            flags="$flags --resume-from out/run"
+            outdir=""
+          fi
           # PRIOR_FLAG is one of two fixed strings built above; the operator inputs go via env only
           python -m tripwire.live_eval --condition-set "$CONDITION_SET" \
             --budget-usd "$BUDGET_USD" --ledger-rows "$LEDGER_ROWS" --confirm "$CONFIRM" \
-            --spend-ledger out/spend_ledger.jsonl --out "$outdir" $PRIOR_FLAG $flags
+            --spend-ledger out/spend_ledger.jsonl ${outdir:+--out "$outdir"} $PRIOR_FLAG $flags
       - name: Name the artifact
         if: always()
         id: kind

@@ -97,7 +97,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--confirm", required=True, help=f"must equal {CONFIRM_PHRASE}")
     p.add_argument("--ledger-rows", type=int, required=True, help="spend rows you expect")
     p.add_argument("--spend-ledger", type=Path, default=Path("runs/spend_ledger.jsonl"))
-    p.add_argument("--out", type=Path, required=True)
+    p.add_argument("--out", type=Path, help="output directory (required unless --resume-from)")
+    p.add_argument(
+        "--resume-from",
+        type=Path,
+        metavar="DIR",
+        help="a prior run's out/run directory: re-attempt only its RUN_ERROR jobs, in place. "
+        "Its recorded spend counts against --budget-usd; the ledger ceiling still applies",
+    )
     p.add_argument("--repo", type=Path, default=Path("."))
     p.add_argument("--dry-run", action="store_true", help="scripted client, throwaway ledger")
     p.add_argument("--max-jobs", type=int, help="dry-run only: run the first N jobs")
@@ -144,8 +151,18 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
         check_prior_ledger(args.spend_ledger, args.prior_ledger)
     elif not args.no_prior_paid_run and not args.dry_run:
         raise runner.RunnerRefused("live runs need --prior-ledger or --no-prior-paid-run")
+    resume: Path | None = args.resume_from
+    if resume is not None:
+        if args.out is not None and args.out != resume:
+            raise runner.RunnerRefused("--out must be omitted or equal --resume-from")
+        if pilot is not None or args.max_jobs is not None:
+            raise runner.RunnerRefused("--resume-from excludes --pilot-jobs and --max-jobs")
+        if not (resume / "meta.json").is_file() or not (resume / "receipt.jsonl").is_file():
+            raise runner.RunnerRefused(f"{resume} has no meta.json and receipt.jsonl to resume")
+    elif args.out is None:
+        raise runner.RunnerRefused("--out is required unless --resume-from is given")
     check_budget(args.budget_usd, args.spend_ledger, args.ledger_rows)
-    out: Path = args.out
+    out: Path = resume if resume is not None else args.out
     if (out / "meta.json").exists():  # never mix pilot and scored records in one directory
         was_pilot = json.loads((out / "meta.json").read_text()).get("pilot") is True
         if was_pilot != (pilot is not None):
@@ -165,6 +182,11 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
         client = xai.LiveClient(key)
     all_tasks = tasks.default_tasks()
     jobs = runner.plan_matrix(all_tasks, xai.MODEL_CONFIGS, CONDITION_SETS[args.condition_set])
+    if resume is not None:
+        failed = runner.failed_run_ids(resume / "receipt.jsonl")
+        jobs = tuple(j for j in jobs if j.job_id in failed)
+        if not jobs:
+            raise runner.RunnerRefused(f"{resume} has no RUN_ERROR job in this condition set")
     if args.max_jobs is not None:
         jobs = jobs[: args.max_jobs]
     if pilot is not None:
