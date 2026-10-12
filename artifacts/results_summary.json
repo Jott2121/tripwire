@@ -5,6 +5,11 @@
       "runs": 377,
       "total_usd": 4.293016
     },
+    "gate": {
+      "mean_usd": 0.069767,
+      "runs": 186,
+      "total_usd": 12.976622
+    },
     "prompt_fix": {
       "mean_usd": 0.046594,
       "runs": 377,
@@ -12,10 +17,10 @@
     }
   },
   "first_timestamp": "2026-10-12T00:37:55.099140+00:00",
-  "last_timestamp": "2026-10-12T17:01:19.941973+00:00",
+  "last_timestamp": "2026-10-12T21:45:07.418747+00:00",
   "model": "grok-4.7",
   "path": "client_side_functions",
-  "runs": 754,
+  "runs": 940,
   "source": "runs/spend_ledger.jsonl",
-  "total_usd": 21.859
+  "total_usd": 34.835622
 }
