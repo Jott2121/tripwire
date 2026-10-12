@@ -221,6 +221,7 @@ def run_one(
                         "role": "assistant",
                         "content": resp.content,
                         "tool_calls": [_wire(c) for c in resp.tool_calls],
+                        **({"output_items": list(resp.output_items)} if resp.output_items else {}),
                     }
                 )
                 for call in resp.tool_calls:
@@ -237,7 +238,9 @@ def run_one(
                             "content": json.dumps(out, sort_keys=True),
                         }
                     )
-    except QuotaExhausted:
+    except QuotaExhausted as exc:
+        exc.paid_usd = sum(c for c in costs if c is not None)  # lets the runner book what ran
+        exc.paid_ticks = sum(ticks)
         raise
     except XaiError as exc:
         error = f"{type(exc).__name__}: {exc}"
