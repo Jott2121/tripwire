@@ -148,7 +148,8 @@ def test_load_fails_closed(tmp_path):
         rp.load_records([tmp_path])
     r = row("T1", None, True)
     with pytest.raises(rp.ReportError, match="duplicate"):
-        rp.load_records([write(tmp_path / "a", [r, r])])
+        rp.load_records([write(tmp_path / "a", [r]), write(tmp_path / "a2", [r])])  # across dirs
+    assert len(rp.load_records([write(tmp_path / "a3", [r, r])])[0]) == 1  # same dir: newest wins
     with pytest.raises(rp.ReportError, match="never adjudicated"):
         rp.load_records([write(tmp_path / "b", [{**r, "adjudication": None}])])
     with pytest.raises(rp.ReportError, match="lacks"):

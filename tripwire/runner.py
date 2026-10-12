@@ -348,7 +348,7 @@ def run_matrix(
                 "exit_code": int(code),
                 "exit_name": code.name,
                 "ran_this_session": ran,
-                "records_total": len(_read_receipt(receipt)[0]),
+                "records_total": _distinct_records(receipt),
                 "spent_usd": spent,
                 "cap_usd": cap_usd,
                 "ceiling_usd": ceiling_usd,
@@ -405,8 +405,38 @@ def _preflight(
         raise RunnerRefused(f"projected spend {total:.2f} USD exceeds the cap {cap_usd:.2f} USD")
 
 
+def _latest_by_run_id(rows: Sequence[Mapping[str, Any]]) -> dict[str, Mapping[str, Any]]:
+    """The newest (last-appended) receipt row per ``run_id``."""
+    return {r["run_id"]: r for r in rows}
+
+
 def _read_receipt(path: Path) -> tuple[set[str], float]:
+    """(run ids that need no re-run, total spend). A run whose newest record is ``RUN_ERROR`` is
+    not done, so a resume re-attempts it; its earlier cost still counts (it was paid)."""
     if not path.exists():
         return set(), 0.0
     rows: list[dict[str, Any]] = [json.loads(x) for x in path.read_text().splitlines() if x]
-    return {r["run_id"] for r in rows}, sum(r["cost_usd"] or 0.0 for r in rows)
+    done = {
+        rid
+        for rid, r in _latest_by_run_id(rows).items()
+        if r["exclusion"] != Exclusion.RUN_ERROR.value
+    }
+    return done, sum(r["cost_usd"] or 0.0 for r in rows)
+
+
+def _distinct_records(path: Path) -> int:
+    if not path.exists():
+        return 0
+    return len(_latest_by_run_id([json.loads(x) for x in path.read_text().splitlines() if x]))
+
+
+def failed_run_ids(receipt: Path) -> set[str]:
+    """Run ids whose newest receipt record is ``RUN_ERROR`` (what ``--resume-from`` re-attempts)."""
+    if not receipt.exists():
+        return set()
+    rows = [json.loads(x) for x in receipt.read_text().splitlines() if x]
+    return {
+        rid
+        for rid, r in _latest_by_run_id(rows).items()
+        if r["exclusion"] == Exclusion.RUN_ERROR.value
+    }

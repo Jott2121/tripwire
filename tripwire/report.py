@@ -106,7 +106,10 @@ def load_records(run_dirs: Iterable[Path]) -> tuple[list[dict[str, Any]], list[d
         if not receipt.is_file():
             raise ReportError(f"{d}: no receipt.jsonl")
         try:
-            these = [json.loads(x) for x in receipt.read_text().splitlines() if x.strip()]
+            lines = [json.loads(x) for x in receipt.read_text().splitlines() if x.strip()]
+            # a resumed run appends a new record; only the newest per run_id counts (in order)
+            newest = {r["run_id"]: i for i, r in enumerate(lines) if "run_id" in r}
+            these = [r for i, r in enumerate(lines) if newest.get(r.get("run_id"), i) == i]
             meta = json.loads((d / "meta.json").read_text()) if (d / "meta.json").exists() else {}
             result = (
                 json.loads((d / "result.json").read_text()) if (d / "result.json").exists() else {}
