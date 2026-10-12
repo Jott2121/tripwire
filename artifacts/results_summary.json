@@ -1,0 +1,21 @@
+{
+  "conditions": {
+    "baseline": {
+      "mean_usd": 0.011387,
+      "runs": 377,
+      "total_usd": 4.293016
+    },
+    "prompt_fix": {
+      "mean_usd": 0.046594,
+      "runs": 377,
+      "total_usd": 17.565984
+    }
+  },
+  "first_timestamp": "2026-10-12T00:37:55.099140+00:00",
+  "last_timestamp": "2026-10-12T17:01:19.941973+00:00",
+  "model": "grok-4.7",
+  "path": "client_side_functions",
+  "runs": 754,
+  "source": "runs/spend_ledger.jsonl",
+  "total_usd": 21.859
+}
