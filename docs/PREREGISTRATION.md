@@ -364,3 +364,20 @@ open question for the owner (M7).
   10 <= N <= 20 with `budget_usd <= 2`. `meta.json` and `result.json` carry `pilot: true` and
   `pilot_jobs: N`, each pilot writes to its own directory, and a pilot directory is never reused
   for a scored run. Pilot records are not part of the scored run.
+- **2026-10-12, M7 part 2, results report (`tripwire/report.py`).** Choices fixed before any
+  scored run: (1) bootstrap = 10,000 resamples, seed 1, percentile 95% interval, resampling whole
+  tasks (`task_id` is the replicate cluster; all of a task's runs in the cell move together). A
+  resample with a zero denominator is skipped; fewer than two tasks gives "no CI", never an
+  invented one. (2) Every rate is quoted as strict floor / published. Strict: excluded runs stay
+  in the denominator and count as incorrect; for the clean false-flag rate (lower is better) the
+  strict value is the worst case, excluded clean runs counting as false flags. Published:
+  excluded runs dropped. (3) `BASELINE_FAIL` is applied at analysis to a faulted, otherwise
+  unexcluded run when its task has unexcluded clean runs in the same model, path and condition
+  and none is correct; a task with no such clean run is not excluded for this reason. A receipt
+  code (`RUN_ERROR`, `INJECTION_UNVERIFIED`) is never overwritten. (4) Cost per correct outcome =
+  total cost of the cell's runs (all runs for strict, unexcluded for published) / correct runs,
+  resampled as a ratio; "n/a" when any run in the cell has unknown cost or none is correct. (5)
+  Gate overhead = sum(gate cost - prompt_fix cost) / sum(prompt_fix cost) over runs paired by
+  plan run, model, path and repeat, both priced and neither `RUN_ERROR`, plus the gate's extra
+  tool calls and latency; the comparator is `prompt_fix` because the gate prompt is `prompt_fix`
+  plus the gate. (6) A report is never overwritten; pilot and halted directories are labelled.
