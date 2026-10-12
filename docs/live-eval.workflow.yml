@@ -1,12 +1,37 @@
-# PROPOSED workflow. Copy to .github/workflows/live-eval.yml in a PR you review yourself: the
-# bot that wrote this cannot push to .github/workflows. Nothing below has run.
+# PROPOSED workflow. Nothing below has run. The bot that wrote this cannot push to
+# .github/workflows, so install it yourself, in a PR you review:
+#
+#   git switch -c ci/live-eval origin/main
+#   git checkout claude/issue-29-20261011-2333 -- docs/live-eval.workflow.yml   # skip once merged
+#   cp docs/live-eval.workflow.yml .github/workflows/live-eval.yml
+#   git add .github/workflows/live-eval.yml
+#   git commit -m "ci: add manual live-eval workflow" && git push -u origin ci/live-eval
+#
+# Keep the file name live-eval.yml: the prior-run lookup below queries that workflow by name.
+# Add the repository secret XAI_API_KEY (Settings > Secrets and variables > Actions).
 #
 # Manual only (workflow_dispatch). Never on push, pull_request or schedule.
-# Spend ledger: the committed file runs/spend_ledger.jsonl is the source of truth. The job reads
-# it, refuses if its row count differs from `ledger_rows`, appends each run's cost to a COPY,
-# and uploads the copy. Nothing is committed. After a paid run, download the artifact and commit
-# the new ledger in a PR BEFORE the next run; the next dispatch must pass the new row count, so a
-# forgotten commit (a stale ledger that under-counts spend) is refused, not trusted.
+#
+# Spend ledger. The committed file runs/spend_ledger.jsonl is the SOURCE OF TRUTH. A run appends
+# to a COPY and uploads it; nothing is committed. After a paid run, download the artifact
+# `live-eval-paid-<run id>` and commit its spend_ledger.jsonl in a PR BEFORE the next run.
+# Enforced, fail closed, before anything is spent:
+#   1. the job finds the most recent completed PAID live-eval run (artifact live-eval-paid-*) with
+#      GITHUB_TOKEN (actions: read), downloads its spend_ledger.jsonl, and the driver refuses
+#      unless every spend row in it is already in the committed ledger (run_id + timestamp +
+#      cost_usd) and the committed total is at least as large;
+#   2. a prior paid run whose artifact is expired or missing is refused (never skipped);
+#      --no-prior-paid-run is passed only when the API shows zero prior paid runs;
+#   3. `ledger_rows` must equal the spend rows in the committed file (a second, manual check).
+# Artifacts are kept 90 days; after that the committed file alone carries the history, and a
+# paid run older than 90 days with an expired artifact makes the next dispatch refuse until the
+# owner has checked that the committed ledger is complete (then re-dispatch is a code change).
+# Dry runs upload live-eval-dry-*; a live run that appended no spend uploads live-eval-nospend-*
+# (so a refused run cannot hide an earlier uncommitted ledger).
+#
+# Pilot: set pilot_jobs to 10..20 (budget_usd must be <= 2). A deterministic stratified subset of
+# the matrix runs into its own directory, meta.json / result.json say pilot: true, and its spend
+# still goes to the ledger. 0 runs the full matrix.
 name: live-eval
 on:
   workflow_dispatch:
@@ -21,9 +46,13 @@ on:
         type: string
         default: "25"
       ledger_rows:
-        description: "Spend rows in the committed runs/spend_ledger.jsonl (0 before the first run)"
+        description: "Spend rows in the committed runs/spend_ledger.jsonl (1 header + N rows; count N)"
         type: string
         required: true
+      pilot_jobs:
+        description: "0 = full matrix; 10-20 = stratified pilot (live needs budget_usd <= 2)"
+        type: string
+        default: "0"
       confirm:
         description: "Type I-APPROVE-LIVE-SPEND to spend money"
         type: string
@@ -34,6 +63,7 @@ on:
         default: true
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: live-eval
   cancel-in-progress: false
@@ -46,30 +76,79 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with: { python-version: "3.11" }
       - run: pip install -e .
-      - name: Run (the secret is only visible to the live step)
+      - name: Find and fetch the last paid run's ledger (fail closed)
         env:
-          XAI_API_KEY: ${{ inputs.dry_run && '' || secrets.XAI_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p prior
+          ids=$(gh api --paginate \
+            "repos/$REPO/actions/workflows/live-eval.yml/runs?status=completed&per_page=100" \
+            --jq '.workflow_runs[].id')
+          found=""
+          for id in $ids; do
+            row=$(gh api "repos/$REPO/actions/runs/$id/artifacts?per_page=100" \
+              --jq '.artifacts[] | select(.name | startswith("live-eval-paid-")) | "\(.name) \(.expired)"')
+            if [ -n "$row" ]; then found="$id $row"; break; fi
+          done
+          if [ -z "$found" ]; then
+            echo "no prior paid run"
+            echo "PRIOR_FLAG=--no-prior-paid-run" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          set -- $found
+          echo "most recent paid run: $1 (artifact $2, expired=$3)"
+          if [ "$3" != "false" ]; then
+            echo "REFUSED: the last paid run's artifact expired; verify the committed ledger" >&2
+            exit 1
+          fi
+          gh run download "$1" --repo "$REPO" --name "$2" --dir prior
+          n=$(find prior -name spend_ledger.jsonl | wc -l)
+          if [ "$n" != "1" ]; then
+            echo "REFUSED: expected exactly one spend_ledger.jsonl in the artifact, found $n" >&2
+            exit 1
+          fi
+          echo "PRIOR_FLAG=--prior-ledger $(find prior -name spend_ledger.jsonl)" >> "$GITHUB_ENV"
+      - name: Run (the secret is only visible to a live run)
+        env:
+          XAI_API_KEY: ${{ !inputs.dry_run && secrets.XAI_API_KEY || '' }}
           CONDITION_SET: ${{ inputs.condition_set }}
           BUDGET_USD: ${{ inputs.budget_usd }}
           LEDGER_ROWS: ${{ inputs.ledger_rows }}
+          PILOT_JOBS: ${{ inputs.pilot_jobs }}
           CONFIRM: ${{ inputs.confirm }}
           DRY_RUN: ${{ inputs.dry_run }}
+          RUN_ID: ${{ github.run_id }}
         run: |
           mkdir -p out
           cp runs/spend_ledger.jsonl out/spend_ledger.jsonl
           flags=""
           if [ "$DRY_RUN" = "true" ]; then flags="--dry-run"; fi
+          outdir="out/run"
+          if [ "$PILOT_JOBS" != "0" ]; then
+            flags="$flags --pilot-jobs $PILOT_JOBS"
+            outdir="out/pilot-$RUN_ID"
+          fi
+          # PRIOR_FLAG is one of two fixed strings built above; the operator inputs go via env only
           python -m tripwire.live_eval --condition-set "$CONDITION_SET" \
             --budget-usd "$BUDGET_USD" --ledger-rows "$LEDGER_ROWS" --confirm "$CONFIRM" \
-            --spend-ledger out/spend_ledger.jsonl --out out/run $flags
+            --spend-ledger out/spend_ledger.jsonl --out "$outdir" $PRIOR_FLAG $flags
+      - name: Name the artifact
+        if: always()
+        id: kind
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then kind=dry
+          elif [ -f out/spend_ledger.jsonl ] && ! cmp -s runs/spend_ledger.jsonl out/spend_ledger.jsonl; then kind=paid
+          else kind=nospend; fi
+          echo "name=live-eval-$kind-$RUN_ID" >> "$GITHUB_OUTPUT"
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2 (verify the pin)
         with:
-          name: live-eval-${{ github.run_id }}
-          path: |
-            out/run/meta.json
-            out/run/receipt.jsonl
-            out/run/result.json
-            out/run/ledgers/
-            out/spend_ledger.jsonl
-            out/run/dry_run_spend_ledger.jsonl
+          name: ${{ steps.kind.outputs.name }}
+          path: out/
+          retention-days: 90
+          if-no-files-found: warn

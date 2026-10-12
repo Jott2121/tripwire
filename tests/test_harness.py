@@ -253,7 +253,7 @@ def test_grok_4_7_facts_are_pinned_and_live_calls_refused():
     assert price.cost(199_999, 0) == pytest.approx(199_999 * 2 / 1e6)
     req = xai.ChatRequest("m", None, ())
     with pytest.raises(xai.LiveCallsDisabled):
-        xai.LiveClient("not-a-key").chat(req)  # unconfirmed wire format: refuses
+        xai.LiveClient("not-a-key", wire_confirmed=False).chat(req)  # unconfirmed: refuses
     with pytest.raises(xai.XaiError):
         xai.ScriptedClient([]).chat(req)
     remote = xai.RemoteMcp("https://example.invalid/mcp", "TRIPWIRE_SERVER_TOKEN")

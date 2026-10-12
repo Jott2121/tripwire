@@ -58,6 +58,38 @@ def check_budget(budget_usd: float, ledger: Path, expect_rows: int) -> float:
     return remaining
 
 
+def _spend_rows(path: Path) -> list[dict[str, object]]:
+    """The spend rows of a ledger that ``read_spend`` accepts (so each has a numeric cost)."""
+    runner.read_spend(path)
+    rows = [json.loads(line) for line in path.read_text().splitlines()[1:]]
+    return [r for r in rows if r["kind"] == "spend"]
+
+
+def check_prior_ledger(committed: Path, prior: Path) -> None:
+    """Refuse unless the committed ledger already contains everything the last paid run recorded.
+
+    Catches a forgotten ledger commit: the last paid run's artifact ledger holds rows the stale
+    committed file lacks. Rows match on (run_id, timestamp, cost_usd); the committed total must
+    also be at least the prior total.
+    """
+
+    def ident(row: dict[str, object]) -> tuple[object, object, object]:
+        return row.get("run_id"), row.get("timestamp"), row.get("cost_usd")
+
+    have = {ident(r) for r in _spend_rows(committed)}
+    missing = [r for r in _spend_rows(prior) if ident(r) not in have]
+    if missing:
+        raise runner.RunnerRefused(
+            f"committed ledger lacks {len(missing)} spend row(s) from the last paid run "
+            "(commit its spend_ledger.jsonl artifact first)"
+        )
+    if runner.read_spend(committed) < runner.read_spend(prior):
+        raise runner.RunnerRefused("committed ledger total is below the last paid run's total")
+
+
+PILOT_MIN, PILOT_MAX, PILOT_MAX_BUDGET_USD = 10, 20, 2.0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="tripwire.live_eval")
     p.add_argument("--condition-set", choices=sorted(CONDITION_SETS), required=True)
@@ -69,6 +101,19 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--repo", type=Path, default=Path("."))
     p.add_argument("--dry-run", action="store_true", help="scripted client, throwaway ledger")
     p.add_argument("--max-jobs", type=int, help="dry-run only: run the first N jobs")
+    p.add_argument(
+        "--pilot-jobs",
+        type=int,
+        help=f"run a deterministic stratified N-job pilot; live needs {PILOT_MIN}<=N<={PILOT_MAX} "
+        f"and budget<={PILOT_MAX_BUDGET_USD}",
+    )
+    prior = p.add_mutually_exclusive_group()
+    prior.add_argument("--prior-ledger", type=Path, help="the last paid run's spend ledger")
+    prior.add_argument(
+        "--no-prior-paid-run",
+        action="store_true",
+        help="only when the Actions API shows zero prior paid runs",
+    )
     return p
 
 
@@ -87,8 +132,24 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
         raise runner.RunnerRefused("confirm string does not match")
     if args.max_jobs is not None and not args.dry_run:
         raise runner.RunnerRefused("--max-jobs is dry-run only")
+    pilot: int | None = args.pilot_jobs
+    if pilot is not None and args.max_jobs is not None:
+        raise runner.RunnerRefused("--pilot-jobs and --max-jobs are exclusive")
+    if pilot is not None and not args.dry_run:
+        if not PILOT_MIN <= pilot <= PILOT_MAX or args.budget_usd > PILOT_MAX_BUDGET_USD:
+            raise runner.RunnerRefused(
+                f"a live pilot needs {PILOT_MIN}<=N<={PILOT_MAX} and budget<={PILOT_MAX_BUDGET_USD}"
+            )
+    if args.prior_ledger is not None:
+        check_prior_ledger(args.spend_ledger, args.prior_ledger)
+    elif not args.no_prior_paid_run and not args.dry_run:
+        raise runner.RunnerRefused("live runs need --prior-ledger or --no-prior-paid-run")
     check_budget(args.budget_usd, args.spend_ledger, args.ledger_rows)
     out: Path = args.out
+    if (out / "meta.json").exists():  # never mix pilot and scored records in one directory
+        was_pilot = json.loads((out / "meta.json").read_text()).get("pilot") is True
+        if was_pilot != (pilot is not None):
+            raise runner.RunnerRefused(f"{out} holds a different kind of run (pilot vs scored)")
     ledger = args.spend_ledger
     if args.dry_run:
         out.mkdir(parents=True, exist_ok=True)
@@ -106,6 +167,8 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
     jobs = runner.plan_matrix(all_tasks, xai.MODEL_CONFIGS, CONDITION_SETS[args.condition_set])
     if args.max_jobs is not None:
         jobs = jobs[: args.max_jobs]
+    if pilot is not None:
+        jobs = runner.pilot_subset(jobs, pilot)
     code = runner.run_matrix(
         jobs,
         {t.task_id: t for t in all_tasks},
@@ -117,6 +180,7 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
         pricing=xai.PRICING,
         clock=lambda: datetime.now(UTC),
         spend_ledger=ledger,
+        extra_meta={"pilot": True, "pilot_jobs": pilot} if pilot is not None else None,
     )
     print(f"{code.name}: see {out / 'result.json'}")
     return int(code)

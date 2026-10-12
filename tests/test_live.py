@@ -77,11 +77,9 @@ def test_follow_up_turn_echoes_output_items_and_tool_results():
 
 def test_refuses_until_wire_confirmed_and_without_calling():
     fake = Fake(body=OK_BODY)
-    assert xai.WIRE_CONFIRMED is False
+    assert xai.WIRE_CONFIRMED is True  # confirmed from docs.x.ai on 2026-10-11 (see xai.py)
     with pytest.raises(xai.LiveCallsDisabled):
         live(fake, confirmed=False).chat(REQ)
-    with pytest.raises(xai.LiveCallsDisabled):
-        xai.LiveClient("sk-test", fake).chat(REQ)  # the module default
     assert fake.sent == []
     with pytest.raises(xai.LiveCallsDisabled):
         xai.LiveClient("")
@@ -224,8 +222,11 @@ def test_missing_or_corrupt_ledger_refuses(repo, ledger, tmp_path):
     assert live_eval.main([*args(repo, ledger, tmp_path), "--dry-run"]) == 2
 
 
-def test_live_mode_needs_key_and_a_confirmed_wire_and_runs_nothing(repo, ledger, tmp_path, capsys):
-    argv = args(repo, ledger, tmp_path)
+def test_live_mode_needs_key_and_a_confirmed_wire_and_runs_nothing(
+    repo, ledger, tmp_path, capsys, monkeypatch
+):
+    monkeypatch.setattr(xai, "WIRE_CONFIRMED", False)
+    argv = [*args(repo, ledger, tmp_path), "--no-prior-paid-run"]
     assert live_eval.main(argv, env={}) == 2
     assert "XAI_API_KEY is not set" in capsys.readouterr().err
     assert live_eval.main(argv, env={"XAI_API_KEY": "sk-test"}) == 2
@@ -241,7 +242,7 @@ def test_confirmed_wire_reaches_the_client_and_spends_into_the_real_ledger(
     monkeypatch.setattr(xai, "LiveClient", lambda key: live_eval.DryRunClient())
     real_plan = runner.plan_matrix
     monkeypatch.setattr(runner, "plan_matrix", lambda *a, **k: real_plan(*a, **k)[:3])
-    argv = [*args(repo, ledger, tmp_path), "--budget-usd", "1"]
+    argv = [*args(repo, ledger, tmp_path), "--budget-usd", "1", "--no-prior-paid-run"]
     assert live_eval.main(argv, env={"XAI_API_KEY": "k"}) == int(runner.ExitCode.OK)
     assert runner.read_spend(ledger) == pytest.approx(3 * 0.052)
 
@@ -261,3 +262,105 @@ def test_committed_spend_ledger_is_valid_and_the_workflow_is_manual_only():
     assert "workflow_dispatch:" in text and "cancel-in-progress: false" in text
     for trigger in ("push:", "pull_request:", "schedule:"):
         assert trigger not in text.split("permissions:")[0].split("\non:")[1]
+    # '' is falsy, so `dry && '' || secret` always yields the secret: the order below matters
+    assert "XAI_API_KEY: ${{ !inputs.dry_run && secrets.XAI_API_KEY || '' }}" in text
+    assert "inputs.dry_run && '' ||" not in text
+    assert "actions: read" in text and "retention-days: 90" in text
+    assert "live-eval-$kind-$RUN_ID" in text and "kind=paid" in text and "kind=dry" in text
+    assert "pilot_jobs:" in text and "--no-prior-paid-run" in text and "--prior-ledger" in text
+    assert "cp docs/live-eval.workflow.yml .github/workflows/live-eval.yml" in text
+
+
+def _spend(run_id, cost, ts="2026-10-12T00:00:00+00:00"):
+    return {"kind": "spend", "run_id": run_id, "cost_usd": cost, "timestamp": ts}
+
+
+def _write_rows(path, *rows):
+    with path.open("a") as fh:
+        for r in rows:
+            fh.write(json.dumps(r) + "\n")
+
+
+def test_prior_ledger_must_be_contained_in_the_committed_one(repo, ledger, tmp_path, capsys):
+    prior = tmp_path / "prior.jsonl"
+    prior.write_text(ledger.read_text())
+    _write_rows(prior, _spend("a", 1.0), _spend("b", 2.0))
+    base = [*args(repo, ledger, tmp_path), "--dry-run", "--max-jobs", "1"]
+    assert live_eval.main([*base, "--prior-ledger", str(prior)], env={}) == 2  # forgotten commit
+    assert "lacks 2 spend row" in capsys.readouterr().err
+    _write_rows(ledger, _spend("a", 1.0))  # partially committed
+    assert live_eval.main([*base, "--prior-ledger", str(prior), "--ledger-rows", "1"]) == 2
+    _write_rows(ledger, _spend("b", 2.0))
+    ok = [*args(repo, ledger, tmp_path, ledger_rows=2), "--dry-run", "--max-jobs", "1"]
+    assert live_eval.main([*ok, "--prior-ledger", str(prior)], env={}) == 0
+
+
+def test_prior_rows_match_on_run_id_timestamp_and_cost(repo, ledger, tmp_path):
+    prior = tmp_path / "prior.jsonl"
+    prior.write_text(ledger.read_text())
+    _write_rows(prior, _spend("a", 1.0))
+    for changed in (
+        _spend("x", 1.0),
+        _spend("a", 1.0, "2026-10-13T00:00:00+00:00"),
+        _spend("a", 1.5),
+    ):
+        committed = tmp_path / "c.jsonl"
+        committed.write_text(ledger.read_text())
+        _write_rows(committed, changed, _spend("pad", 9.0))  # bigger total, wrong identity
+        with pytest.raises(runner.RunnerRefused, match="lacks 1"):
+            live_eval.check_prior_ledger(committed, prior)
+        committed.unlink()
+    _write_rows(ledger, _spend("a", 1.0))
+    live_eval.check_prior_ledger(ledger, prior)  # same row: fine
+
+
+def test_committed_total_below_prior_total_is_refused(tmp_path):
+    prior, committed = tmp_path / "p.jsonl", tmp_path / "c.jsonl"
+    for path in (prior, committed):
+        runner.init_spend_ledger(path, sp.CLOCK)
+    _write_rows(prior, _spend("a", 1.0), _spend("a", 1.0))  # the same run booked twice
+    _write_rows(committed, _spend("a", 1.0))  # every identity present, but the total is lower
+    with pytest.raises(runner.RunnerRefused, match="total is below"):
+        live_eval.check_prior_ledger(committed, prior)
+
+
+def test_live_runs_need_a_prior_decision_and_the_flags_are_exclusive(repo, ledger, tmp_path):
+    argv = args(repo, ledger, tmp_path)
+    assert live_eval.main(argv, env={"XAI_API_KEY": "k"}) == 2  # neither flag
+    with pytest.raises(SystemExit):
+        live_eval.main([*argv, "--no-prior-paid-run", "--prior-ledger", str(ledger)])
+    assert not (tmp_path / "out").exists()
+
+
+def test_pilot_runs_a_stratified_subset_and_is_marked(repo, ledger, tmp_path):
+    base = [*args(repo, ledger, tmp_path), "--dry-run", "--pilot-jobs", "12"]
+    assert live_eval.main(base, env={}) == 0
+    out = tmp_path / "out"
+    meta = json.loads((out / "meta.json").read_text())
+    result = json.loads((out / "result.json").read_text())
+    assert meta["pilot"] is True and meta["pilot_jobs"] == 12 and meta["jobs"] == 12
+    assert result["pilot"] is True and result["ran_this_session"] == 12
+    recs = [json.loads(x) for x in (out / "receipt.jsonl").read_text().splitlines()]
+    assert {r["condition"] for r in recs} == {"baseline", "prompt_fix"}
+    assert len({(r["condition"], r["planned_fault"]) for r in recs}) == 12
+    # a pilot directory is never reused for a scored run
+    assert live_eval.main([*args(repo, ledger, tmp_path), "--dry-run"], env={}) == 2
+
+
+@pytest.mark.parametrize(("pilot", "budget"), [("9", "2"), ("21", "2"), ("10", "2.01"), ("0", "2")])
+def test_live_pilot_bounds(repo, ledger, tmp_path, monkeypatch, pilot, budget):
+    monkeypatch.setattr(xai, "LiveClient", lambda key: live_eval.DryRunClient())
+    argv = [*args(repo, ledger, tmp_path, budget_usd=budget), "--no-prior-paid-run"]
+    argv += ["--pilot-jobs", pilot]
+    assert live_eval.main(argv, env={"XAI_API_KEY": "k"}) == 2
+    assert not (tmp_path / "out").exists() and runner.read_spend(ledger) == 0.0
+
+
+def test_live_pilot_inside_bounds_runs(repo, ledger, tmp_path, monkeypatch):
+    monkeypatch.setattr(xai, "LiveClient", lambda key: live_eval.DryRunClient())
+    argv = [*args(repo, ledger, tmp_path, budget_usd="2"), "--no-prior-paid-run"]
+    both = [*argv, "--pilot-jobs", "10", "--max-jobs", "3"]
+    assert live_eval.main(both, env={"XAI_API_KEY": "k"}) == 2  # exclusive with --max-jobs
+    assert live_eval.main([*argv, "--pilot-jobs", "10"], env={"XAI_API_KEY": "k"}) == 0
+    assert runner.read_spend(ledger) == pytest.approx(10 * 0.052)
+    assert json.loads((tmp_path / "out/meta.json").read_text())["pilot_jobs"] == 10

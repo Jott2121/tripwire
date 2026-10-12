@@ -30,6 +30,7 @@ from tripwire.runner import (
     assert_protocol_committed,
     estimate_run_cost,
     init_spend_ledger,
+    pilot_subset,
     plan_matrix,
     read_spend,
     run_matrix,
@@ -150,6 +151,36 @@ def test_quota_exhaustion_halts_without_recording_the_run(repo, tmp_path):
     assert _run(repo, tmp_path, _jobs(2), client) is ExitCode.QUOTA_HALT
     assert not (tmp_path / "out/receipt.jsonl").exists()
     assert json.loads((tmp_path / "out/result.json").read_text())["exit_name"] == "QUOTA_HALT"
+
+
+def test_halted_run_books_completed_turns_plus_an_estimate(repo, tmp_path):
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    good = replace(sp.resp(calls=sp.read_calls(task)), cost_in_usd_ticks=3 * xai.TICKS_PER_USD)
+    client = xai.ScriptedClient([good, xai.UsageUnrecognised("response has no usage object")])
+    assert _run(repo, tmp_path, _jobs(2), client) is ExitCode.QUOTA_HALT
+    assert not (tmp_path / "out/receipt.jsonl").exists()  # nothing scored
+    rows = [json.loads(x) for x in _ledger(tmp_path).read_text().splitlines()[1:]]
+    est = estimate_run_cost(sp.PRICE)
+    assert len(rows) == 1 and rows[0]["halted"] is True
+    assert rows[0]["run_id"] == _jobs(2)[0].job_id
+    assert rows[0]["cost_usd"] == pytest.approx(3.0 + est)  # known paid turn + one estimate
+    assert rows[0]["cost_in_usd_ticks"] == 3 * xai.TICKS_PER_USD
+    assert json.loads((tmp_path / "out/result.json").read_text())["spent_usd"] == pytest.approx(
+        3.0 + est
+    )
+
+
+def test_pilot_subset_is_deterministic_and_stratified():
+    all_tasks = tk.default_tasks()
+    jobs = plan_matrix(all_tasks, xai.MODEL_CONFIGS)
+    a, b = pilot_subset(jobs, 14), pilot_subset(jobs, 14)
+    assert a == b and len(a) == 14 and len({j.job_id for j in a}) == 14
+    assert [j for j in jobs if j in a] == list(a)  # plan order
+    strata = {(j.condition, j.plan.fault) for j in a}
+    assert len(strata) == 14 and len({s[0] for s in strata}) == 2  # one per stratum, both arms
+    assert a != jobs[:14]
+    with pytest.raises(RunnerRefused):
+        pilot_subset(jobs, 0)
 
 
 def test_run_errors_are_recorded_and_reflected_in_the_exit_code(repo, tmp_path):

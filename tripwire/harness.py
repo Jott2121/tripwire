@@ -238,7 +238,9 @@ def run_one(
                             "content": json.dumps(out, sort_keys=True),
                         }
                     )
-    except QuotaExhausted:
+    except QuotaExhausted as exc:
+        exc.paid_usd = sum(c for c in costs if c is not None)  # lets the runner book what ran
+        exc.paid_ticks = sum(ticks)
         raise
     except XaiError as exc:
         error = f"{type(exc).__name__}: {exc}"

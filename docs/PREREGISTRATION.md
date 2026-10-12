@@ -321,16 +321,23 @@ open question for the owner (M7).
   `usage.cost_in_usd_ticks`). docs.x.ai could not be read while writing it, so the wire names
   beyond issue #25 (function tool entry, `function_call` / `function_call_output` / `message` /
   `output_text` items, `usage.input_tokens` / `output_tokens`, the HTTP status for quota) follow
-  the OpenAI-style shape and are **UNRESOLVED**. `xai.WIRE_CONFIRMED = False` makes the client
-  and `tripwire.live_eval` refuse live runs until the owner checks each name against docs.x.ai and
-  flips it in a reviewed PR. Fail-closed rules: a response without `input_tokens`,
+  the OpenAI-style shape and were **UNRESOLVED** when written; `xai.WIRE_CONFIRMED = False` made
+  the client and `tripwire.live_eval` refuse live runs. **Superseded 2026-10-11 (PR #30 review):**
+  the owner read docs.x.ai and the names are confirmed, so `WIRE_CONFIRMED = True`. Sources:
+  https://docs.x.ai/docs/guides/function-calling (flat function tools
+  `{"type","name","description","parameters"}`; `function_call` items with `call_id`, `name`,
+  `arguments` as a JSON string; results as `{"type":"function_call_output","call_id","output"}`;
+  text in `message` items via `content[0].text`; `parallel_tool_calls` on by default) and
+  https://docs.x.ai/developers/cost-tracking (`usage.input_tokens`, `usage.output_tokens`,
+  `usage.cost_in_usd_ticks`; the ticks figure is per request, not cumulative, and net of caching
+  discounts; 1 USD = 1e10 ticks). Still unconfirmed: the HTTP status for quota (429 stays a
+  halt). The parser stays strict: an unknown output item or message part type raises. Fail-closed rules: a response without `input_tokens`,
   `output_tokens` or an integer `cost_in_usd_ticks` raises `UsageUnrecognised`, a
   `QuotaExhausted`, so the runner halts rather than guessing a cost (that paid request's cost is
-  then missing from the ledger; the operator must add it by hand before the next run); HTTP 429
-  is treated as quota (halt, resumable); `cost_in_usd_ticks` is assumed per response, not
-  cumulative (UNRESOLVED). `prompt_cache_key` is not sent (it affects cost only). Provider output
-  items are echoed back verbatim each turn (`ChatResponse.output_items`, harness assistant
-  messages).
+  then booked as a conservative `halted` ledger row, see the next entry); HTTP 429 is treated as
+  quota (halt, resumable); `cost_in_usd_ticks` is per response (confirmed, above).
+  `prompt_cache_key` is not sent (it affects cost only). Provider output items are echoed back
+  verbatim each turn (`ChatResponse.output_items`, harness assistant messages).
 - **2026-10-11, M7, workflow and ledger persistence.** `tripwire/live_eval.py` is the entry point
   (`--dry-run` uses a scripted client and a throwaway ledger copy, no secret). The spend ledger is
   the committed `runs/spend_ledger.jsonl`; a run appends to a copy that is uploaded as an artifact
@@ -339,3 +346,21 @@ open question for the owner (M7).
   The budget must be within (0, $50 minus the ledger total]. The bot cannot write
   `.github/workflows`, so the workflow is proposed at `docs/live-eval.workflow.yml` for the owner
   to copy. The results report (`python -m tripwire.report`) is the next step, not in this change.
+- **2026-10-12, M7, review fixes (PR #30).** (1) The workflow injects the secret only on live
+  runs: `${{ !inputs.dry_run && secrets.XAI_API_KEY || '' }}` (the earlier `dry && '' || secret`
+  always yielded the secret, since `''` is falsy). (2) Ledger durability is enforced by the
+  workflow, not the operator's typed `ledger_rows` (kept as a second check): it finds the most
+  recent completed paid run (artifact `live-eval-paid-<run id>`; dry runs `live-eval-dry-*`,
+  live runs that appended nothing `live-eval-nospend-*`), downloads its `spend_ledger.jsonl`, and
+  `tripwire.live_eval --prior-ledger` refuses unless every spend row there is in the committed
+  ledger (match on `run_id` + `timestamp` + `cost_usd`) and the committed total is at least as
+  large. A prior paid run with an expired or missing artifact is refused; `--no-prior-paid-run`
+  is passed only when the API shows none. Artifacts are kept 90 days; the committed file stays the
+  source of truth. (3) A run halted by `QuotaExhausted` (including `UsageUnrecognised` after paid
+  200s) now books a spend row flagged `"halted": true` with the known cost of its completed turns
+  plus one run's estimate: over-counting by design. The halted run is still not in the receipt.
+  (4) Pilot mode: `--pilot-jobs N` (workflow input `pilot_jobs`, 0 = full matrix) runs a
+  deterministic subset stratified by (condition, fault or clean); live runs allow only
+  10 <= N <= 20 with `budget_usd <= 2`. `meta.json` and `result.json` carry `pilot: true` and
+  `pilot_jobs: N`, each pilot writes to its own directory, and a pilot directory is never reused
+  for a scored run. Pilot records are not part of the scored run.

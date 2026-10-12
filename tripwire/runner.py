@@ -172,10 +172,57 @@ def _append_spend(path: Path, rec: RunRecord, out_dir: Path, fallback_usd: float
         "cost_in_usd_ticks": rec.cost_in_usd_ticks,
         "timestamp": rec.timestamp,
     }
+    _append_row(path, row)
+
+
+def _append_row(path: Path, row: Mapping[str, Any]) -> None:
     with path.open("a") as fh:
         fh.write(json.dumps(row, sort_keys=True) + "\n")
         fh.flush()
         os.fsync(fh.fileno())
+
+
+def _append_halted_spend(
+    path: Path, job: Job, out_dir: Path, paid_usd: float, paid_ticks: int, est: float, ts: str
+) -> None:
+    """Book a halted run: the known cost of its completed turns PLUS one run's estimate, because
+    the request that halted it may have been paid (a 200 with no usage). Over-count, never under."""
+    _append_row(
+        path,
+        {
+            "kind": "spend",
+            "run_id": job.job_id,
+            "out_dir": str(out_dir),
+            "cost_usd": paid_usd + est,
+            "cost_in_usd_ticks": paid_ticks or None,
+            "timestamp": ts,
+            "halted": True,
+        },
+    )
+
+
+def pilot_subset(jobs: Sequence[Job], n: int) -> tuple[Job, ...]:
+    """A deterministic stratified ``n`` of ``jobs``. Strata are (condition, fault or clean); take
+    round-robin across strata (hash-ordered, so no condition or fault is favoured) and, within a
+    stratum, in hash order. The same jobs and ``n`` always give the same subset, in plan order."""
+    if not 0 < n <= len(jobs):
+        raise RunnerRefused(f"pilot size {n} must be in (0, {len(jobs)}]")
+
+    def key(text: str) -> str:
+        return hashlib.sha256(f"pilot:{text}".encode()).hexdigest()
+
+    strata: dict[str, list[Job]] = {}
+    for job in jobs:
+        fault = job.plan.fault.value if job.plan.fault else "clean"
+        strata.setdefault(f"{job.condition.value}/{fault}", []).append(job)
+    queues = [sorted(strata[k], key=lambda j: key(j.job_id)) for k in sorted(strata, key=key)]
+    picked: list[Job] = []
+    while len(picked) < n:
+        for queue in queues:
+            if queue and len(picked) < n:
+                picked.append(queue.pop(0))
+    chosen = {j.job_id for j in picked}
+    return tuple(j for j in jobs if j.job_id in chosen)
 
 
 def assert_protocol_committed(protocol: Path, repo: Path) -> tuple[str, str]:
@@ -207,12 +254,15 @@ def run_matrix(
     clock: Clock,
     spend_ledger: Path,
     ceiling_usd: float = HARD_CEILING_USD,
+    extra_meta: Mapping[str, Any] | None = None,
 ) -> ExitCode:
     """Run ``jobs`` (resuming any already in the receipt); returns the exit code.
 
     ``cap_usd`` bounds this output directory. ``spend_ledger`` is the one shared file that
     records every run's cost across all sessions and directories; ``ceiling_usd`` bounds it and
     can only be lowered from ``HARD_CEILING_USD``. A missing or corrupt ledger refuses the run.
+    ``extra_meta`` (e.g. ``{"pilot": True, "pilot_jobs": 12}``) is written into meta.json and
+    result.json so such records are never mistaken for the scored run.
     """
     if not 0 < ceiling_usd <= HARD_CEILING_USD:
         raise RunnerRefused(f"ceiling must be in (0, {HARD_CEILING_USD}] USD, got {ceiling_usd}")
@@ -233,6 +283,7 @@ def run_matrix(
         "ceiling_usd": ceiling_usd,
         "spend_ledger": str(spend_ledger),
         "jobs": len(jobs),
+        **(extra_meta or {}),
     }
     first = json.loads(meta_path.read_text()) if meta_path.exists() else {}
     meta_path.write_text(
@@ -245,6 +296,7 @@ def run_matrix(
                 "jobs": len(jobs),
                 "started": first.get("started", now),
                 "sessions": [*first.get("sessions", []), session],
+                **(extra_meta or {}),
             },
             sort_keys=True,
         )
@@ -275,7 +327,12 @@ def run_matrix(
                 pricing=price,
                 ledger_path=out_dir / "ledgers" / f"{job.job_id}.jsonl",
             )
-        except QuotaExhausted:
+        except QuotaExhausted as exc:
+            # nothing reaches the receipt, but the money already spent must reach the ledger
+            _append_halted_spend(
+                spend_ledger, job, out_dir, exc.paid_usd, exc.paid_ticks, est, clock().isoformat()
+            )
+            spent += exc.paid_usd + est
             code = ExitCode.QUOTA_HALT
             break
         _append_spend(spend_ledger, rec, out_dir, est)  # first: an over-count beats an under-count
@@ -296,6 +353,7 @@ def run_matrix(
                 "cap_usd": cap_usd,
                 "ceiling_usd": ceiling_usd,
                 "ledger_spent_usd": read_spend(spend_ledger),
+                **(extra_meta or {}),
             },
             sort_keys=True,
         )

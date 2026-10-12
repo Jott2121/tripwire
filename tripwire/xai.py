@@ -30,7 +30,14 @@ class XaiError(RuntimeError):
 
 
 class QuotaExhausted(XaiError):
-    """The account's quota or rate budget is spent: the runner halts instead of retrying."""
+    """The account's quota or rate budget is spent: the runner halts instead of retrying.
+
+    ``paid_usd`` is the known cost of requests the harness already completed in the run this
+    interrupted (set by ``harness.run_one`` before it re-raises), so the runner can still book it.
+    """
+
+    paid_usd: float = 0.0
+    paid_ticks: int = 0
 
 
 class LiveCallsDisabled(XaiError):
@@ -190,18 +197,21 @@ class ScriptedClient:
 
 
 # --- live client (M7) -------------------------------------------------------------------------
-# CONFIRMED by the owner in issue #25 (docs.x.ai, retrieved 2026-10-11): Responses API at
-# POST https://api.x.ai/v1/responses; ``reasoning.effort``; ``usage.cost_in_usd_ticks``;
-# encrypted reasoning items are passed back unchanged each turn.
-# NOT CONFIRMED (docs.x.ai could not be read when this was written; the names below follow the
-# OpenAI-style Responses shape and are a guess): the function-tool entry (flat ``name`` /
-# ``parameters``), the ``function_call`` / ``function_call_output`` / ``message`` / ``output_text``
-# items and their fields, ``usage.input_tokens`` / ``output_tokens``, and the HTTP status for
-# quota. Until the owner checks each against docs.x.ai and flips this to True in a reviewed PR,
-# the live client refuses every call (fail closed). Unresolved even then: whether
-# ``cost_in_usd_ticks`` is per response or cumulative (treated as per response), and the
-# cached-token usage field (ignored; the ticks figure already includes discounts).
-WIRE_CONFIRMED = False
+# CONFIRMED by the owner from docs.x.ai (retrieved 2026-10-11; issue #25 and the PR #30 review):
+# * https://docs.x.ai/docs/guides/function-calling: tools are flat
+#   {"type": "function", "name", "description", "parameters"}; output items are ``function_call``
+#   (``call_id``, ``name``, ``arguments`` as a JSON string); results go back as
+#   {"type": "function_call_output", "call_id", "output"}; text is in ``message`` items
+#   (``content[0].text``); ``parallel_tool_calls`` is on by default.
+# * https://docs.x.ai/developers/cost-tracking: ``usage.input_tokens``, ``usage.output_tokens`` and
+#   ``usage.cost_in_usd_ticks`` are on Responses API bodies; the ticks figure is per request (not
+#   cumulative) and net of caching discounts; 1 USD = 1e10 ticks.
+# * POST https://api.x.ai/v1/responses; ``reasoning.effort``; encrypted reasoning items are passed
+#   back unchanged each turn.
+# STILL UNCONFIRMED: the HTTP status for quota. 429 is treated as a halt (resumable). The parser
+# stays strict: unknown output item or message part types raise. The cached-token usage field is
+# ignored (the ticks figure already includes discounts).
+WIRE_CONFIRMED = True
 API_URL = "https://api.x.ai/v1/responses"
 
 # (url, headers, body, timeout) -> (status, body bytes). Tests pass a recorded fake.
