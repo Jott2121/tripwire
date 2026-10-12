@@ -65,6 +65,16 @@ false flags on clean data sharply (1.8% → 14.5%) without a matching gain in co
 data (65.4% → 63.2% strict count). That is the shape H2 predicted — more flagging, not more right
 answers — and it is a direct argument against "just tell the model to be careful" as a control.
 
+Two further readings from the same report<sup>†</sup>. First, the prompt's apparent gain on the
+*published* count (75.6% → 87.3%, excluded runs dropped) is mostly an exclusion artifact: the
+prompt condition had twice the `BASELINE_FAIL` exclusions (50 vs 25), and dropping excluded runs
+flatters the condition that fails more often — which is why the strict floor is reported alongside
+it. Second, **F3 (wrong value, right unit) is the hardest fault**, at 36–41% strict in both
+conditions: nothing in the data looks malformed, only the number is off. Single-fault cells are
+small (13–61 runs) and their intervals wide, so per-fault figures are directional.
+
+<sup>†</sup> Read from the uncommitted `tripwire.report` output; see limitations.
+
 The cost side is the part this repo can fully back: from the committed spend ledger, the prompt
 condition costs a mean **$0.0466/run vs $0.0114/run**, about **4.1× per run**. Since the prompt is
 no more accurate on faulted data, that ≈4.1× is also roughly the cost per *correct* answer — a
@@ -89,12 +99,12 @@ gate figure in the README is TBD.
   one effort row) was chosen to fit ~$25 of the budget. Per the preregistration, **H1 and H4 cannot
   be confirmed by interval, and H3 and H5 are not tested** (one effort row, no server-side runs).
 - **The adjudicated accuracy/false-flag report is not committed to this repo.** Only the spend
-  ledger is. The 65.4% / 63.2% / 1.8% / 14.5% / ~3× figures are read from the run's
+  ledger is. The accuracy and false-flag figures marked <sup>†</sup> are read from the run's
   `python -m tripwire.report` output and are reproducible from the run directories, which live in
   CI artifacts rather than in git. They are indicative until that report lands here.
 - **The server-side remote-MCP path was not run** (needs a reachable HTTPS tunnel and per-run
   tokens). The gate cannot be applied there, by design, since xAI runs the tools.
-- **Public/synthetic data only.** No real FAA narrative rows and no employer data are ever
+- **Public/synthetic data only.** No real FAA narrative rows and no proprietary data are ever
   committed; fixtures are seeded synthetic rows over the real column layout
   ([`docs/DATA.md`](docs/DATA.md)).
 
@@ -103,7 +113,7 @@ gate figure in the README is TBD.
 ```bash
 pip install -e ".[dev]"
 make demo     # regenerate the cost chart + summary from the committed ledger (zero spend)
-make check    # ruff + pytest (coverage >= 90%) + the no-employer-data scan
+make check    # ruff + pytest (coverage >= 90%) + the proprietary-data scan
 ```
 
 The adjudicated report, once its run directories are available, is produced by
