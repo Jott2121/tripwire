@@ -1,27 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="720" height="420" viewBox="0 0 720 420" font-family="system-ui,Helvetica,Arial,sans-serif" role="img" aria-label="Mean cost per run by condition, from the tripwire spend ledger.">
 <rect width="720" height="420" fill="#ffffff"/>
 <text x="90" y="34" font-size="20" font-weight="700" fill="#111111">Cost per run: the safety prompt is not free</text>
-<text x="90" y="56" font-size="13" fill="#555555">Mean USD per run, grok-4.7, client_side_functions path (n=1000 runs, source: runs/spend_ledger.jsonl)</text>
+<text x="90" y="56" font-size="13" fill="#555555">Mean USD per run, grok-4.7, client_side_functions path (n=1072 runs, source: runs/spend_ledger.jsonl)</text>
 <line x1="90" y1="330" x2="680" y2="330" stroke="#111111" stroke-width="1"/>
 <line x1="90" y1="265.0" x2="680" y2="265.0" stroke="#eeeeee" stroke-width="1"/>
-<text x="80" y="269.0" font-size="11" fill="#777777" text-anchor="end">$0.0177</text>
+<text x="80" y="269.0" font-size="11" fill="#777777" text-anchor="end">$0.0179</text>
 <line x1="90" y1="200.0" x2="680" y2="200.0" stroke="#eeeeee" stroke-width="1"/>
-<text x="80" y="204.0" font-size="11" fill="#777777" text-anchor="end">$0.0355</text>
+<text x="80" y="204.0" font-size="11" fill="#777777" text-anchor="end">$0.0359</text>
 <line x1="90" y1="135.0" x2="680" y2="135.0" stroke="#eeeeee" stroke-width="1"/>
-<text x="80" y="139.0" font-size="11" fill="#777777" text-anchor="end">$0.0532</text>
+<text x="80" y="139.0" font-size="11" fill="#777777" text-anchor="end">$0.0538</text>
 <line x1="90" y1="70.0" x2="680" y2="70.0" stroke="#eeeeee" stroke-width="1"/>
-<text x="80" y="74.0" font-size="11" fill="#777777" text-anchor="end">$0.0710</text>
-<rect x="134.2" y="288.3" width="108.2" height="41.7" fill="#0072B2" rx="3"/>
-<text x="188.3" y="280.3" font-size="14" font-weight="700" fill="#111111" text-anchor="middle">$0.0114</text>
+<text x="80" y="74.0" font-size="11" fill="#777777" text-anchor="end">$0.0718</text>
+<rect x="134.2" y="287.5" width="108.2" height="42.5" fill="#0072B2" rx="3"/>
+<text x="188.3" y="279.5" font-size="14" font-weight="700" fill="#111111" text-anchor="middle">$0.0117</text>
 <text x="188.3" y="354.0" font-size="13" fill="#333333" text-anchor="middle">Baseline</text>
-<text x="188.3" y="372.0" font-size="11" fill="#777777" text-anchor="middle">377 runs</text>
-<rect x="330.9" y="159.3" width="108.2" height="170.7" fill="#D55E00" rx="3"/>
-<text x="385.0" y="151.3" font-size="14" font-weight="700" fill="#111111" text-anchor="middle">$0.0466</text>
+<text x="188.3" y="372.0" font-size="11" fill="#777777" text-anchor="middle">401 runs</text>
+<rect x="330.9" y="154.7" width="108.2" height="175.3" fill="#D55E00" rx="3"/>
+<text x="385.0" y="146.7" font-size="14" font-weight="700" fill="#111111" text-anchor="middle">$0.0484</text>
 <text x="385.0" y="354.0" font-size="13" fill="#333333" text-anchor="middle">"Check your data" prompt</text>
-<text x="385.0" y="372.0" font-size="11" fill="#777777" text-anchor="middle">377 runs</text>
+<text x="385.0" y="372.0" font-size="11" fill="#777777" text-anchor="middle">401 runs</text>
 <rect x="527.6" y="70.0" width="108.2" height="260.0" fill="#009E73" rx="3"/>
-<text x="581.7" y="62.0" font-size="14" font-weight="700" fill="#111111" text-anchor="middle">$0.0710</text>
+<text x="581.7" y="62.0" font-size="14" font-weight="700" fill="#111111" text-anchor="middle">$0.0718</text>
 <text x="581.7" y="354.0" font-size="13" fill="#333333" text-anchor="middle">Gate</text>
-<text x="581.7" y="372.0" font-size="11" fill="#777777" text-anchor="middle">246 runs</text>
+<text x="581.7" y="372.0" font-size="11" fill="#777777" text-anchor="middle">270 runs</text>
 <text x="90" y="404" font-size="11" fill="#777777">Cost only. Accuracy and false-flag rates come from the adjudicated report, not this chart.</text>
 </svg>

@@ -36,9 +36,18 @@ def test_plan_shape_is_stratified_and_three_conditions():
     assert all(j.job_id.startswith(holdout.PREFIX) for j in js)
 
 
+def _holdout_spent() -> bool:
+    ledger_ids = holdout._all_ledger_run_ids(ROOT / "runs" / "spend_ledger.jsonl")
+    return {j.job_id for j in holdout.jobs()} <= ledger_ids
+
+
 def test_fresh_against_ledger_and_benchmark_plan():
     ledger_ids = holdout._all_ledger_run_ids(ROOT / "runs" / "spend_ledger.jsonl")
-    assert not {j.job_id for j in holdout.jobs()} & ledger_ids
+    if _holdout_spent():
+        # holdout-1 is spent (run 38434106473): every job is in the ledger, none partially
+        assert {j.job_id for j in holdout.jobs()} <= ledger_ids
+    else:
+        assert not {j.job_id for j in holdout.jobs()} & ledger_ids
     triples = holdout._benchmark_triples()
     assert not any(
         (p.task_id, p.fault, p.fault_seed) in triples for p in {j.plan for j in holdout.jobs()}
@@ -75,6 +84,12 @@ def test_cli_check_and_out(tmp_path, capsys):
     bad.write_text("{}")
     assert holdout.main(["--check", str(bad)]) == 1
     out = tmp_path / "h.json"
+    if _holdout_spent():
+        # re-authoring a spent holdout from the real ledger refuses
+        with pytest.raises(targets.TargetError, match="already in the spend ledger"):
+            holdout.main(["--out", str(out)])
+        assert not out.exists()
+        return
     assert holdout.main(["--out", str(out)]) == 0
     assert out.read_text() == COMMITTED.read_text()
     capsys.readouterr()
@@ -130,6 +145,10 @@ def test_driver_refuses_over_cap_and_mixed_flags(tmp_path, capsys):
 
 
 def test_driver_dry_run_plans_exactly_the_holdout_jobs(tmp_path):
+    if _holdout_spent():
+        # a spent holdout must never be re-planned against the real ledger
+        assert live_eval.main(_args(tmp_path, "--budget-usd", "5.8")) != 0
+        return
     assert live_eval.main(_args(tmp_path, "--budget-usd", "5.8")) == 0
     rows = [json.loads(x) for x in (tmp_path / "o" / "receipt.jsonl").read_text().splitlines()]
     assert sorted(r["run_id"] for r in rows) == sorted(j.job_id for j in holdout.jobs())
