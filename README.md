@@ -11,6 +11,14 @@ records every planted fault, and adjudicates — with no LLM judge — whether t
 acted, and reached the right answer. It then measures a fail-closed read-back gate for how much
 it helps and what it costs. Method ported from [sabot](https://github.com/Jott2121/sabot).
 
+> **Headline: the fail-closed gate passed its pre-registered holdout.** On 72 fresh jobs
+> ([A4](docs/amendments/A4-holdout-confirmation.md), [results](docs/results/holdout-1.md)), the gate
+> was correct on faulted data **100%** (strict and published) vs **66.7%** strict for the
+> "check your data" prompt and **61.1%** for baseline; **0/6** false flags on clean data (prompt 1/6);
+> cost per correct **0.65×** the prompt's. All four criteria fixed in advance (P1–P4) passed.
+> Caveats: small n, same base tasks with new fault draws, one model (grok-4.7).
+> Total spend to date: **$43.48 of the $50 cap**.
+
 ## The problem
 
 An agent that reads tools does not see raw data; it sees whatever the tool layer hands back. If a
@@ -61,7 +69,7 @@ numbers: [`artifacts/results_summary.json`](artifacts/results_summary.json)).*
 | Correct on faulted data (strict count) <sup>†</sup> | 65.4% | 63.2% | TBD |
 | False flags on clean data <sup>†</sup> | 1.8% | 14.5% | TBD |
 
-Run: grok-4.7, medium effort, client-side function-calling path, 754 runs, $21.86 of the $50 cap.
+Run: grok-4.7, medium effort, client-side function-calling path, 754 runs, $21.86 (cumulative spend across all runs to date: $43.48 of the $50 cap).
 
 **The two cost rows are reproducible from this repo**: `scripts/make_results_chart.py` computes
 them from the committed spend ledger and writes `artifacts/`. <sup>†</sup> **The two correctness
@@ -100,9 +108,13 @@ Small n (48 faulted, 12 clean runs per condition, same slots); 95% task-cluster 
 | False flags on clean data | 0/12 | 3/12 (25%) | 0/12 | 0/12 |
 | Cost per correct (published) | $0.0241 | $0.0708 | $0.0732 | $0.0683 |
 
-The CIs overlap; the preregistered table above keeps the Gate column TBD. A pre-registered holdout
-on fresh fault draws, with pass/fail thresholds fixed in advance, is planned in
-[A4](docs/amendments/A4-holdout-confirmation.md) (not yet run).
+The CIs overlap; the preregistered table above keeps the Gate column TBD (that table is left
+as pre-registered). The pre-registered holdout on fresh fault draws,
+[A4](docs/amendments/A4-holdout-confirmation.md), has since been run and **passed all four
+pre-set criteria (P1–P4)**: on 72 fresh jobs the gate scored 100% strict and published vs 66.7%
+strict (prompt_fix) and 61.1% (baseline), 0/6 clean false flags (prompt_fix 1/6), at 0.65× the
+prompt_fix cost per correct. See [docs/results/holdout-1.md](docs/results/holdout-1.md). Same caveats
+apply: small n, same base tasks with new fault draws, one model.
 
 ## How to read this (for non-engineers)
 
