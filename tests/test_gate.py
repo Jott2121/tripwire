@@ -8,10 +8,11 @@ import pytest
 import support as sp
 
 from tripwire import contract, xai
+from tripwire import standards as s
 from tripwire import tasks as tk
-from tripwire.adjudicator import FLAG_VOCABULARY
+from tripwire.adjudicator import FLAG_VOCABULARY, Status, Verdict
 from tripwire.faults import FAULT_NAMES, FaultKind
-from tripwire.gate import Failure, Gate
+from tripwire.gate import Failure, Gate, classify_value_fault, downgrade_clean
 from tripwire.harness import run_one
 from tripwire.prompts import Condition
 from tripwire.xai import ExecPath
@@ -69,12 +70,61 @@ def test_without_the_gate_the_same_agent_is_never_blocked(fault):
 
 
 @pytest.mark.parametrize("fault", NOT_CAUGHT)
-def test_f1_and_f3_pass_the_gate_by_design(fault):
-    """Documented gap: a valid unit label and a plausible number leave nothing to check."""
-    task = sp.first_task(tk.TaskKind.SPEC_LIMIT, fault)
+@pytest.mark.parametrize("kind", [tk.TaskKind.SPEC_LIMIT, tk.TaskKind.TEST_MEASURED,
+                                  tk.TaskKind.DEFECT_CRACK])  # fmt: skip
+def test_gate_now_catches_f1_and_f3_by_store_crosscheck(kind, fault):
+    """Issue #44: a served value that disagrees with the store is blocked and named, where the
+    old gate passed F1/F3 (a valid label and a plausible number have nothing in the metadata)."""
+    task = sp.first_task(kind, fault)
     rec = _confident(task, fault, Condition.GATE)
-    assert rec.exclusion is None and rec.gate["blocked"] is False
-    assert rec.verdict["status"] == "ok" and rec.gate["checks_run"] >= 1  # nothing to flag
+    assert rec.exclusion is None and rec.gate["blocked"]
+    assert rec.gate["quantity_checks"] >= 1
+    assert rec.verdict["status"] == "blocked" and rec.verdict["flags"] == [FAULT_NAMES[fault]]
+    assert rec.adjudication["flagged"] and rec.adjudication["correct"]
+
+
+def test_classify_value_fault_separates_unit_swap_from_wrong_value():
+    """F1 is the trusted value in a swapped unit (label unchanged); any other gap is F3. The
+    swap ratios come from the defined factors, disjoint from the fault middleware's 0.8..1.25."""
+    for (src, dst), factor in s.CONVERSION_FACTORS.items():
+        base = contract.Quantity(2.5, src)
+        assert classify_value_fault(base, base) is None
+        swapped = contract.Quantity(2.5 * factor, src)  # converted value, label left on src
+        assert classify_value_fault(base, swapped) is FaultKind.F1
+        back = contract.Quantity(2.5, dst)
+        assert classify_value_fault(back, contract.Quantity(2.5 / factor, dst)) is FaultKind.F1
+    length = contract.Quantity(2.0, s.Unit.INCH)
+    for wrong in (0.8, 0.9, 1.1, 1.25):
+        assert classify_value_fault(length, contract.Quantity(2.0 * wrong, s.Unit.INCH)) is (
+            FaultKind.F3
+        )
+    cycles = contract.Quantity(100.0, s.Unit.CYCLE)  # not swappable: any change is wrong_value
+    assert classify_value_fault(cycles, contract.Quantity(125.0, s.Unit.CYCLE)) is FaultKind.F3
+    assert classify_value_fault(length, contract.Quantity(2.0, s.Unit.HOUR)) is FaultKind.F1
+
+
+def _refusal(*flags):
+    return Verdict(Status.REFUSED, None, None, None, tuple(flags))
+
+
+def test_downgrade_clean_only_fires_with_positive_evidence_and_value_flags():
+    ok, changed = downgrade_clean(_refusal("F1"), blocked=False, quantity_checks=1)
+    assert changed and ok.status is Status.OK and ok.flags == ()
+    # no positive evidence (verified no quantity): leave the refusal alone
+    assert downgrade_clean(_refusal("F1"), blocked=False, quantity_checks=0) == (
+        _refusal("F1"),
+        False,
+    )
+    # blocked run: never downgraded (the block stands)
+    assert downgrade_clean(_refusal("F3"), blocked=True, quantity_checks=3)[1] is False
+    # a non-value flag the cross-check cannot disprove: leave it
+    assert downgrade_clean(_refusal("F1", "F5"), blocked=False, quantity_checks=2)[1] is False
+    # not a refusal, or no flags: nothing to downgrade
+    assert (
+        downgrade_clean(Verdict(Status.OK, 1.0, s.Unit.INCH), blocked=False, quantity_checks=1)[1]
+        is False
+    )
+    assert downgrade_clean(_refusal(), blocked=False, quantity_checks=1)[1] is False
 
 
 @pytest.mark.parametrize("kind", [k for k in tk.TaskKind])
@@ -95,12 +145,40 @@ def test_gate_cost_is_recorded_for_a_write_task():
     assert json.loads(rec.to_json())["gate"]["blocked"] is False
 
 
-def test_an_agents_own_refusal_passes_through_when_all_checks_pass():
+def test_gate_downgrades_a_clean_runs_unsupported_value_refusal():
+    """Issue #44: on data the gate verified against the store, an agent's bare F1/F3 refusal is
+    rewritten to its answer with the unsupported flag dropped, so it is no longer a false flag."""
     task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
     script = sp.agent_script(task, ExecPath.CLIENT_SIDE, sp.refusal_json("F1"))
     rec = _run(task, None, sp.client_for(script))
-    assert rec.verdict["flags"] == ["F1"] and rec.gate["blocked"] is False
-    assert rec.adjudication["false_flag"]  # a clean-run refusal still counts, gate or not
+    assert rec.gate["blocked"] is False and rec.gate["downgraded"] is True
+    assert rec.verdict["status"] == "ok" and rec.verdict["flags"] == []
+    assert not rec.adjudication["false_flag"]
+    assert (
+        rec.gate["agent_verdict"]["status"] == "refused"
+    )  # the pre-gate verdict is on the receipt
+
+
+def test_without_the_gate_a_clean_run_value_refusal_is_still_a_false_flag():
+    """The downgrade is the gate's doing: prompt_fix alone keeps the false flag."""
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    script = sp.agent_script(task, ExecPath.CLIENT_SIDE, sp.refusal_json("F1"))
+    rec = _run(task, None, sp.client_for(script), condition=Condition.PROMPT_FIX)
+    assert rec.gate is None and rec.verdict["flags"] == ["F1"]
+    assert rec.adjudication["false_flag"]
+
+
+def test_gate_will_not_downgrade_a_refusal_it_cannot_disprove():
+    """A refusal that names a non-value fault, or that read no quantity, is left untouched."""
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    other = sp.agent_script(task, ExecPath.CLIENT_SIDE, sp.refusal_json("F5", "F1"))
+    rec = _run(task, None, sp.client_for(other))
+    assert rec.gate["downgraded"] is False and rec.adjudication["false_flag"]
+    # a refusal with no tool reads: no positive store evidence, so no downgrade
+    bare = [sp.resp(sp.refusal_json("F1"))]
+    rec2 = _run(task, None, sp.client_for(bare))
+    assert rec2.gate["quantity_checks"] == 0 and rec2.gate["downgraded"] is False
+    assert rec2.adjudication["false_flag"]
 
 
 def test_gate_internal_error_fails_closed(monkeypatch):

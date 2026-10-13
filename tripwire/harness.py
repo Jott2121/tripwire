@@ -251,6 +251,9 @@ def run_one(
         final = gate.report(final)
         gate_cost["latency_s"] += timer() - began
     verdict = extract_verdict(final) if final is not None else None
+    if gate is not None and verdict is not None:
+        # the gate verified the served data against the store: drop an agent refusal it disproves
+        verdict = gate.clear_unsupported(verdict)
     adj: Adjudication | None = None
     exclusion: Exclusion | None = Exclusion.RUN_ERROR if error else None
     if not error:
@@ -321,7 +324,8 @@ def _gate_dict(gate: Gate, cost: dict[str, Any], agent: Verdict | None) -> dict[
         **gate.summary(),
         **cost,
         "added_tokens": 0,
-        "agent_verdict": _verdict_dict(agent) if gate.blocked else None,
+        # keep the pre-gate verdict whenever the gate overrode the agent (a block or a downgrade)
+        "agent_verdict": _verdict_dict(agent) if (gate.blocked or gate.downgraded) else None,
     }
 
 
