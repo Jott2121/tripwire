@@ -246,6 +246,10 @@ def run_one(
         error = f"{type(exc).__name__}: {exc}"
 
     agent_verdict = extract_verdict(final) if final is not None else None
+    turn_cap_hit = final is None and error is None and turns >= MAX_TURNS
+    if gate is not None and turn_cap_hit and gate.blocked:
+        # amendment A3: the gate already blocked a fault, so its fail-closed report is the verdict
+        final = ""
     if gate is not None and final is not None:
         began = timer()
         final = gate.report(final)
@@ -290,7 +294,7 @@ def run_one(
         adjudication=asdict(adj) if adj else None,
         exclusion=exclusion.value if exclusion else None,
         error=error,
-        turn_cap_hit=final is None and error is None and turns >= MAX_TURNS,
+        turn_cap_hit=turn_cap_hit,
         gate=_gate_dict(gate, gate_cost, agent_verdict) if gate is not None else None,
     )
 
