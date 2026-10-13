@@ -1,0 +1,35 @@
+{
+  "budget_usd_cap": 1.5,
+  "condition_set": "gate",
+  "counts": {
+    "already_run": 239,
+    "plan": 240,
+    "skipped": 7,
+    "topup": 0,
+    "total": 7
+  },
+  "est_cost_usd": 0.36,
+  "issue": 46,
+  "job_ids": [
+    "T18-r01.grok-4.7.client_side_functions.gate.k1",
+    "T40-r05.grok-4.7.client_side_functions.gate.k1",
+    "T35-r03.grok-4.7.client_side_functions.gate.k1",
+    "T01-r06.grok-4.7.client_side_functions.gate.k1",
+    "T10-r03.grok-4.7.client_side_functions.gate.k1",
+    "T11-r03.grok-4.7.client_side_functions.gate.k1",
+    "T04-r06.grok-4.7.client_side_functions.gate.k1"
+  ],
+  "name": "gate-confirm-1b",
+  "selection": "the 7 gate-confirm-1 jobs that run 38398347678 did not reach before BUDGET_HALT ($3.96 of $4 cap, 53/60 done)",
+  "skipped_job_ids": [
+    "T18-r01.grok-4.7.client_side_functions.gate.k1",
+    "T40-r05.grok-4.7.client_side_functions.gate.k1",
+    "T35-r03.grok-4.7.client_side_functions.gate.k1",
+    "T01-r06.grok-4.7.client_side_functions.gate.k1",
+    "T10-r03.grok-4.7.client_side_functions.gate.k1",
+    "T11-r03.grok-4.7.client_side_functions.gate.k1",
+    "T04-r06.grok-4.7.client_side_functions.gate.k1"
+  ],
+  "source_run": "38398347678",
+  "topup_job_ids": []
+}
