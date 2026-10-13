@@ -39,6 +39,12 @@
 # against budget_usd (so budget_usd is the cap for the whole folder, not just this session), and
 # every retry is still bounded by the cumulative $50 ledger ceiling. The artifact's own ledger is
 # NOT used: the committed ledger stays the source of truth. Not combinable with pilot_jobs.
+#
+# Targets (issue #46, manual-only): set targets to a committed runs/targets/<name>.json job list
+# (e.g. gate-confirm-1) to run that fixed, deterministic set instead of the full matrix. The file's
+# condition_set must equal condition_set; the driver fails closed on a stale list and refuses a
+# budget over the file's cap ($4 for gate-confirm-1) or a planning estimate above budget_usd. The
+# run writes its own out/<name>-<id> directory. Not combinable with pilot_jobs or resume_from_run.
 name: live-eval
 on:
   workflow_dispatch:
@@ -63,6 +69,11 @@ on:
       resume_from_run:
         description: "Run id of a paid run (live-eval-paid-<id>) whose RUN_ERROR jobs to re-attempt; blank = fresh run"
         type: string
+        default: ""
+      targets:
+        description: "Committed target set to run (blank = full matrix); gate-confirm-1 needs condition_set=gate"
+        type: choice
+        options: ["", gate-confirm-1]
         default: ""
       confirm:
         description: "Type I-APPROVE-LIVE-SPEND to spend money"
@@ -150,6 +161,7 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
           RUN_ID: ${{ github.run_id }}
           RESUME_ID: ${{ inputs.resume_from_run }}
+          TARGETS: ${{ inputs.targets }}
         run: |
           mkdir -p out
           cp runs/spend_ledger.jsonl out/spend_ledger.jsonl
@@ -160,6 +172,14 @@ jobs:
             flags="$flags --pilot-jobs $PILOT_JOBS"
             outdir="out/pilot-$RUN_ID"
           fi
+          # TARGETS is one of the fixed choice options (blank or a committed set name)
+          case "$TARGETS" in
+            "") ;;
+            gate-confirm-1)
+              flags="$flags --targets runs/targets/$TARGETS.json"
+              outdir="out/$TARGETS-$RUN_ID" ;;
+            *) echo "REFUSED: unknown targets value" >&2; exit 1 ;;
+          esac
           if [ -n "$RESUME_ID" ]; then
             flags="$flags --resume-from out/run"
             outdir=""
