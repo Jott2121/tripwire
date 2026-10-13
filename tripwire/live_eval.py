@@ -7,6 +7,11 @@ operator expects (a stale copy would under-count spend), a budget no larger than
 ``runner.HARD_CEILING_USD``, a committed protocol, and (live mode only) an API key plus a confirmed
 wire format. ``--dry-run`` swaps in a scripted client and a throwaway ledger so the whole path runs
 with no secret and no network. The key is read from the environment here and nowhere else.
+
+``--targets runs/targets/<name>.json`` runs a committed, deterministic job list instead of the
+full matrix (issue #46): the file's ``condition_set`` must equal ``--condition-set``, every job id
+must still be in the plan (a stale list fails closed), the budget may not exceed
+``targets.BUDGET_USD_CAP``, and the planning estimate must fit the budget. See ``tripwire.targets``.
 """
 
 from __future__ import annotations
@@ -20,7 +25,7 @@ from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
-from tripwire import runner, tasks, xai
+from tripwire import runner, targets, tasks, xai
 from tripwire.prompts import Condition
 
 CONFIRM_PHRASE = "I-APPROVE-LIVE-SPEND"
@@ -114,6 +119,13 @@ def build_parser() -> argparse.ArgumentParser:
         help=f"run a deterministic stratified N-job pilot; live needs {PILOT_MIN}<=N<={PILOT_MAX} "
         f"and budget<={PILOT_MAX_BUDGET_USD}",
     )
+    p.add_argument(
+        "--targets",
+        type=Path,
+        metavar="FILE",
+        help="a committed runs/targets/*.json job list to run (its condition_set must match "
+        f"--condition-set); needs budget<={targets.BUDGET_USD_CAP}. Excludes pilot/resume/max-jobs",
+    )
     prior = p.add_mutually_exclusive_group()
     prior.add_argument("--prior-ledger", type=Path, help="the last paid run's spend ledger")
     prior.add_argument(
@@ -161,6 +173,14 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
             raise runner.RunnerRefused(f"{resume} has no meta.json and receipt.jsonl to resume")
     elif args.out is None:
         raise runner.RunnerRefused("--out is required unless --resume-from is given")
+    target_path: Path | None = args.targets
+    if target_path is not None:
+        if pilot is not None or args.max_jobs is not None or resume is not None:
+            raise runner.RunnerRefused("--targets excludes --pilot-jobs, --max-jobs, --resume-from")
+        if args.budget_usd > targets.BUDGET_USD_CAP:
+            raise runner.RunnerRefused(
+                f"a targets run needs budget<={targets.BUDGET_USD_CAP} USD (got {args.budget_usd})"
+            )
     check_budget(args.budget_usd, args.spend_ledger, args.ledger_rows)
     out: Path = resume if resume is not None else args.out
     if (out / "meta.json").exists():  # never mix pilot and scored records in one directory
@@ -191,6 +211,18 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
         jobs = jobs[: args.max_jobs]
     if pilot is not None:
         jobs = runner.pilot_subset(jobs, pilot)
+    extra_meta: dict[str, object] | None = (
+        {"pilot": True, "pilot_jobs": pilot} if pilot is not None else None
+    )
+    if target_path is not None:
+        wanted = set(targets.load_targets(target_path, args.condition_set, jobs))
+        jobs = tuple(j for j in jobs if j.job_id in wanted)
+        est = targets.estimate_jobs_usd(jobs)  # fails closed on an unpriced model
+        if est > args.budget_usd:
+            raise runner.RunnerRefused(
+                f"targets estimate {est:.2f} USD exceeds budget {args.budget_usd:.2f} USD"
+            )
+        extra_meta = {"targets": target_path.stem, "target_count": len(jobs)}
     code = runner.run_matrix(
         jobs,
         {t.task_id: t for t in all_tasks},
@@ -202,7 +234,7 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
         pricing=xai.PRICING,
         clock=lambda: datetime.now(UTC),
         spend_ledger=ledger,
-        extra_meta={"pilot": True, "pilot_jobs": pilot} if pilot is not None else None,
+        extra_meta=extra_meta,
     )
     print(f"{code.name}: see {out / 'result.json'}")
     return int(code)

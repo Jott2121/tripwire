@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 import subprocess
+from pathlib import Path
 
 import pytest
 import support as sp
 
-from tripwire import live_eval, runner, xai
+from tripwire import live_eval, runner, targets, xai
 
 GIT = ["git", "-c", "user.name=t", "-c", "user.email=t@example.invalid"]
 OK_BODY = {
@@ -269,6 +270,12 @@ def test_committed_spend_ledger_is_valid_and_the_workflow_is_manual_only():
     assert "live-eval-$kind-$RUN_ID" in text and "kind=paid" in text and "kind=dry" in text
     assert "pilot_jobs:" in text and "--no-prior-paid-run" in text and "--prior-ledger" in text
     assert "cp docs/live-eval.workflow.yml .github/workflows/live-eval.yml" in text
+    # issue #46: a manual-only targeted-run input, wired to the committed job list
+    assert "targets:" in text and 'options: ["", gate-confirm-1]' in text
+    assert "--targets runs/targets/$TARGETS.json" in text
+    # the installed workflow must stay byte-identical to this committed source
+    installed = root / ".github" / "workflows" / "live-eval.yml"
+    assert installed.read_text() == text
 
 
 def _spend(run_id, cost, ts="2026-10-12T00:00:00+00:00"):
@@ -364,3 +371,93 @@ def test_live_pilot_inside_bounds_runs(repo, ledger, tmp_path, monkeypatch):
     assert live_eval.main([*argv, "--pilot-jobs", "10"], env={"XAI_API_KEY": "k"}) == 0
     assert runner.read_spend(ledger) == pytest.approx(10 * 0.052)
     assert json.loads((tmp_path / "out/meta.json").read_text())["pilot_jobs"] == 10
+
+
+# --- targeted confirmation runs (issue #46) -------------------------------------------------
+
+
+def _targets_file(tmp_path, skipped, topup=(), name="gate-confirm-1"):
+    plan = targets.gate_plan()
+    chosen = set(skipped) | set(topup)
+    doc = {
+        "name": name, "condition_set": "gate", "skipped_job_ids": list(skipped),
+        "topup_job_ids": list(topup),
+        "job_ids": [j.job_id for j in plan if j.job_id in chosen],
+    }  # fmt: skip
+    path = tmp_path / f"{name}.json"
+    path.write_text(json.dumps(doc))
+    return path
+
+
+def test_targets_run_executes_only_the_listed_jobs(repo, ledger, tmp_path):
+    plan = targets.gate_plan()
+    tf = _targets_file(tmp_path, [j.job_id for j in plan[:3]])
+    base = args(repo, ledger, tmp_path, condition_set="gate", budget_usd="4")
+    assert live_eval.main([*base, "--dry-run", "--targets", str(tf)], env={}) == 0
+    out = tmp_path / "out"
+    result = json.loads((out / "result.json").read_text())
+    meta = json.loads((out / "meta.json").read_text())
+    assert result["ran_this_session"] == 3 and result["targets"] == "gate-confirm-1"
+    assert meta["targets"] == "gate-confirm-1" and meta["target_count"] == 3
+    recs = [json.loads(x) for x in (out / "receipt.jsonl").read_text().splitlines()]
+    assert {r["run_id"] for r in recs} == {j.job_id for j in plan[:3]}
+
+
+def test_committed_gate_confirm_1_runs_sixty_jobs_within_cap(repo, ledger, tmp_path):
+    committed = Path(__file__).resolve().parent.parent / "runs/targets/gate-confirm-1.json"
+    base = args(repo, ledger, tmp_path, condition_set="gate", budget_usd="4")
+    assert live_eval.main([*base, "--dry-run", "--targets", str(committed)], env={}) == 0
+    result = json.loads((tmp_path / "out/result.json").read_text())
+    assert result["ran_this_session"] == 60
+    assert runner.read_spend(tmp_path / "out/dry_run_spend_ledger.jsonl") == pytest.approx(
+        60 * 0.052
+    )
+
+
+def test_targets_budget_capped_at_four(repo, ledger, tmp_path, capsys):
+    tf = _targets_file(tmp_path, [targets.gate_plan()[0].job_id])
+    base = args(repo, ledger, tmp_path, condition_set="gate", budget_usd="4.01")
+    assert live_eval.main([*base, "--dry-run", "--targets", str(tf)], env={}) == 2
+    assert "budget<=4.0" in capsys.readouterr().err
+
+
+def test_targets_refuses_estimate_over_budget(repo, ledger, tmp_path, capsys):
+    committed = Path(__file__).resolve().parent.parent / "runs/targets/gate-confirm-1.json"
+    base = args(repo, ledger, tmp_path, condition_set="gate", budget_usd="1")
+    assert live_eval.main([*base, "--dry-run", "--targets", str(committed)], env={}) == 2
+    err = capsys.readouterr().err
+    assert "estimate" in err and "exceeds budget" in err
+
+
+def test_targets_condition_set_must_match(repo, ledger, tmp_path, capsys):
+    tf = _targets_file(tmp_path, [targets.gate_plan()[0].job_id])
+    base = args(repo, ledger, tmp_path, condition_set="baseline-prompt-fix", budget_usd="4")
+    assert live_eval.main([*base, "--dry-run", "--targets", str(tf)], env={}) == 2
+    assert "condition-set" in capsys.readouterr().err
+
+
+def test_targets_refuses_a_stale_job_id(repo, ledger, tmp_path, capsys):
+    tf = tmp_path / "stale.json"
+    tf.write_text(
+        json.dumps(
+            {
+                "name": "x",
+                "condition_set": "gate",
+                "skipped_job_ids": ["ghost-job"],
+                "topup_job_ids": [],
+                "job_ids": ["ghost-job"],
+            }
+        )  # fmt: skip
+    )
+    base = args(repo, ledger, tmp_path, condition_set="gate", budget_usd="4")
+    assert live_eval.main([*base, "--dry-run", "--targets", str(tf)], env={}) == 2
+    assert "not in the gate plan" in capsys.readouterr().err
+
+
+def test_targets_excludes_pilot_and_max_jobs(repo, ledger, tmp_path, capsys):
+    tf = _targets_file(tmp_path, [targets.gate_plan()[0].job_id])
+    base = args(repo, ledger, tmp_path, condition_set="gate", budget_usd="4")
+    assert (
+        live_eval.main([*base, "--dry-run", "--targets", str(tf), "--max-jobs", "1"], env={}) == 2
+    )
+    assert "--targets excludes" in capsys.readouterr().err
