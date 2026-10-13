@@ -32,7 +32,19 @@ def test_committed_file_is_a_valid_bounded_gate_set():
     assert len(doc["job_ids"]) == 60 == len(set(doc["job_ids"]))
 
 
+def _gate_fully_run() -> bool:
+    ran = targets.ran_gate_job_ids(targets._LEDGER)
+    return all(j.job_id in ran for j in targets.gate_plan())
+
+
 def test_committed_file_matches_regeneration_from_the_committed_ledger():
+    if _gate_fully_run():
+        # gate-confirm-1 is spent: every one of its jobs is in the ledger and re-authoring refuses
+        ran = targets.ran_gate_job_ids(targets._LEDGER)
+        assert set(json.loads(COMMITTED.read_text())["job_ids"]) <= ran
+        with pytest.raises(targets.TargetError, match="nothing to confirm"):
+            targets.render_document()
+        return
     assert COMMITTED.read_text() == targets.render_document()
 
 
@@ -43,6 +55,11 @@ def test_check_cli_passes_on_the_committed_file(capsys):
 
 def test_out_cli_authors_from_the_real_ledger(tmp_path, capsys):
     out = tmp_path / "gate-confirm-1.json"
+    if _gate_fully_run():
+        with pytest.raises(targets.TargetError, match="nothing to confirm"):
+            targets.main(["--out", str(out)])
+        assert not out.exists()
+        return
     assert targets.main(["--out", str(out)]) == 0
     assert "wrote" in capsys.readouterr().out
     assert out.read_text() == COMMITTED.read_text()
