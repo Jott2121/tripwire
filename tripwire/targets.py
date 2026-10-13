@@ -61,6 +61,9 @@ def _fault_label(job: runner.Job) -> str:
     return job.plan.fault.value if job.plan.fault else "clean"
 
 
+HOLDOUT_PREFIX = "H1-"  # mirrors tripwire.holdout.PREFIX (holdout imports this module)
+
+
 def ran_gate_job_ids(ledger: Path) -> frozenset[str]:
     """Gate job ids already recorded in the committed spend ledger (the jobs that were paid for).
 
@@ -77,7 +80,12 @@ def ran_gate_job_ids(ledger: Path) -> frozenset[str]:
         except ValueError as exc:
             raise TargetError(f"spend ledger corrupt ({exc}): {ledger}") from exc
         run_id = row.get("run_id")
-        is_gate = isinstance(run_id, str) and f".{CONDITION_SET}." in run_id
+        # holdout jobs (amendment A4, "H1-" prefix) are a separate set, never gate-confirm-1 jobs
+        is_gate = (
+            isinstance(run_id, str)
+            and f".{CONDITION_SET}." in run_id
+            and not run_id.startswith(HOLDOUT_PREFIX)
+        )
         if row.get("kind") == "spend" and is_gate:
             ids.add(run_id)
     return frozenset(ids)

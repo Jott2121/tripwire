@@ -1,26 +1,26 @@
 {
   "conditions": {
     "baseline": {
-      "mean_usd": 0.011387,
-      "runs": 377,
-      "total_usd": 4.293016
+      "mean_usd": 0.011732,
+      "runs": 401,
+      "total_usd": 4.704604
     },
     "gate": {
-      "mean_usd": 0.07098,
-      "runs": 246,
-      "total_usd": 17.461026
+      "mean_usd": 0.071756,
+      "runs": 270,
+      "total_usd": 19.374204
     },
     "prompt_fix": {
-      "mean_usd": 0.046594,
-      "runs": 377,
-      "total_usd": 17.565984
+      "mean_usd": 0.048388,
+      "runs": 401,
+      "total_usd": 19.403696
     }
   },
   "first_timestamp": "2026-10-12T00:37:55.099140+00:00",
-  "last_timestamp": "2026-10-13T15:32:44.142297+00:00",
+  "last_timestamp": "2026-10-13T18:05:54.975448+00:00",
   "model": "grok-4.7",
   "path": "client_side_functions",
-  "runs": 1000,
+  "runs": 1072,
   "source": "runs/spend_ledger.jsonl",
-  "total_usd": 39.320026
+  "total_usd": 43.482504
 }

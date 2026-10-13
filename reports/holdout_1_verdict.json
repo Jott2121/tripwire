@@ -1,0 +1,10 @@
+{
+  "verdict": "PASS",
+  "complete": true,
+  "checks": {
+    "P1_strict_gain": true,
+    "P2_gate_published": true,
+    "P3_clean_false_flags": true,
+    "P4_cost_ratio": true
+  }
+}

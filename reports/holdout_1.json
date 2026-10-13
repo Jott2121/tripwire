@@ -1,0 +1,1098 @@
+{
+  "cells": [
+    {
+      "condition": "baseline",
+      "correct": 1,
+      "excluded": {},
+      "fault": "F1",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.3333333333333333
+      },
+      "published_cost_per_correct": {
+        "den": 1.0,
+        "hi": 0.071014,
+        "lo": 0.014122000000000001,
+        "num": 0.05641,
+        "resamples": 10000,
+        "valid": 7020,
+        "value": 0.05641
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.3333333333333333
+      },
+      "strict_cost_per_correct": {
+        "den": 1.0,
+        "hi": 0.071014,
+        "lo": 0.014122000000000001,
+        "num": 0.05641,
+        "resamples": 10000,
+        "valid": 7020,
+        "value": 0.05641
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "correct": 1,
+      "excluded": {},
+      "fault": "F2",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.3333333333333333
+      },
+      "published_cost_per_correct": {
+        "den": 1.0,
+        "hi": 0.037506,
+        "lo": 0.019013999999999996,
+        "num": 0.034283999999999995,
+        "resamples": 10000,
+        "valid": 7020,
+        "value": 0.034283999999999995
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.3333333333333333
+      },
+      "strict_cost_per_correct": {
+        "den": 1.0,
+        "hi": 0.037506,
+        "lo": 0.019013999999999996,
+        "num": 0.034283999999999995,
+        "resamples": 10000,
+        "valid": 7020,
+        "value": 0.034283999999999995
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "correct": 1,
+      "excluded": {},
+      "fault": "F3",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.3333333333333333
+      },
+      "published_cost_per_correct": {
+        "den": 1.0,
+        "hi": 0.06328399999999999,
+        "lo": 0.02188,
+        "num": 0.059224,
+        "resamples": 10000,
+        "valid": 7037,
+        "value": 0.059224
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.3333333333333333
+      },
+      "strict_cost_per_correct": {
+        "den": 1.0,
+        "hi": 0.06328399999999999,
+        "lo": 0.02188,
+        "num": 0.059224,
+        "resamples": 10000,
+        "valid": 7037,
+        "value": 0.059224
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "correct": 3,
+      "excluded": {},
+      "fault": "F4",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.015349999999999997,
+        "lo": 0.010376,
+        "num": 0.04075,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.013583333333333334
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "strict_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.015349999999999997,
+        "lo": 0.010376,
+        "num": 0.04075,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.013583333333333334
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "correct": 2,
+      "excluded": {},
+      "fault": "F5",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 2.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6666666666666666
+      },
+      "published_cost_per_correct": {
+        "den": 2.0,
+        "hi": 0.155644,
+        "lo": 0.029119999999999997,
+        "num": 0.12531199999999998,
+        "resamples": 10000,
+        "valid": 9644,
+        "value": 0.06265599999999999
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 2.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6666666666666666
+      },
+      "strict_cost_per_correct": {
+        "den": 2.0,
+        "hi": 0.155644,
+        "lo": 0.029119999999999997,
+        "num": 0.12531199999999998,
+        "resamples": 10000,
+        "valid": 9644,
+        "value": 0.06265599999999999
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "correct": 3,
+      "excluded": {},
+      "fault": "F6",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.023128,
+        "lo": 0.0068699999999999985,
+        "num": 0.037602000000000003,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.012534000000000002
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "strict_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.023128,
+        "lo": 0.0068699999999999985,
+        "num": 0.037602000000000003,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.012534000000000002
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "correct": 11,
+      "excluded": {},
+      "fault": "ALL",
+      "kept": 18,
+      "published": {
+        "den": 18.0,
+        "hi": 0.8823529411764706,
+        "lo": 0.3684210526315789,
+        "num": 11.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6111111111111112
+      },
+      "published_cost_per_correct": {
+        "den": 11.0,
+        "hi": 0.0593242857142857,
+        "lo": 0.019460133333333334,
+        "num": 0.3535819999999999,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.03214381818181817
+      },
+      "runs": 18,
+      "strict": {
+        "den": 18.0,
+        "hi": 0.8823529411764706,
+        "lo": 0.3684210526315789,
+        "num": 11.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6111111111111112
+      },
+      "strict_cost_per_correct": {
+        "den": 11.0,
+        "hi": 0.0593242857142857,
+        "lo": 0.019460133333333334,
+        "num": 0.3535819999999999,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.03214381818181817
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "excluded": {},
+      "false_flags": 0,
+      "fault": "clean",
+      "kept": 6,
+      "published": {
+        "den": 6.0,
+        "hi": 0.0,
+        "lo": 0.0,
+        "num": 0.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.0
+      },
+      "runs": 6,
+      "strict": {
+        "den": 6.0,
+        "hi": 0.0,
+        "lo": 0.0,
+        "num": 0.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.0
+      }
+    },
+    {
+      "condition": "gate",
+      "correct": 3,
+      "excluded": {},
+      "fault": "F1",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.04437,
+        "lo": 0.030404,
+        "num": 0.115978,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.03865933333333333
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "strict_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.04437,
+        "lo": 0.030404,
+        "num": 0.115978,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.03865933333333333
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "gate",
+      "correct": 3,
+      "excluded": {},
+      "fault": "F2",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.049206,
+        "lo": 0.022508,
+        "num": 0.11651,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.038836666666666665
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "strict_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.049206,
+        "lo": 0.022508,
+        "num": 0.11651,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.038836666666666665
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "gate",
+      "correct": 3,
+      "excluded": {},
+      "fault": "F3",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.10978800000000001,
+        "lo": 0.028555999999999998,
+        "num": 0.168608,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.05620266666666667
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "strict_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.10978800000000001,
+        "lo": 0.028555999999999998,
+        "num": 0.168608,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.05620266666666667
+      },
+      "turn_cap_hit": 1
+    },
+    {
+      "condition": "gate",
+      "correct": 3,
+      "excluded": {},
+      "fault": "F4",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.09405800000000002,
+        "lo": 0.049716,
+        "num": 0.208606,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.06953533333333334
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "strict_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.09405800000000002,
+        "lo": 0.049716,
+        "num": 0.208606,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.06953533333333334
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "gate",
+      "correct": 3,
+      "excluded": {},
+      "fault": "F5",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.154668,
+        "lo": 0.0784,
+        "num": 0.362216,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.12073866666666666
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "strict_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.154668,
+        "lo": 0.0784,
+        "num": 0.362216,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.12073866666666666
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "gate",
+      "correct": 3,
+      "excluded": {},
+      "fault": "F6",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.078244,
+        "lo": 0.056808,
+        "num": 0.19816,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.06605333333333334
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "strict_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.078244,
+        "lo": 0.056808,
+        "num": 0.19816,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.06605333333333334
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "gate",
+      "correct": 18,
+      "excluded": {},
+      "fault": "ALL",
+      "kept": 18,
+      "published": {
+        "den": 18.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 18.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 18.0,
+        "hi": 0.0830469411764706,
+        "lo": 0.04960279999999999,
+        "num": 1.1700780000000002,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.06500433333333334
+      },
+      "runs": 18,
+      "strict": {
+        "den": 18.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 18.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "strict_cost_per_correct": {
+        "den": 18.0,
+        "hi": 0.0830469411764706,
+        "lo": 0.04960279999999999,
+        "num": 1.1700780000000002,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.06500433333333334
+      },
+      "turn_cap_hit": 1
+    },
+    {
+      "condition": "gate",
+      "excluded": {},
+      "false_flags": 0,
+      "fault": "clean",
+      "kept": 6,
+      "published": {
+        "den": 6.0,
+        "hi": 0.0,
+        "lo": 0.0,
+        "num": 0.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.0
+      },
+      "runs": 6,
+      "strict": {
+        "den": 6.0,
+        "hi": 0.0,
+        "lo": 0.0,
+        "num": 0.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.0
+      }
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 2,
+      "excluded": {},
+      "fault": "F1",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 2.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6666666666666666
+      },
+      "published_cost_per_correct": {
+        "den": 2.0,
+        "hi": 0.125234,
+        "lo": 0.032958,
+        "num": 0.11875200000000001,
+        "resamples": 10000,
+        "valid": 9644,
+        "value": 0.059376000000000005
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 2.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6666666666666666
+      },
+      "strict_cost_per_correct": {
+        "den": 2.0,
+        "hi": 0.125234,
+        "lo": 0.032958,
+        "num": 0.11875200000000001,
+        "resamples": 10000,
+        "valid": 9644,
+        "value": 0.059376000000000005
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 1,
+      "excluded": {},
+      "fault": "F2",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.3333333333333333
+      },
+      "published_cost_per_correct": {
+        "den": 1.0,
+        "hi": 0.126334,
+        "lo": 0.026765999999999998,
+        "num": 0.10771399999999999,
+        "resamples": 10000,
+        "valid": 7020,
+        "value": 0.10771399999999999
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.3333333333333333
+      },
+      "strict_cost_per_correct": {
+        "den": 1.0,
+        "hi": 0.126334,
+        "lo": 0.026765999999999998,
+        "num": 0.10771399999999999,
+        "resamples": 10000,
+        "valid": 7020,
+        "value": 0.10771399999999999
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 2,
+      "excluded": {},
+      "fault": "F3",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 2.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6666666666666666
+      },
+      "published_cost_per_correct": {
+        "den": 2.0,
+        "hi": 0.14356799999999997,
+        "lo": 0.03325,
+        "num": 0.145154,
+        "resamples": 10000,
+        "valid": 9614,
+        "value": 0.072577
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 2.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6666666666666666
+      },
+      "strict_cost_per_correct": {
+        "den": 2.0,
+        "hi": 0.14356799999999997,
+        "lo": 0.03325,
+        "num": 0.145154,
+        "resamples": 10000,
+        "valid": 9614,
+        "value": 0.072577
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 3,
+      "excluded": {},
+      "fault": "F4",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.056743999999999996,
+        "lo": 0.039138000000000006,
+        "num": 0.14247400000000002,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.04749133333333334
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "strict_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.056743999999999996,
+        "lo": 0.039138000000000006,
+        "num": 0.14247400000000002,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.04749133333333334
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 1,
+      "excluded": {},
+      "fault": "F5",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.3333333333333333
+      },
+      "published_cost_per_correct": {
+        "den": 1.0,
+        "hi": 0.553448,
+        "lo": 0.12546000000000002,
+        "num": 0.45574600000000004,
+        "resamples": 10000,
+        "valid": 7020,
+        "value": 0.45574600000000004
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.3333333333333333
+      },
+      "strict_cost_per_correct": {
+        "den": 1.0,
+        "hi": 0.553448,
+        "lo": 0.12546000000000002,
+        "num": 0.45574600000000004,
+        "resamples": 10000,
+        "valid": 7020,
+        "value": 0.45574600000000004
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 3,
+      "excluded": {},
+      "fault": "F6",
+      "kept": 3,
+      "published": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.080896,
+        "lo": 0.07346599999999999,
+        "num": 0.228178,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.07605933333333333
+      },
+      "runs": 3,
+      "strict": {
+        "den": 3.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 3.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "strict_cost_per_correct": {
+        "den": 3.0,
+        "hi": 0.080896,
+        "lo": 0.07346599999999999,
+        "num": 0.228178,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.07605933333333333
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 12,
+      "excluded": {},
+      "fault": "ALL",
+      "kept": 18,
+      "published": {
+        "den": 18.0,
+        "hi": 0.8823529411764706,
+        "lo": 0.45,
+        "num": 12.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6666666666666666
+      },
+      "published_cost_per_correct": {
+        "den": 12.0,
+        "hi": 0.1709044,
+        "lo": 0.0635837142857143,
+        "num": 1.198018,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.09983483333333333
+      },
+      "runs": 18,
+      "strict": {
+        "den": 18.0,
+        "hi": 0.8823529411764706,
+        "lo": 0.45,
+        "num": 12.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6666666666666666
+      },
+      "strict_cost_per_correct": {
+        "den": 12.0,
+        "hi": 0.1709044,
+        "lo": 0.0635837142857143,
+        "num": 1.198018,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.09983483333333333
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "prompt_fix",
+      "excluded": {},
+      "false_flags": 1,
+      "fault": "clean",
+      "kept": 6,
+      "published": {
+        "den": 6.0,
+        "hi": 0.5,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.16666666666666666
+      },
+      "runs": 6,
+      "strict": {
+        "den": 6.0,
+        "hi": 0.5,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.16666666666666666
+      }
+    }
+  ],
+  "exclusions_by_code": {},
+  "gate_overhead": {
+    "added_latency_s_per_run": 0.0013777787083680455,
+    "added_tokens": 0,
+    "comparator": "prompt_fix",
+    "cost_overhead": {
+      "den": 1.837712,
+      "hi": 0.2068599515270821,
+      "lo": -0.09617593822910889,
+      "num": 0.07546600000000003,
+      "resamples": 10000,
+      "valid": 10000,
+      "value": 0.041065194110937966
+    },
+    "extra_tool_calls_per_run": 0.375,
+    "gate_runs": 24,
+    "pairs": 24
+  },
+  "incomplete": [],
+  "params": {
+    "bootstrap": "replicate-cluster (tasks), percentile",
+    "ci": 0.95,
+    "resamples": 10000,
+    "seed": 1
+  },
+  "pilot": false,
+  "records": 72,
+  "sources": [
+    {
+      "dir": "run",
+      "meta": {
+        "amendment": "A4",
+        "cap_usd": 5.8,
+        "git_commit": "bbdb0ef7163a524a2a676073214ee573969bbbc0",
+        "jobs": 72,
+        "protocol": "docs/PREREGISTRATION.md",
+        "protocol_sha256": "516e8ef0fbee73284a2e2f7be6b57371a909927007cd085b77ccf262eddbd491",
+        "sessions": [
+          {
+            "amendment": "A4",
+            "cap_usd": 5.8,
+            "ceiling_usd": 50.0,
+            "git_commit": "bbdb0ef7163a524a2a676073214ee573969bbbc0",
+            "jobs": 72,
+            "spend_ledger": "out/spend_ledger.jsonl",
+            "started": "2026-10-13T16:53:23.519133+00:00",
+            "target_count": 72,
+            "targets": "holdout-1"
+          }
+        ],
+        "started": "2026-10-13T16:53:23.519133+00:00",
+        "target_count": 72,
+        "targets": "holdout-1"
+      },
+      "records": 72,
+      "result": {
+        "amendment": "A4",
+        "cap_usd": 5.8,
+        "ceiling_usd": 50.0,
+        "exit_code": 0,
+        "exit_name": "OK",
+        "ledger_spent_usd": 43.48250399999998,
+        "ran_this_session": 72,
+        "records_total": 72,
+        "spent_usd": 4.162478000000001,
+        "target_count": 72,
+        "targets": "holdout-1"
+      }
+    }
+  ],
+  "spend_usd": 4.162478000000001
+}
