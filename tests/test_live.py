@@ -272,6 +272,7 @@ def test_committed_spend_ledger_is_valid_and_the_workflow_is_manual_only():
     assert "cp docs/live-eval.workflow.yml .github/workflows/live-eval.yml" in text
     # issue #46: a manual-only targeted-run input, wired to the committed job list
     assert "targets:" in text and 'options: ["", gate-confirm-1, gate-confirm-1b]' in text
+    assert "options: [baseline-prompt-fix, gate, holdout-1]" in text
     assert "--targets runs/targets/$TARGETS.json" in text
     # the installed workflow must stay byte-identical to this committed source
     installed = root / ".github" / "workflows" / "live-eval.yml"

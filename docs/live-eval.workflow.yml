@@ -52,7 +52,7 @@ on:
       condition_set:
         description: "baseline-prompt-fix (the lean run) or gate (its own session)"
         type: choice
-        options: [baseline-prompt-fix, gate]
+        options: [baseline-prompt-fix, gate, holdout-1]
         default: baseline-prompt-fix
       budget_usd:
         description: "Cap for this run in USD; must fit the room left under the $50 ceiling"
