@@ -1,0 +1,1213 @@
+{
+  "cells": [
+    {
+      "condition": "baseline",
+      "correct": 9,
+      "excluded": {},
+      "fault": "F1",
+      "kept": 21,
+      "published": {
+        "den": 21.0,
+        "hi": 0.6666666666666666,
+        "lo": 0.20833333333333334,
+        "num": 9.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.42857142857142855
+      },
+      "published_cost_per_correct": {
+        "den": 9.0,
+        "hi": 0.0949324,
+        "lo": 0.024485076923076922,
+        "num": 0.393398,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.04371088888888889
+      },
+      "runs": 21,
+      "strict": {
+        "den": 21.0,
+        "hi": 0.6666666666666666,
+        "lo": 0.20833333333333334,
+        "num": 9.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.42857142857142855
+      },
+      "strict_cost_per_correct": {
+        "den": 9.0,
+        "hi": 0.0949324,
+        "lo": 0.024485076923076922,
+        "num": 0.393398,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.04371088888888889
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "correct": 8,
+      "excluded": {},
+      "fault": "F2",
+      "kept": 13,
+      "published": {
+        "den": 13.0,
+        "hi": 1.0,
+        "lo": 0.2857142857142857,
+        "num": 8.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6153846153846154
+      },
+      "published_cost_per_correct": {
+        "den": 8.0,
+        "hi": 0.0465895,
+        "lo": 0.02420442857142857,
+        "num": 0.241366,
+        "resamples": 10000,
+        "valid": 9999,
+        "value": 0.03017075
+      },
+      "runs": 13,
+      "strict": {
+        "den": 13.0,
+        "hi": 1.0,
+        "lo": 0.2857142857142857,
+        "num": 8.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6153846153846154
+      },
+      "strict_cost_per_correct": {
+        "den": 8.0,
+        "hi": 0.0465895,
+        "lo": 0.02420442857142857,
+        "num": 0.241366,
+        "resamples": 10000,
+        "valid": 9999,
+        "value": 0.03017075
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "correct": 8,
+      "excluded": {},
+      "fault": "F3",
+      "kept": 22,
+      "published": {
+        "den": 22.0,
+        "hi": 0.5833333333333334,
+        "lo": 0.16,
+        "num": 8.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.36363636363636365
+      },
+      "published_cost_per_correct": {
+        "den": 8.0,
+        "hi": 0.09398233333333333,
+        "lo": 0.0263276,
+        "num": 0.37602,
+        "resamples": 10000,
+        "valid": 9999,
+        "value": 0.0470025
+      },
+      "runs": 22,
+      "strict": {
+        "den": 22.0,
+        "hi": 0.5833333333333334,
+        "lo": 0.16,
+        "num": 8.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.36363636363636365
+      },
+      "strict_cost_per_correct": {
+        "den": 8.0,
+        "hi": 0.09398233333333333,
+        "lo": 0.0263276,
+        "num": 0.37602,
+        "resamples": 10000,
+        "valid": 9999,
+        "value": 0.0470025
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "correct": 16,
+      "excluded": {},
+      "fault": "F4",
+      "kept": 20,
+      "published": {
+        "den": 20.0,
+        "hi": 0.9523809523809523,
+        "lo": 0.6111111111111112,
+        "num": 16.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.8
+      },
+      "published_cost_per_correct": {
+        "den": 16.0,
+        "hi": 0.035348,
+        "lo": 0.018038434782608696,
+        "num": 0.382552,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.0239095
+      },
+      "runs": 20,
+      "strict": {
+        "den": 20.0,
+        "hi": 0.9523809523809523,
+        "lo": 0.6111111111111112,
+        "num": 16.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.8
+      },
+      "strict_cost_per_correct": {
+        "den": 16.0,
+        "hi": 0.035348,
+        "lo": 0.018038434782608696,
+        "num": 0.382552,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.0239095
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "correct": 23,
+      "excluded": {
+        "BASELINE_FAIL": 25
+      },
+      "fault": "F5",
+      "kept": 23,
+      "published": {
+        "den": 23.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 23.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 23.0,
+        "hi": 0.022317,
+        "lo": 0.011719,
+        "num": 0.362862,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.015776608695652176
+      },
+      "runs": 48,
+      "strict": {
+        "den": 48.0,
+        "hi": 0.7619047619047619,
+        "lo": 0.26229508196721313,
+        "num": 23.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.4791666666666667
+      },
+      "strict_cost_per_correct": {
+        "den": 23.0,
+        "hi": 0.111284125,
+        "lo": 0.02214206451612903,
+        "num": 1.182716,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.0514224347826087
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "correct": 57,
+      "excluded": {},
+      "fault": "F6",
+      "kept": 61,
+      "published": {
+        "den": 61.0,
+        "hi": 1.0,
+        "lo": 0.8450704225352113,
+        "num": 57.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.9344262295081968
+      },
+      "published_cost_per_correct": {
+        "den": 57.0,
+        "hi": 0.02208651851851852,
+        "lo": 0.013469846153846153,
+        "num": 0.969006,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.017000105263157896
+      },
+      "runs": 61,
+      "strict": {
+        "den": 61.0,
+        "hi": 1.0,
+        "lo": 0.8450704225352113,
+        "num": 57.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.9344262295081968
+      },
+      "strict_cost_per_correct": {
+        "den": 57.0,
+        "hi": 0.02208651851851852,
+        "lo": 0.013469846153846153,
+        "num": 0.969006,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.017000105263157896
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "correct": 121,
+      "excluded": {
+        "BASELINE_FAIL": 25
+      },
+      "fault": "ALL",
+      "kept": 160,
+      "published": {
+        "den": 160.0,
+        "hi": 0.85625,
+        "lo": 0.64375,
+        "num": 121.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.75625
+      },
+      "published_cost_per_correct": {
+        "den": 121.0,
+        "hi": 0.02804392380952381,
+        "lo": 0.018544342465753424,
+        "num": 2.725204,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.02252234710743802
+      },
+      "runs": 185,
+      "strict": {
+        "den": 185.0,
+        "hi": 0.772972972972973,
+        "lo": 0.5243243243243243,
+        "num": 121.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.654054054054054
+      },
+      "strict_cost_per_correct": {
+        "den": 121.0,
+        "hi": 0.04037954347826087,
+        "lo": 0.02221290625,
+        "num": 3.545058,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.029298
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "baseline",
+      "excluded": {},
+      "false_flags": 1,
+      "fault": "clean",
+      "kept": 55,
+      "published": {
+        "den": 55.0,
+        "hi": 0.05333333333333334,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.01818181818181818
+      },
+      "runs": 55,
+      "strict": {
+        "den": 55.0,
+        "hi": 0.05333333333333334,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.01818181818181818
+      }
+    },
+    {
+      "condition": "gate",
+      "correct": 15,
+      "excluded": {
+        "BASELINE_FAIL": 5,
+        "RUN_ERROR": 1
+      },
+      "fault": "F1",
+      "kept": 15,
+      "published": {
+        "den": 15.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 15.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 15.0,
+        "hi": 0.08495825,
+        "lo": 0.039208,
+        "num": 0.9137959999999999,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.06091973333333333
+      },
+      "runs": 21,
+      "strict": {
+        "den": 21.0,
+        "hi": 0.9473684210526315,
+        "lo": 0.45454545454545453,
+        "num": 15.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.7142857142857143
+      },
+      "strict_cost_per_correct": {
+        "den": 15.0,
+        "hi": 0.20233963636363636,
+        "lo": 0.060093,
+        "num": 1.6212659999999999,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.1080844
+      },
+      "turn_cap_hit": 2
+    },
+    {
+      "condition": "gate",
+      "correct": 13,
+      "excluded": {},
+      "fault": "F2",
+      "kept": 13,
+      "published": {
+        "den": 13.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 13.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 13.0,
+        "hi": 0.05127076923076923,
+        "lo": 0.030876266666666666,
+        "num": 0.506836,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.03898738461538461
+      },
+      "runs": 13,
+      "strict": {
+        "den": 13.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 13.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "strict_cost_per_correct": {
+        "den": 13.0,
+        "hi": 0.05127076923076923,
+        "lo": 0.030876266666666666,
+        "num": 0.506836,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.03898738461538461
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "gate",
+      "correct": 16,
+      "excluded": {
+        "BASELINE_FAIL": 5,
+        "RUN_ERROR": 1
+      },
+      "fault": "F3",
+      "kept": 16,
+      "published": {
+        "den": 16.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 16.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 16.0,
+        "hi": 0.052514375,
+        "lo": 0.03596,
+        "num": 0.69754,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.04359625
+      },
+      "runs": 22,
+      "strict": {
+        "den": 22.0,
+        "hi": 0.95,
+        "lo": 0.5,
+        "num": 16.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.7272727272727273
+      },
+      "strict_cost_per_correct": {
+        "den": 16.0,
+        "hi": 0.1471145,
+        "lo": 0.0447955,
+        "num": 1.2426,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.0776625
+      },
+      "turn_cap_hit": 2
+    },
+    {
+      "condition": "gate",
+      "correct": 19,
+      "excluded": {
+        "RUN_ERROR": 1
+      },
+      "fault": "F4",
+      "kept": 19,
+      "published": {
+        "den": 19.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 19.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 19.0,
+        "hi": 0.06755486956521739,
+        "lo": 0.05099576470588235,
+        "num": 1.1322780000000001,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.05959357894736843
+      },
+      "runs": 20,
+      "strict": {
+        "den": 20.0,
+        "hi": 1.0,
+        "lo": 0.85,
+        "num": 19.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.95
+      },
+      "strict_cost_per_correct": {
+        "den": 19.0,
+        "hi": 0.06755486956521739,
+        "lo": 0.05099576470588235,
+        "num": 1.1322780000000001,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.05959357894736843
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "gate",
+      "correct": 22,
+      "excluded": {
+        "BASELINE_FAIL": 25
+      },
+      "fault": "F5",
+      "kept": 23,
+      "published": {
+        "den": 23.0,
+        "hi": 1.0,
+        "lo": 0.8636363636363636,
+        "num": 22.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.9565217391304348
+      },
+      "published_cost_per_correct": {
+        "den": 22.0,
+        "hi": 0.09373895238095238,
+        "lo": 0.04989408333333334,
+        "num": 1.469236,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.06678345454545455
+      },
+      "runs": 48,
+      "strict": {
+        "den": 48.0,
+        "hi": 0.75,
+        "lo": 0.25,
+        "num": 22.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.4583333333333333
+      },
+      "strict_cost_per_correct": {
+        "den": 22.0,
+        "hi": 0.331634625,
+        "lo": 0.08367955555555556,
+        "num": 3.627206,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.16487300000000002
+      },
+      "turn_cap_hit": 1
+    },
+    {
+      "condition": "gate",
+      "correct": 49,
+      "excluded": {
+        "BASELINE_FAIL": 10,
+        "RUN_ERROR": 1
+      },
+      "fault": "F6",
+      "kept": 50,
+      "published": {
+        "den": 50.0,
+        "hi": 1.0,
+        "lo": 0.9375,
+        "num": 49.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.98
+      },
+      "published_cost_per_correct": {
+        "den": 49.0,
+        "hi": 0.08002928000000001,
+        "lo": 0.05382152380952381,
+        "num": 3.270358,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.066742
+      },
+      "runs": 61,
+      "strict": {
+        "den": 61.0,
+        "hi": 0.9482758620689655,
+        "lo": 0.6290322580645161,
+        "num": 49.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.8032786885245902
+      },
+      "strict_cost_per_correct": {
+        "den": 49.0,
+        "hi": 0.1363801052631579,
+        "lo": 0.06734265454545454,
+        "num": 4.613378,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.09415057142857143
+      },
+      "turn_cap_hit": 1
+    },
+    {
+      "condition": "gate",
+      "correct": 134,
+      "excluded": {
+        "BASELINE_FAIL": 45,
+        "RUN_ERROR": 4
+      },
+      "fault": "ALL",
+      "kept": 136,
+      "published": {
+        "den": 136.0,
+        "hi": 1.0,
+        "lo": 0.9552238805970149,
+        "num": 134.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.9852941176470589
+      },
+      "published_cost_per_correct": {
+        "den": 134.0,
+        "hi": 0.07060753125,
+        "lo": 0.0508675,
+        "num": 7.990044,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.05962719402985075
+      },
+      "runs": 185,
+      "strict": {
+        "den": 185.0,
+        "hi": 0.8540540540540541,
+        "lo": 0.5837837837837838,
+        "num": 134.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.7243243243243244
+      },
+      "strict_cost_per_correct": {
+        "den": 134.0,
+        "hi": 0.13157301818181819,
+        "lo": 0.0712811125,
+        "num": 12.743564,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.09510122388059701
+      },
+      "turn_cap_hit": 6
+    },
+    {
+      "condition": "gate",
+      "excluded": {
+        "RUN_ERROR": 1
+      },
+      "false_flags": 0,
+      "fault": "clean",
+      "kept": 54,
+      "published": {
+        "den": 54.0,
+        "hi": 0.0,
+        "lo": 0.0,
+        "num": 0.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.0
+      },
+      "runs": 55,
+      "strict": {
+        "den": 55.0,
+        "hi": 0.05,
+        "lo": 0.0,
+        "num": 1.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.01818181818181818
+      }
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 11,
+      "excluded": {
+        "BASELINE_FAIL": 6
+      },
+      "fault": "F1",
+      "kept": 15,
+      "published": {
+        "den": 15.0,
+        "hi": 1.0,
+        "lo": 0.4375,
+        "num": 11.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.7333333333333333
+      },
+      "published_cost_per_correct": {
+        "den": 11.0,
+        "hi": 0.112188,
+        "lo": 0.05114383333333333,
+        "num": 0.777612,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.07069199999999999
+      },
+      "runs": 21,
+      "strict": {
+        "den": 21.0,
+        "hi": 0.7894736842105263,
+        "lo": 0.2727272727272727,
+        "num": 11.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.5238095238095238
+      },
+      "strict_cost_per_correct": {
+        "den": 11.0,
+        "hi": 0.2870588571428571,
+        "lo": 0.07109266666666667,
+        "num": 1.4215,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.12922727272727272
+      },
+      "turn_cap_hit": 4
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 12,
+      "excluded": {},
+      "fault": "F2",
+      "kept": 13,
+      "published": {
+        "den": 13.0,
+        "hi": 1.0,
+        "lo": 0.7272727272727273,
+        "num": 12.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.9230769230769231
+      },
+      "published_cost_per_correct": {
+        "den": 12.0,
+        "hi": 0.04913,
+        "lo": 0.0331412,
+        "num": 0.46832,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.03902666666666667
+      },
+      "runs": 13,
+      "strict": {
+        "den": 13.0,
+        "hi": 1.0,
+        "lo": 0.7272727272727273,
+        "num": 12.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.9230769230769231
+      },
+      "strict_cost_per_correct": {
+        "den": 12.0,
+        "hi": 0.04913,
+        "lo": 0.0331412,
+        "num": 0.46832,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.03902666666666667
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 9,
+      "excluded": {
+        "BASELINE_FAIL": 7
+      },
+      "fault": "F3",
+      "kept": 15,
+      "published": {
+        "den": 15.0,
+        "hi": 0.8666666666666667,
+        "lo": 0.3076923076923077,
+        "num": 9.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6
+      },
+      "published_cost_per_correct": {
+        "den": 9.0,
+        "hi": 0.141435,
+        "lo": 0.04296938461538462,
+        "num": 0.614562,
+        "resamples": 10000,
+        "valid": 9998,
+        "value": 0.06828466666666667
+      },
+      "runs": 22,
+      "strict": {
+        "den": 22.0,
+        "hi": 0.6666666666666666,
+        "lo": 0.17391304347826086,
+        "num": 9.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.4090909090909091
+      },
+      "strict_cost_per_correct": {
+        "den": 9.0,
+        "hi": 0.407175,
+        "lo": 0.06859514285714285,
+        "num": 1.30939,
+        "resamples": 10000,
+        "valid": 9998,
+        "value": 0.14548777777777777
+      },
+      "turn_cap_hit": 2
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 14,
+      "excluded": {
+        "RUN_ERROR": 1
+      },
+      "fault": "F4",
+      "kept": 19,
+      "published": {
+        "den": 19.0,
+        "hi": 0.9444444444444444,
+        "lo": 0.5,
+        "num": 14.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.7368421052631579
+      },
+      "published_cost_per_correct": {
+        "den": 14.0,
+        "hi": 0.12378600000000001,
+        "lo": 0.07234785714285714,
+        "num": 1.2650460000000001,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.09036042857142858
+      },
+      "runs": 20,
+      "strict": {
+        "den": 20.0,
+        "hi": 0.9,
+        "lo": 0.47619047619047616,
+        "num": 14.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.7
+      },
+      "strict_cost_per_correct": {
+        "den": 14.0,
+        "hi": 0.1303766,
+        "lo": 0.0753585,
+        "num": 1.334824,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.09534457142857143
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 20,
+      "excluded": {
+        "BASELINE_FAIL": 27
+      },
+      "fault": "F5",
+      "kept": 21,
+      "published": {
+        "den": 21.0,
+        "hi": 1.0,
+        "lo": 0.8571428571428571,
+        "num": 20.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.9523809523809523
+      },
+      "published_cost_per_correct": {
+        "den": 20.0,
+        "hi": 0.06890344444444445,
+        "lo": 0.05082154545454545,
+        "num": 1.193638,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.059681899999999996
+      },
+      "runs": 48,
+      "strict": {
+        "den": 48.0,
+        "hi": 0.7105263157894737,
+        "lo": 0.2222222222222222,
+        "num": 20.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.4166666666666667
+      },
+      "strict_cost_per_correct": {
+        "den": 20.0,
+        "hi": 0.42915215384615385,
+        "lo": 0.09256777777777778,
+        "num": 3.968168,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.19840839999999998
+      },
+      "turn_cap_hit": 0
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 51,
+      "excluded": {
+        "BASELINE_FAIL": 10
+      },
+      "fault": "F6",
+      "kept": 51,
+      "published": {
+        "den": 51.0,
+        "hi": 1.0,
+        "lo": 1.0,
+        "num": 51.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 1.0
+      },
+      "published_cost_per_correct": {
+        "den": 51.0,
+        "hi": 0.07198969491525424,
+        "lo": 0.052104923076923076,
+        "num": 3.1975160000000002,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.06269639215686275
+      },
+      "runs": 61,
+      "strict": {
+        "den": 61.0,
+        "hi": 0.9636363636363636,
+        "lo": 0.6833333333333333,
+        "num": 51.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.8360655737704918
+      },
+      "strict_cost_per_correct": {
+        "den": 51.0,
+        "hi": 0.10536777777777778,
+        "lo": 0.06297777272727273,
+        "num": 4.099492,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.08038219607843136
+      },
+      "turn_cap_hit": 3
+    },
+    {
+      "condition": "prompt_fix",
+      "correct": 117,
+      "excluded": {
+        "BASELINE_FAIL": 50,
+        "RUN_ERROR": 1
+      },
+      "fault": "ALL",
+      "kept": 134,
+      "published": {
+        "den": 134.0,
+        "hi": 0.9259259259259259,
+        "lo": 0.8134328358208955,
+        "num": 117.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.8731343283582089
+      },
+      "published_cost_per_correct": {
+        "den": 117.0,
+        "hi": 0.07196686486486487,
+        "lo": 0.05705243333333333,
+        "num": 7.516694,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.06424524786324787
+      },
+      "runs": 185,
+      "strict": {
+        "den": 185.0,
+        "hi": 0.7567567567567568,
+        "lo": 0.4972972972972973,
+        "num": 117.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.6324324324324324
+      },
+      "strict_cost_per_correct": {
+        "den": 117.0,
+        "hi": 0.1519220888888889,
+        "lo": 0.08046283333333333,
+        "num": 12.601694,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.10770678632478632
+      },
+      "turn_cap_hit": 9
+    },
+    {
+      "condition": "prompt_fix",
+      "excluded": {},
+      "false_flags": 8,
+      "fault": "clean",
+      "kept": 55,
+      "published": {
+        "den": 55.0,
+        "hi": 0.35,
+        "lo": 0.0,
+        "num": 8.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.14545454545454545
+      },
+      "runs": 55,
+      "strict": {
+        "den": 55.0,
+        "hi": 0.35,
+        "lo": 0.0,
+        "num": 8.0,
+        "resamples": 10000,
+        "valid": 10000,
+        "value": 0.14545454545454545
+      }
+    }
+  ],
+  "exclusions_by_code": {
+    "BASELINE_FAIL": 120,
+    "RUN_ERROR": 6
+  },
+  "gate_overhead": {
+    "added_latency_s_per_run": 0.001702379461451654,
+    "added_tokens": 0,
+    "comparator": "prompt_fix",
+    "cost_overhead": {
+      "den": 16.60987,
+      "hi": 0.08932403266427535,
+      "lo": -0.06200647780613908,
+      "num": 0.1915439999999998,
+      "resamples": 10000,
+      "valid": 10000,
+      "value": 0.011531938540157135
+    },
+    "extra_tool_calls_per_run": 0.405982905982906,
+    "gate_runs": 240,
+    "pairs": 234
+  },
+  "incomplete": [
+    "gate-confirm-1-38398347678"
+  ],
+  "params": {
+    "bootstrap": "replicate-cluster (tasks), percentile",
+    "ci": 0.95,
+    "resamples": 10000,
+    "seed": 1
+  },
+  "pilot": false,
+  "records": 720,
+  "sources": [
+    {
+      "dir": "run",
+      "meta": {
+        "cap_usd": 25.0,
+        "git_commit": "d4aba85844a3d117c198201c0480711654651997",
+        "jobs": 259,
+        "protocol": "docs/PREREGISTRATION.md",
+        "protocol_sha256": "516e8ef0fbee73284a2e2f7be6b57371a909927007cd085b77ccf262eddbd491",
+        "sessions": [
+          {
+            "cap_usd": 25.0,
+            "ceiling_usd": 50.0,
+            "git_commit": "d4aba85844a3d117c198201c0480711654651997",
+            "jobs": 480,
+            "spend_ledger": "out/spend_ledger.jsonl",
+            "started": "2026-10-12T01:05:37.604331+00:00"
+          },
+          {
+            "cap_usd": 25.0,
+            "ceiling_usd": 50.0,
+            "git_commit": "b194a6fdbc79c424ef201f78a65d434ab5384af3",
+            "jobs": 259,
+            "spend_ledger": "out/spend_ledger.jsonl",
+            "started": "2026-10-12T13:03:28.415173+00:00"
+          }
+        ],
+        "started": "2026-10-12T01:05:37.604331+00:00"
+      },
+      "records": 480,
+      "result": {
+        "cap_usd": 25.0,
+        "ceiling_usd": 50.0,
+        "exit_code": 1,
+        "exit_name": "RUN_ERRORS",
+        "ledger_spent_usd": 21.858999999999966,
+        "ran_this_session": 259,
+        "records_total": 480,
+        "spent_usd": 21.395511999999975
+      }
+    },
+    {
+      "dir": "gate-confirm-1-38398347678",
+      "meta": {
+        "cap_usd": 4.0,
+        "git_commit": "7e1d7a87a9b6eecbee439ac5646171ff847aaec0",
+        "jobs": 60,
+        "protocol": "docs/PREREGISTRATION.md",
+        "protocol_sha256": "516e8ef0fbee73284a2e2f7be6b57371a909927007cd085b77ccf262eddbd491",
+        "sessions": [
+          {
+            "cap_usd": 4.0,
+            "ceiling_usd": 50.0,
+            "git_commit": "7e1d7a87a9b6eecbee439ac5646171ff847aaec0",
+            "jobs": 60,
+            "spend_ledger": "out/spend_ledger.jsonl",
+            "started": "2026-10-13T12:35:19.793510+00:00",
+            "target_count": 60,
+            "targets": "gate-confirm-1"
+          }
+        ],
+        "started": "2026-10-13T12:35:19.793510+00:00",
+        "target_count": 60,
+        "targets": "gate-confirm-1"
+      },
+      "records": 53,
+      "result": {
+        "cap_usd": 4.0,
+        "ceiling_usd": 50.0,
+        "exit_code": 3,
+        "exit_name": "BUDGET_HALT",
+        "ledger_spent_usd": 38.79112599999998,
+        "ran_this_session": 53,
+        "records_total": 53,
+        "spent_usd": 3.9555040000000004,
+        "target_count": 60,
+        "targets": "gate-confirm-1"
+      }
+    },
+    {
+      "dir": "gate-confirm-1b-38421505642",
+      "meta": {
+        "cap_usd": 1.5,
+        "git_commit": "c49564e54ee35bb1b1337b78d819d4a21cd57d0f",
+        "jobs": 7,
+        "protocol": "docs/PREREGISTRATION.md",
+        "protocol_sha256": "516e8ef0fbee73284a2e2f7be6b57371a909927007cd085b77ccf262eddbd491",
+        "sessions": [
+          {
+            "cap_usd": 1.5,
+            "ceiling_usd": 50.0,
+            "git_commit": "c49564e54ee35bb1b1337b78d819d4a21cd57d0f",
+            "jobs": 7,
+            "spend_ledger": "out/spend_ledger.jsonl",
+            "started": "2026-10-13T15:22:46.688738+00:00",
+            "target_count": 7,
+            "targets": "gate-confirm-1b"
+          }
+        ],
+        "started": "2026-10-13T15:22:46.688738+00:00",
+        "target_count": 7,
+        "targets": "gate-confirm-1b"
+      },
+      "records": 7,
+      "result": {
+        "cap_usd": 1.5,
+        "ceiling_usd": 50.0,
+        "exit_code": 0,
+        "exit_name": "OK",
+        "ledger_spent_usd": 39.32002599999998,
+        "ran_this_session": 7,
+        "records_total": 7,
+        "spent_usd": 0.5288999999999999,
+        "target_count": 7,
+        "targets": "gate-confirm-1b"
+      }
+    }
+  ],
+  "spend_usd": 38.340568
+}
