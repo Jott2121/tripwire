@@ -83,6 +83,27 @@ file or labelled with its source.
 - **Takeaway:** a prompt is a weak control for silent data corruption. That is the case for the
   fail-closed gate (F2/F4/F5/F6 are mechanically catchable; F1/F3 are not) — measured next.
 
+### Exploratory: the fail-closed gate, live (A1–A3)
+
+**Prompting doesn't fix bad-data detection; a fail-closed gate does, at about prompt_fix cost.**
+These numbers are **exploratory, not preregistered**: the gate was tuned offline on the earlier
+runs ([A1](docs/amendments/A1-gate-store-crosscheck.md)), confirmed live on 60 targeted slots
+([A2](docs/amendments/A2-targeted-gate-confirmation.md), [results](docs/results/gate-confirm-1.md)),
+and one scoring rule ([A3](docs/amendments/A3-turn-cap-blocked-report.md): a turn-capped run the
+gate has already blocked records the gate's block) was **decided after seeing those results**.
+Small n (48 faulted, 12 clean runs per condition, same slots); 95% task-cluster bootstrap CIs.
+
+| Same 60 slots, grok-4.7 | Baseline | "Check your data" prompt | Gate (live) | Gate, A3 re-scored |
+|---|---|---|---|---|
+| Correct on faulted data (strict) | 72.9% [58–86] | 75.0% [61–88] | 87.5% [73–100] | 93.8% [80–100] |
+| Correct on faulted data (published) | 72.9% | 81.8% [70–93] | 93.3% [84–100] | 100% |
+| False flags on clean data | 0/12 | 3/12 (25%) | 0/12 | 0/12 |
+| Cost per correct (published) | $0.0241 | $0.0708 | $0.0732 | $0.0683 |
+
+The CIs overlap; the preregistered table above keeps the Gate column TBD. A pre-registered holdout
+on fresh fault draws, with pass/fail thresholds fixed in advance, is planned in
+[A4](docs/amendments/A4-holdout-confirmation.md) (not yet run).
+
 ## How to read this (for non-engineers)
 
 Imagine a very capable assistant that looks things up for you through a set of tools. Someone

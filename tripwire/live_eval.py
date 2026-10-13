@@ -25,13 +25,14 @@ from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
-from tripwire import runner, targets, tasks, xai
+from tripwire import holdout, runner, targets, tasks, xai
 from tripwire.prompts import Condition
 
 CONFIRM_PHRASE = "I-APPROVE-LIVE-SPEND"
 CONDITION_SETS: Mapping[str, tuple[Condition, ...]] = {
     "baseline-prompt-fix": runner.CONDITIONS,  # the lean first run
     "gate": (Condition.GATE,),  # its own session
+    "holdout-1": holdout.CONDITIONS,  # amendment A4: the committed holdout plan, all three
 }
 KEY_ENV = "XAI_API_KEY"
 DRY_RUN_REPLY = json.dumps(
@@ -181,6 +182,14 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
             raise runner.RunnerRefused(
                 f"a targets run needs budget<={targets.BUDGET_USD_CAP} USD (got {args.budget_usd})"
             )
+    is_holdout = args.condition_set == holdout.NAME
+    if is_holdout:
+        if pilot is not None or args.max_jobs is not None or target_path is not None:
+            raise runner.RunnerRefused("holdout-1 excludes --pilot-jobs, --max-jobs, --targets")
+        if args.budget_usd > holdout.BUDGET_USD_CAP:
+            raise runner.RunnerRefused(
+                f"holdout-1 needs budget<={holdout.BUDGET_USD_CAP} USD (got {args.budget_usd})"
+            )
     check_budget(args.budget_usd, args.spend_ledger, args.ledger_rows)
     out: Path = resume if resume is not None else args.out
     if (out / "meta.json").exists():  # never mix pilot and scored records in one directory
@@ -201,7 +210,12 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
             raise runner.RunnerRefused("xai.WIRE_CONFIRMED is False: wire format unconfirmed")
         client = xai.LiveClient(key)
     all_tasks = tasks.default_tasks()
-    jobs = runner.plan_matrix(all_tasks, xai.MODEL_CONFIGS, CONDITION_SETS[args.condition_set])
+    if is_holdout:  # fails closed on a stale or edited plan file
+        holdout_file = args.repo / holdout.DEFAULT_PATH
+        holdout.verify_document(json.loads(holdout_file.read_text()))
+        jobs = holdout.jobs()
+    else:
+        jobs = runner.plan_matrix(all_tasks, xai.MODEL_CONFIGS, CONDITION_SETS[args.condition_set])
     if resume is not None:
         failed = runner.failed_run_ids(resume / "receipt.jsonl")
         jobs = tuple(j for j in jobs if j.job_id in failed)
@@ -223,6 +237,8 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
                 f"targets estimate {est:.2f} USD exceeds budget {args.budget_usd:.2f} USD"
             )
         extra_meta = {"targets": target_path.stem, "target_count": len(jobs)}
+    if is_holdout:
+        extra_meta = {"targets": holdout.NAME, "target_count": len(jobs), "amendment": "A4"}
     code = runner.run_matrix(
         jobs,
         {t.task_id: t for t in all_tasks},

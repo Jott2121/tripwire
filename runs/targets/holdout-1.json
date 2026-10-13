@@ -1,0 +1,237 @@
+{
+  "amendment": "A4",
+  "budget_usd_cap": 6.0,
+  "conditions": [
+    "baseline",
+    "prompt_fix",
+    "gate"
+  ],
+  "counts": {
+    "jobs": 72,
+    "slots": 24
+  },
+  "est_cost_usd": 5.4,
+  "est_usd_per_run": 0.075,
+  "job_ids": [
+    "H1-T02-r04.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T02-r04.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T02-r04.grok-4.7.client_side_functions.gate.k1",
+    "H1-T03-r03.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T03-r03.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T03-r03.grok-4.7.client_side_functions.gate.k1",
+    "H1-T04-r01.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T04-r01.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T04-r01.grok-4.7.client_side_functions.gate.k1",
+    "H1-T05-r05.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T05-r05.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T05-r05.grok-4.7.client_side_functions.gate.k1",
+    "H1-T06-r01.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T06-r01.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T06-r01.grok-4.7.client_side_functions.gate.k1",
+    "H1-T06-r02.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T06-r02.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T06-r02.grok-4.7.client_side_functions.gate.k1",
+    "H1-T07-r01.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T07-r01.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T07-r01.grok-4.7.client_side_functions.gate.k1",
+    "H1-T07-r03.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T07-r03.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T07-r03.grok-4.7.client_side_functions.gate.k1",
+    "H1-T08-r01.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T08-r01.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T08-r01.grok-4.7.client_side_functions.gate.k1",
+    "H1-T10-r06.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T10-r06.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T10-r06.grok-4.7.client_side_functions.gate.k1",
+    "H1-T11-r06.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T11-r06.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T11-r06.grok-4.7.client_side_functions.gate.k1",
+    "H1-T12-r04.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T12-r04.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T12-r04.grok-4.7.client_side_functions.gate.k1",
+    "H1-T16-r06.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T16-r06.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T16-r06.grok-4.7.client_side_functions.gate.k1",
+    "H1-T19-r01.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T19-r01.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T19-r01.grok-4.7.client_side_functions.gate.k1",
+    "H1-T20-r06.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T20-r06.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T20-r06.grok-4.7.client_side_functions.gate.k1",
+    "H1-T22-r06.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T22-r06.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T22-r06.grok-4.7.client_side_functions.gate.k1",
+    "H1-T24-r01.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T24-r01.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T24-r01.grok-4.7.client_side_functions.gate.k1",
+    "H1-T26-r06.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T26-r06.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T26-r06.grok-4.7.client_side_functions.gate.k1",
+    "H1-T27-r04.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T27-r04.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T27-r04.grok-4.7.client_side_functions.gate.k1",
+    "H1-T28-r02.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T28-r02.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T28-r02.grok-4.7.client_side_functions.gate.k1",
+    "H1-T29-r03.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T29-r03.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T29-r03.grok-4.7.client_side_functions.gate.k1",
+    "H1-T30-r02.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T30-r02.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T30-r02.grok-4.7.client_side_functions.gate.k1",
+    "H1-T35-r01.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T35-r01.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T35-r01.grok-4.7.client_side_functions.gate.k1",
+    "H1-T38-r06.grok-4.7.client_side_functions.baseline.k1",
+    "H1-T38-r06.grok-4.7.client_side_functions.prompt_fix.k1",
+    "H1-T38-r06.grok-4.7.client_side_functions.gate.k1"
+  ],
+  "name": "holdout-1",
+  "plan_seed": 20261013,
+  "slots": [
+    {
+      "fault": "F2",
+      "fault_seed": 553728032,
+      "run_id": "H1-T02-r04",
+      "task_id": "T02"
+    },
+    {
+      "fault": "F2",
+      "fault_seed": 3814755028,
+      "run_id": "H1-T03-r03",
+      "task_id": "T03"
+    },
+    {
+      "fault": null,
+      "fault_seed": 2041090837,
+      "run_id": "H1-T04-r01",
+      "task_id": "T04"
+    },
+    {
+      "fault": null,
+      "fault_seed": 2765814158,
+      "run_id": "H1-T05-r05",
+      "task_id": "T05"
+    },
+    {
+      "fault": "F1",
+      "fault_seed": 607186778,
+      "run_id": "H1-T06-r01",
+      "task_id": "T06"
+    },
+    {
+      "fault": "F3",
+      "fault_seed": 4280156254,
+      "run_id": "H1-T06-r02",
+      "task_id": "T06"
+    },
+    {
+      "fault": "F1",
+      "fault_seed": 166773293,
+      "run_id": "H1-T07-r01",
+      "task_id": "T07"
+    },
+    {
+      "fault": null,
+      "fault_seed": 4284104175,
+      "run_id": "H1-T07-r03",
+      "task_id": "T07"
+    },
+    {
+      "fault": "F6",
+      "fault_seed": 2150272650,
+      "run_id": "H1-T08-r01",
+      "task_id": "T08"
+    },
+    {
+      "fault": "F1",
+      "fault_seed": 1681984270,
+      "run_id": "H1-T10-r06",
+      "task_id": "T10"
+    },
+    {
+      "fault": "F3",
+      "fault_seed": 2942799273,
+      "run_id": "H1-T11-r06",
+      "task_id": "T11"
+    },
+    {
+      "fault": "F2",
+      "fault_seed": 4076419183,
+      "run_id": "H1-T12-r04",
+      "task_id": "T12"
+    },
+    {
+      "fault": "F5",
+      "fault_seed": 2261105646,
+      "run_id": "H1-T16-r06",
+      "task_id": "T16"
+    },
+    {
+      "fault": "F5",
+      "fault_seed": 3248520994,
+      "run_id": "H1-T19-r01",
+      "task_id": "T19"
+    },
+    {
+      "fault": null,
+      "fault_seed": 4080274098,
+      "run_id": "H1-T20-r06",
+      "task_id": "T20"
+    },
+    {
+      "fault": "F5",
+      "fault_seed": 2062983859,
+      "run_id": "H1-T22-r06",
+      "task_id": "T22"
+    },
+    {
+      "fault": "F6",
+      "fault_seed": 1276557620,
+      "run_id": "H1-T24-r01",
+      "task_id": "T24"
+    },
+    {
+      "fault": "F3",
+      "fault_seed": 1117889751,
+      "run_id": "H1-T26-r06",
+      "task_id": "T26"
+    },
+    {
+      "fault": null,
+      "fault_seed": 4083153055,
+      "run_id": "H1-T27-r04",
+      "task_id": "T27"
+    },
+    {
+      "fault": null,
+      "fault_seed": 1589589416,
+      "run_id": "H1-T28-r02",
+      "task_id": "T28"
+    },
+    {
+      "fault": "F4",
+      "fault_seed": 3447346245,
+      "run_id": "H1-T29-r03",
+      "task_id": "T29"
+    },
+    {
+      "fault": "F6",
+      "fault_seed": 307246883,
+      "run_id": "H1-T30-r02",
+      "task_id": "T30"
+    },
+    {
+      "fault": "F4",
+      "fault_seed": 301092032,
+      "run_id": "H1-T35-r01",
+      "task_id": "T35"
+    },
+    {
+      "fault": "F4",
+      "fault_seed": 1507853920,
+      "run_id": "H1-T38-r06",
+      "task_id": "T38"
+    }
+  ]
+}
