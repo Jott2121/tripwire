@@ -18,6 +18,7 @@ from pathlib import Path
 
 from tripwire import gate_replay as g
 from tripwire import report as r
+from tripwire import rescore
 
 
 def main() -> int:
@@ -27,12 +28,20 @@ def main() -> int:
     ap.add_argument("live_dirs", type=Path, nargs="+")
     ap.add_argument("--targets", type=Path, default=Path("runs/targets/gate-confirm-1.json"))
     ap.add_argument("--out", type=Path, default=Path("reports"))
+    ap.add_argument("--a3", action="store_true", help="re-score live rows under amendment A3")
     a = ap.parse_args()
+    sfx = "_a3" if a.a3 else ""
     doc = json.loads(a.targets.read_text())
-    live, live_src = r.load_records(a.live_dirs)
+    live, live_src = [], []
+    for d in a.live_dirs:
+        rows, src = r.load_records([d])
+        live += rescore.rescore(rows, d / "ledgers") if a.a3 else rows
+        live_src += src
     prior, prior_src = r.load_records([a.prior_dir])
     comp = g._filter_to_slots(prior, {g.slot(x["run_id"]) for x in live})
-    r.write_report(r.analyse(comp + live, prior_src + live_src), a.out, "gate_confirm_1_same_slots")
+    r.write_report(
+        r.analyse(comp + live, prior_src + live_src), a.out, "gate_confirm_1_same_slots" + sfx
+    )
 
     before, after, _ = g.replay(a.prior_dir, a.old_gate_dir)
     bf = {g.slot(x["run_id"]): x for x in before if x["condition"] == "gate"}
@@ -52,7 +61,7 @@ def main() -> int:
     gate = [x for x in after if x["condition"] == "gate"]
     gate += [x for x in live if g.slot(x["run_id"]) in skipped]
     comp240 = g._filter_to_slots(prior, {g.slot(x["run_id"]) for x in gate})
-    r.write_report(r.analyse(comp240 + gate, prior_src + live_src), a.out, "gate_240_mixed")
+    r.write_report(r.analyse(comp240 + gate, prior_src + live_src), a.out, "gate_240_mixed" + sfx)
     return 0
 
 

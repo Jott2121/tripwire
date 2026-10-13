@@ -330,3 +330,29 @@ def test_spec_with_neither_bound_is_a_contract_failure_not_a_gate_error():
     g = Gate(store)
     g.observe("get_spec", call.args, {"spec": spec})
     assert g.blocked and [f.check for f in g.failures] == ["spec_unbounded"]
+
+
+@pytest.mark.parametrize("fault", [FaultKind.F2, FaultKind.F6])
+def test_a3_turn_cap_after_a_gate_block_records_the_blocked_report(fault):
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    loop = [sp.resp(calls=sp.read_calls(task)) for _ in range(12)]
+    rec = _run(task, fault, sp.client_for(loop))
+    assert rec.turn_cap_hit and rec.gate["blocked"] and rec.exclusion is None
+    assert rec.verdict["status"] == "blocked" and FAULT_NAMES[fault] in rec.verdict["flags"]
+    assert rec.adjudication["correct"] is True
+
+
+def test_a3_turn_cap_without_a_gate_block_still_has_no_verdict():
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    loop = [sp.resp(calls=sp.read_calls(task)) for _ in range(12)]
+    rec = _run(task, None, sp.client_for(loop))
+    assert rec.turn_cap_hit and not rec.gate["blocked"] and rec.verdict is None
+    assert rec.adjudication["correct"] is False
+
+
+def test_a3_does_not_touch_ungated_turn_caps():
+    task = sp.first_task(tk.TaskKind.SPEC_LIMIT)
+    loop = [sp.resp(calls=sp.read_calls(task)) for _ in range(12)]
+    rec = _run(task, FaultKind.F6, sp.client_for(loop), Condition.PROMPT_FIX)
+    assert rec.turn_cap_hit and rec.gate is None and rec.verdict is None
+    assert rec.adjudication["correct"] is False
