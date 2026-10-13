@@ -6,9 +6,9 @@
       "total_usd": 4.293016
     },
     "gate": {
-      "mean_usd": 0.069767,
-      "runs": 186,
-      "total_usd": 12.976622
+      "mean_usd": 0.07098,
+      "runs": 246,
+      "total_usd": 17.461026
     },
     "prompt_fix": {
       "mean_usd": 0.046594,
@@ -17,10 +17,10 @@
     }
   },
   "first_timestamp": "2026-10-12T00:37:55.099140+00:00",
-  "last_timestamp": "2026-10-12T21:45:07.418747+00:00",
+  "last_timestamp": "2026-10-13T15:32:44.142297+00:00",
   "model": "grok-4.7",
   "path": "client_side_functions",
-  "runs": 940,
+  "runs": 1000,
   "source": "runs/spend_ledger.jsonl",
-  "total_usd": 34.835622
+  "total_usd": 39.320026
 }

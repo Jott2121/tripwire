@@ -73,7 +73,7 @@ on:
       targets:
         description: "Committed target set to run (blank = full matrix); gate-confirm-1 needs condition_set=gate"
         type: choice
-        options: ["", gate-confirm-1]
+        options: ["", gate-confirm-1, gate-confirm-1b]
         default: ""
       confirm:
         description: "Type I-APPROVE-LIVE-SPEND to spend money"
@@ -175,7 +175,7 @@ jobs:
           # TARGETS is one of the fixed choice options (blank or a committed set name)
           case "$TARGETS" in
             "") ;;
-            gate-confirm-1)
+            gate-confirm-1|gate-confirm-1b)
               flags="$flags --targets runs/targets/$TARGETS.json"
               outdir="out/$TARGETS-$RUN_ID" ;;
             *) echo "REFUSED: unknown targets value" >&2; exit 1 ;;
