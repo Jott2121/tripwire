@@ -189,7 +189,7 @@ Build status and milestones: [`docs/STATUS.md`](docs/STATUS.md).
 ```
 tripwire/     package: tool server, F1–F6 fault middleware, hash-chained ledger,
               deterministic adjudicator, harness, gate, report
-tasks/        the 30-task set with ground truth (tasks_v1.json)
+tasks/        the 40-task set with ground truth (tasks_v1.json)
 docs/         PREREGISTRATION.md, MEASUREMENT_STANDARDS.md, DATA.md, STATUS.md
 scripts/      make_results_chart.py, scan_blocked_terms.py, fetch_sdr.py, profile_sdr.py
 artifacts/    results_cost.svg + results_summary.json (generated from the ledger)
