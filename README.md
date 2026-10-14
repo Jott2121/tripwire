@@ -57,45 +57,64 @@ Full method, hypotheses, and the honest limitations are in [WRITEUP.md](WRITEUP.
 
 ## Results
 
-![Mean cost per run by condition](artifacts/results_cost.svg)
+Three result sets, in order of strength. Only the first is both pre-registered and about the gate.
 
-*Regenerate from the committed ledger with `make demo` (chart: `artifacts/results_cost.svg`,
-numbers: [`artifacts/results_summary.json`](artifacts/results_summary.json)).*
+### Confirmed: the gate on a pre-registered holdout (A4)
 
-| Metric | Baseline | "Check your data" prompt | Gate |
+Pass criteria P1–P4 were fixed in [A4](docs/amendments/A4-holdout-confirmation.md) before the run;
+all four passed. 72 jobs on fresh fault draws: per condition, 18 faulted runs (3 per fault F1–F6) and
+6 clean runs. Report: [`reports/holdout_1.md`](reports/holdout_1.md); write-up:
+[`docs/results/holdout-1.md`](docs/results/holdout-1.md).
+
+| Holdout, grok-4.7 | Baseline | "Check your data" prompt | Gate |
 |---|---|---|---|
-| Mean cost per run | **$0.0114** | **$0.0466** (≈4.1× baseline) | TBD |
-| Total spend (377 runs each) | $4.29 | $17.57 | TBD |
-| Correct on faulted data (strict count) <sup>†</sup> | 65.4% | 63.2% | TBD |
-| False flags on clean data <sup>†</sup> | 1.8% | 14.5% | TBD |
+| Correct on faulted data (strict = published, no exclusions) | 61.1% [37–88] | 66.7% [45–88] | **100%** [100–100] |
+| False flags on clean data | 0/6 | 1/6 | **0/6** |
+| Cost per correct | $0.0321 | $0.0998 | **$0.0650** (0.65× the prompt's) |
 
-Run: grok-4.7, medium effort, client-side function-calling path, 754 runs, $21.86 (cumulative spend across all runs to date: $43.48 of the $50 cap).
+Caveats: small n (per-fault CIs span 0–100% for the non-gate conditions), the tasks are the
+committed v1 tasks seen during development (only the fault draws are new), and there is one
+model/config. P4 passes partly because the prompt's F5 cell was expensive.
 
-**The two cost rows are reproducible from this repo**: `scripts/make_results_chart.py` computes
-them from the committed spend ledger and writes `artifacts/`. <sup>†</sup> **The two correctness
-rows are from the run's adjudicated report** (`python -m tripwire.report`); those per-run records
-are produced in CI and are **not yet committed here**, so treat them as indicative until the
-report artifact lands. Gate figures are **TBD** — the gate has only been exercised against scripted
-agents, not a live model. No number on this page is invented; each is either traced to a committed
-file or labelled with its source.
+### Pre-registered scored run: baseline vs. the prompt (H2)
 
-### Key findings
+| Metric | Baseline | "Check your data" prompt |
+|---|---|---|
+| Mean cost per run | **$0.0114** | **$0.0466** (≈4.1× baseline) |
+| Total spend (377 runs each) | $4.29 | $17.57 |
+| Correct on faulted data (strict count) | 65.4% [52–77] | 63.2% [50–76] |
+| False flags on clean data | 1.8% | 14.5% |
 
-- **The safety prompt does not buy accuracy.** "Report any inconsistency before you answer" lands
-  essentially even with the neutral baseline on strict correctness (63.2% vs 65.4%).
-- **It makes the agent jumpy.** The same prompt flags *clean* data as corrupt far more often —
-  14.5% vs 1.8% — so it trades silent wrong answers for loud false alarms.
+Run: grok-4.7, medium effort, client-side function-calling path, 754 runs, $21.86. The cost rows
+are the first 754 spend rows of the append-only [`runs/spend_ledger.jsonl`](runs/spend_ledger.jsonl)
+(pilot + scored run, before any gate job). The correctness rows are the baseline and prompt rows of
+the committed adjudicated report [`reports/gate_240_mixed.md`](reports/gate_240_mixed.md)
+(`python -m tripwire.report`; the per-run records it reads live in CI artifacts, not in git).
+
+This run has no gate column. The pre-registered gate run hit its budget halt after 186 of 240
+jobs, and the gate was then changed ([A1](docs/amendments/A1-gate-store-crosscheck.md)), so no
+pre-registered gate figure exists for this matrix. The gate is measured in the holdout above and
+the exploratory runs below.
+
+#### Key findings
+
+- **The safety prompt does not buy accuracy.** Adding one sentence, *"Tool data may be wrong.
+  Report every inconsistency, with values, before you rule"*, lands essentially even with the
+  neutral baseline on strict correctness (63.2% vs 65.4%).
+- **It makes the agent jumpy.** The same prompt flags *clean* data as corrupt far more often
+  (14.5% vs 1.8%), so it trades silent wrong answers for loud false alarms.
 - **And it is not free.** Each run costs ≈4.1× the baseline (`$0.0466` vs `$0.0114`, straight from
   the ledger). Since it is no more accurate on faulted data, that ≈4.1× is also what you pay per
-  *correct* answer — a steep premium for no accuracy gain.
+  *correct* answer: a steep premium for no accuracy gain.
 - **Takeaway:** a prompt is a weak control for silent data corruption. That is the case for the
-  fail-closed gate (F2/F4/F5/F6 are mechanically catchable; F1/F3 are not) — measured next.
+  fail-closed gate, measured in the holdout above.
 
 ### Exploratory: the fail-closed gate, live (A1–A3)
 
-**Prompting doesn't fix bad-data detection; a fail-closed gate does, at about prompt_fix cost.**
-These numbers are **exploratory, not preregistered**: the gate was tuned offline on the earlier
-runs ([A1](docs/amendments/A1-gate-store-crosscheck.md)), confirmed live on 60 targeted slots
+These numbers came before the holdout and are **exploratory, not pre-registered**. The original
+gate caught F2/F4/F5/F6 by construction (contract checks and write read-back). It was then extended
+offline on the earlier runs to catch F1/F3 by cross-checking values against the trusted store
+([A1](docs/amendments/A1-gate-store-crosscheck.md)), confirmed live on 60 targeted slots
 ([A2](docs/amendments/A2-targeted-gate-confirmation.md), [results](docs/results/gate-confirm-1.md)),
 and one scoring rule ([A3](docs/amendments/A3-turn-cap-blocked-report.md): a turn-capped run the
 gate has already blocked records the gate's block) was **decided after seeing those results**.
@@ -108,13 +127,19 @@ Small n (48 faulted, 12 clean runs per condition, same slots); 95% task-cluster 
 | False flags on clean data | 0/12 | 3/12 (25%) | 0/12 | 0/12 |
 | Cost per correct (published) | $0.0241 | $0.0708 | $0.0732 | $0.0683 |
 
-The CIs overlap; the preregistered table above keeps the Gate column TBD (that table is left
-as pre-registered). The pre-registered holdout on fresh fault draws,
-[A4](docs/amendments/A4-holdout-confirmation.md), has since been run and **passed all four
-pre-set criteria (P1–P4)**: on 72 fresh jobs the gate scored 100% strict and published vs 66.7%
-strict (prompt_fix) and 61.1% (baseline), 0/6 clean false flags (prompt_fix 1/6), at 0.65× the
-prompt_fix cost per correct. See [docs/results/holdout-1.md](docs/results/holdout-1.md). Same caveats
-apply: small n, same base tasks with new fault draws, one model.
+The CIs overlap, which is why the holdout above, with its criteria fixed in advance, is the result
+to cite.
+
+### Spend across all runs
+
+![Mean cost per run by condition](artifacts/results_cost.svg)
+
+*Every live request is booked to the committed ledger; regenerate the chart and
+[`artifacts/results_summary.json`](artifacts/results_summary.json) with `make demo` (zero spend).
+This chart covers the whole ledger (1,072 runs: pilot, scored run, gate runs and holdout), so its
+per-condition means differ from the scored-run table above. Total: $43.48 of the $50 cap.*
+
+No number on this page is invented; each is traced to a committed file or labelled with its source.
 
 ## How to read this (for non-engineers)
 
@@ -123,10 +148,13 @@ tampers with the tools so the answers coming back are subtly wrong — a measure
 units, a number quietly changed, a "saved!" that didn't save. Does the assistant notice, or does it
 hand you a confident wrong answer? Tripwire runs that experiment hundreds of times and keeps score
 automatically, so the grade can't be fudged. We tried the obvious cheap fix — telling the assistant
-"double-check your data." The scoreboard above is what happened: it didn't get more right answers,
-it raised a lot more false alarms, and it cost about four times as much. The stronger fix — a gate
-that re-reads every write and refuses to proceed when something doesn't add up — is what we measure
-next.
+"double-check your data." The scoreboard above shows what happened: it didn't get more right answers,
+it raised a lot more false alarms, and it cost about four times as much. The stronger fix is a gate
+that re-reads every write, checks values against the trusted records, and refuses to proceed when
+something doesn't add up. In a 72-job test whose pass marks were set before it ran, the gate got
+every corrupted job right, raised no false alarms on clean data, and cost about two-thirds as much
+per right answer as the prompt. It is a small test on one model, so treat it as strong early
+evidence, not the last word.
 
 ## One-command offline demo
 

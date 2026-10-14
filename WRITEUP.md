@@ -73,7 +73,8 @@ it. Second, **F3 (wrong value, right unit) is the hardest fault**, at 36–41% s
 conditions: nothing in the data looks malformed, only the number is off. Single-fault cells are
 small (13–61 runs) and their intervals wide, so per-fault figures are directional.
 
-<sup>†</sup> Read from the uncommitted `tripwire.report` output; see limitations.
+<sup>†</sup> From the baseline and prompt rows of the committed report
+[`reports/gate_240_mixed.md`](reports/gate_240_mixed.md); see limitations.
 
 The cost side is the part this repo can fully back: from the committed spend ledger, the prompt
 condition costs a mean **$0.0466/run vs $0.0114/run**, about **4.1× per run**. Since the prompt is
@@ -82,7 +83,7 @@ premium bought no accuracy. 754 runs cost **$21.86** of the **$50** cap. The cha
 and `artifacts/results_summary.json` are regenerated from the ledger by
 [`scripts/make_results_chart.py`](scripts/make_results_chart.py) (`make demo`).
 
-## The gate (measured next)
+## The gate
 
 The fail-closed gate ([`tripwire/gate.py`](tripwire/gate.py)) is a contract check on every tool
 result plus a read-back of every write (`create_work_order` → `get_work_order`), producing a
@@ -90,18 +91,28 @@ result plus a read-back of every write (`create_work_order` → `get_work_order`
 construction it catches the *process* faults — **F2, F4, F5, F6** (row-count / read-back / dropped
 fields) — and does **not** catch **F1** or **F3**, where the served value is internally consistent
 and only wrong against the real world. It adds no model call (0 extra tokens), only tool calls and
-latency. It has so far run only against scripted agents, so **H1 and H4 are unmeasured** and every
-gate figure in the README is TBD.
+latency.
+
+The pre-registered gate run hit its budget halt after 186 of 240 jobs. The gate was then extended
+to catch F1 and F3 by cross-checking served values against the trusted store
+([A1](docs/amendments/A1-gate-store-crosscheck.md), exploratory), confirmed live on 60 targeted
+slots ([A2](docs/amendments/A2-targeted-gate-confirmation.md)), and finally tested on a
+pre-registered holdout of 72 fresh fault draws ([A4](docs/amendments/A4-holdout-confirmation.md)).
+The holdout passed all four pre-set criteria: 100% correct on faulted data vs 66.7% for the prompt
+and 61.1% for baseline, 0/6 clean false flags, at 0.65× the prompt's cost per correct
+([`docs/results/holdout-1.md`](docs/results/holdout-1.md)). Because the halted run was never
+completed as pre-registered, H1 and H4 still have no verdict under the original protocol; the
+holdout is the gate result to cite.
 
 ## Honest limitations
 
 - **The scored run is underpowered.** The lean matrix (6 runs/task, two conditions, client-side,
   one effort row) was chosen to fit ~$25 of the budget. Per the preregistration, **H1 and H4 cannot
   be confirmed by interval, and H3 and H5 are not tested** (one effort row, no server-side runs).
-- **The adjudicated accuracy/false-flag report is not committed to this repo.** Only the spend
-  ledger is. The accuracy and false-flag figures marked <sup>†</sup> are read from the run's
-  `python -m tripwire.report` output and are reproducible from the run directories, which live in
-  CI artifacts rather than in git. They are indicative until that report lands here.
+- **The per-run records live in CI artifacts, not in git.** The adjudicated reports built from
+  them are committed under [`reports/`](reports/), along with the spend ledger, so every figure
+  traces to a committed file; re-running `python -m tripwire.report` needs the downloaded run
+  directories.
 - **The server-side remote-MCP path was not run** (needs a reachable HTTPS tunnel and per-run
   tokens). The gate cannot be applied there, by design, since xAI runs the tools.
 - **Public/synthetic data only.** No real FAA narrative rows and no proprietary data are ever
@@ -116,5 +127,5 @@ make demo     # regenerate the cost chart + summary from the committed ledger (z
 make check    # ruff + pytest (coverage >= 90%) + the proprietary-data scan
 ```
 
-The adjudicated report, once its run directories are available, is produced by
+The committed reports under `reports/` are rebuilt from downloaded run directories with
 `python -m tripwire.report <run_dir>... --out reports`.
