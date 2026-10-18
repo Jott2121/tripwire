@@ -1,3 +1,4 @@
+# Pair of docs/live-eval.workflow.yml and .github/workflows/live-eval.yml: kept byte-identical on purpose (tests/test_live.py); first added under docs/ when the authoring token could not write workflow files.
 # PROPOSED workflow. Nothing below has run. The bot that wrote this cannot push to
 # .github/workflows, so install it yourself, in a PR you review:
 #
