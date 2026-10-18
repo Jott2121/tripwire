@@ -74,14 +74,20 @@ conditions: nothing in the data looks malformed, only the number is off. Single-
 small (13–61 runs) and their intervals wide, so per-fault figures are directional.
 
 <sup>†</sup> From the baseline and prompt rows of the committed report
-[`reports/gate_240_mixed.md`](reports/gate_240_mixed.md); see limitations.
+[`reports/gate_240_mixed.md`](reports/gate_240_mixed.md); see limitations. Those two conditions
+are the complete 480-record pre-registered run. The file's `INCOMPLETE` banner is the halted
+exploratory gate-confirm source, and the gate rows are not this H2 comparison
+([note](reports/gate_240_mixed.NOTE.md)).
 
 The cost side is the part this repo can fully back: from the committed spend ledger, the prompt
-condition costs a mean **$0.0466/run vs $0.0114/run**, about **4.1× per run**. Since the prompt is
-no more accurate on faulted data, that ≈4.1× is also roughly the cost per *correct* answer — a
-premium bought no accuracy. 754 runs cost **$21.86** of the **$50** cap. The chart
-and `artifacts/results_summary.json` are regenerated from the ledger by
-[`scripts/make_results_chart.py`](scripts/make_results_chart.py) (`make demo`).
+condition costs a mean **$0.0466 per ledger row vs $0.0114** (377 rows each), about **4.1×**.
+Since the prompt is no more accurate on faulted data, that ≈4.1× is also roughly the cost per
+*correct* answer — a premium bought no accuracy. The first 754 spend rows cost **$21.86** of the
+**$50** cap. That is not 754 scored runs. Those rows are 15 pilot rows (job ids that also appear in the scored run), 221 first-session
+completions, 259 rows from the halted session (258 at $0 and one at $0.061118), and 259 resume
+completions, covering 480 unique job ids. The chart and `artifacts/results_summary.json` are
+regenerated from the ledger by [`scripts/make_results_chart.py`](scripts/make_results_chart.py)
+(`make demo`).
 
 ## The gate
 

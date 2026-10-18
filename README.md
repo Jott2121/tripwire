@@ -80,16 +80,22 @@ model/config. P4 passes partly because the prompt's F5 cell was expensive.
 
 | Metric | Baseline | "Check your data" prompt |
 |---|---|---|
-| Mean cost per run | **$0.0114** | **$0.0466** (≈4.1× baseline) |
-| Total spend (377 runs each) | $4.29 | $17.57 |
+| Mean cost per ledger row | **$0.0114** | **$0.0466** (≈4.1× baseline) |
+| Total spend (377 ledger rows each) | $4.29 | $17.57 |
 | Correct on faulted data (strict count) | 65.4% [52–77] | 63.2% [50–76] |
 | False flags on clean data | 1.8% | 14.5% |
 
-Run: grok-4.7, medium effort, client-side function-calling path, 754 runs, $21.86. The cost rows
-are the first 754 spend rows of the append-only [`runs/spend_ledger.jsonl`](runs/spend_ledger.jsonl)
-(pilot + scored run, before any gate job). The correctness rows are the baseline and prompt rows of
-the committed adjudicated report [`reports/gate_240_mixed.md`](reports/gate_240_mixed.md)
-(`python -m tripwire.report`; the per-run records it reads live in CI artifacts, not in git).
+Run: grok-4.7, medium effort, client-side function calling. **480 pre-registered scored runs**
+(240 per condition; correctness rows from
+[`reports/gate_240_mixed.md`](reports/gate_240_mixed.md)). The cost rows use the first 754 spend
+rows of the append-only [`runs/spend_ledger.jsonl`](runs/spend_ledger.jsonl) (file lines 2–755;
+line 1 is the ledger header): 15 pilot rows, 221 first-session completions, 259 rows from the
+halted session (258 at $0 and one at $0.061118), and 259 resume completions — 377 ledger rows per
+condition, $21.859 shown as $21.86. Those 754 rows cover more booked attempts than the 480 scored
+runs. The report's opening `INCOMPLETE` banner names the halted exploratory gate-confirm source,
+not this baseline-vs-prompt comparison; see
+[`reports/gate_240_mixed.NOTE.md`](reports/gate_240_mixed.NOTE.md). The per-run records the report
+reads live in CI artifacts, not in git (`python -m tripwire.report`).
 
 This run has no gate column. The pre-registered gate run hit its budget halt after 186 of 240
 jobs, and the gate was then changed ([A1](docs/amendments/A1-gate-store-crosscheck.md)), so no
@@ -103,9 +109,10 @@ the exploratory runs below.
   neutral baseline on strict correctness (63.2% vs 65.4%).
 - **It makes the agent jumpy.** The same prompt flags *clean* data as corrupt far more often
   (14.5% vs 1.8%), so it trades silent wrong answers for loud false alarms.
-- **And it is not free.** Each run costs ≈4.1× the baseline (`$0.0466` vs `$0.0114`, straight from
-  the ledger). Since it is no more accurate on faulted data, that ≈4.1× is also what you pay per
-  *correct* answer: a steep premium for no accuracy gain.
+- **And it is not free.** Each ledger row costs ≈4.1× the baseline (`$0.0466` vs `$0.0114`,
+  straight from the ledger; 377 rows per condition, not 240 scored runs). Since it is no more
+  accurate on faulted data, that ≈4.1× is also what you pay per *correct* answer: a steep premium
+  for no accuracy gain.
 - **Takeaway:** a prompt is a weak control for silent data corruption. That is the case for the
   fail-closed gate, measured in the holdout above.
 
