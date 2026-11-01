@@ -63,6 +63,12 @@ MAX_TURNS = 12  # as v1: hitting the cap with no reply scores incorrect
 BOOTSTRAP_RESAMPLES = 2000
 BOOTSTRAP_SEED = 20261101
 TIME_TOLERANCE_H = 0.05  # SDR hours are whole or one-decimal numbers; this only absorbs float noise
+# The plan's salt and sizes are fixed here before any real item list is drawn
+# (``scripts/freeze_phase2.py``), so the draw cannot be re-rolled after seeing it.
+PLAN_SALT = "tripwire-phase2-plan-2026-11-01"
+N_SETTLED = 100
+N_CONTROLS = 100
+MIN_SETTLED_AIRCRAFT = 60  # fewer, and the design is re-scoped before freeze, with no spend
 
 # One question per mined field. Every template names only the report, never the other source,
 # so whether the agent checks the registry is what Q1 measures.

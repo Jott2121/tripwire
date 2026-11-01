@@ -83,6 +83,9 @@ aircraft database by N-number.
   name and accepts both that document's field names and the text files' short headers; a header
   matching neither fails closed. The header of the current download is confirmed by
   `scripts/profile_registry.py` (counts only, safe to commit).
+- Phase two items: `scripts/freeze_phase2.py` draws them from the same files and writes the real
+  tasks only to `data/phase2/` (gitignored); its record in `reports/phase2_freeze.json` holds
+  counts and hashes, including each input file's sha256, so keep the files the freeze used.
 - **Observed in the first real download (2026-11-01, `reports/registry_profile.json`).**
   318,181 master rows, no rejects, no duplicate N-numbers; 94,161 reference rows, one reject (a
   code that is not 7 characters). The master header is the text-file spelling (`N-NUMBER`,

@@ -3,7 +3,9 @@
 **Status: DRAFT, not approved, not frozen.** Written 2026-11-01, before any phase-two run. No paid
 call has been made. Nothing here may run until the owner has made the decisions listed at the end,
 the pre-freeze steps are done, and a reviewed PR sets the status line to `FROZEN <date>`. Model
-spend needs its own owner approval in the live workflow, as in v1.
+spend needs its own owner approval in the live workflow, as in v1. As of 2026-11-01 the mining
+rules (`mine-v2`) meet the freeze bar; what is left is the item draw on the owner's files and the
+owner decisions.
 
 ## Why this study, and why now
 
@@ -77,9 +79,11 @@ Read against the field shapes in `docs/DATA.md`:
   zeros and placeholders, lets an all-digit SDR serial match the registry's digits, and moves
   containment to the unsettled S2. How many of the 1,700 survive is unknown until the profile
   is re-run (pre-freeze step 1).
-- **D1 at 0 is expected, not a bug.** One report year against a registry whose build years are
-  almost all in the past cannot give many. The year field parses: T1 fired 17 times and the
-  total-time controls need it.
+- **D1 at 0 is expected, not a bug.** D1 fires only when the report's year is before the year
+  built, so a 2026 report needs a build year of 2027 or later: only a typo in the registry's year
+  can give one. Adding the 2025 file would need a 2026 build year on a 2025 report, so it should
+  not grow D1 much either. The year field parses: T1 fired 17 times and the total-time controls
+  need it. D1 stays in the rules, so a typo of that kind is caught if present.
 - **T1 is small.** Seventeen items is too few to report T1 on its own. Impossible values are
   present in the file (`reports/sdr_profile_2026.json`: whole-number hours up to 7.2 million,
   about 825 years), so T1 firing rarely is plausible, not a sign the rule is broken.
@@ -99,19 +103,41 @@ not committed; the examples below are made-up values of the same shape). Read on
   now drawn **at most one per aircraft** (`phase2.one_per_aircraft`), and controls only from
   aircraft with no finding at all.
 
-Estimate, from those 20 only, so rough: about 220 S1 items survive `mine-v2`, from about 175
-aircraft. The owner's re-run gives the real counts, with distinct aircraft per rule
-(`mining.aircraft` in the profile).
+The estimate from those 20 alone was about 220 S1 items from about 175 aircraft. The owner's
+`mine-v2` profile (commit 20f6e5a, fingerprint `425815509a8e…d989`) gave **S1 271 items from 128
+aircraft**, S2 201 from 84, T1 18 from 14, D1 0, M1 6,056 from 1,189 (unsettled, unused), 82,814
+controls from 6,292 aircraft; serial relation 48,533 agree, 287 differ, 212 partial, 40 blank. The
+item count beat the estimate and the aircraft count fell short of it: more of the reports than the
+20 suggested come from airframes reported several times.
 
-**Planned size per model:** 100 settled items, picked by `phase2.plan_items` (salt fixed at
-freeze), at most one per aircraft: every T1 and D1 item, then S1 to fill, in `mining.sample`
-order. 100 controls drawn **with the same field mix** as the settled items (serial controls for
+The owner printed 20 fresh S1 items (16 distinct aircraft; the look then drew items, not aircraft;
+it now draws at most one per aircraft; the examples below are made-up values of the same
+shape). Read one by one, **none is notation** (no zero, prefix or punctuation difference
+left):
+
+- 11 aircraft share most digits and differ in one to three, changed or swapped (shapes like `31452` against
+  `31542`, `17000310` against `17000316`, `402C1188` against `402C-1488`). One of the two records
+  carries a slip; they cannot both be right.
+- 5 aircraft carry wholly different serials (shapes like `37712` against `5108`). Some likely name
+  the wrong aircraft in the report: one SDR serial has the shape of another make's serial while
+  the registry's serial for that mark is three digits (inferred from the shape, not checked).
+  Either way the records cannot both describe the same airframe.
+- One of the 16 was reported twice with two different SDR serials, neither matching the
+  registry. One per aircraft keeps only one of the two.
+
+**The freeze bar (at most 2 of 20 look like notation) is met: 0 of 20.** `mine-v2` is frozen as is;
+its fingerprint is the one above, and any edit to `tripwire/mining.py` changes it.
+
+**Planned size per model:** 100 settled items, picked by `phase2.plan_items` with
+`phase2.PLAN_SALT = "tripwire-phase2-plan-2026-11-01"`, `N_SETTLED = 100` and `N_CONTROLS = 100`,
+committed before any real item list was drawn, at most one per aircraft: every T1 and D1 item,
+then S1 to fill, in `mining.sample` order. 100 controls drawn **with the same field mix** as the settled items (serial controls for
 serial items, total-time controls for total-time items), so the question's field is not
 confounded with the expected answer, one per aircraft and only from aircraft with no finding. If
-`mine-v2` leaves fewer than 60 settled aircraft, the design is re-scoped before freeze, with no
-spend. Before freeze the owner checks a spread of S1 items by eye (pre-freeze step 1); if more
-than a few look like formatting rather than another airframe, the rule is tightened again and
-re-profiled, still before any agent run.
+`mine-v2` leaves fewer than 60 settled aircraft (`MIN_SETTLED_AIRCRAFT`), the design is re-scoped
+before freeze, with no spend; the freeze script refuses below it. With the `mine-v2` counts the
+draw should give 100 settled items (14 T1, then 86 of the 128 S1 aircraft) and 100 controls
+(86 serial, 14 total-time); the freeze record gives the actual numbers.
 
 Because S1 dominates, this is mainly a study of **serial-number disagreements**; the report says
 so and does not generalise to other fields.
@@ -169,17 +195,8 @@ So **about $20 to $60** for two models; the cap is set at freeze.
      `ReleasableAircraft.zip` in a browser and add `--from-zip <path>`), then the profile,
      committed as c1bb37d.
    - Done 2026-11-01 for `mine-v1`: profile re-run and committed (0174ecc), 20 S1 items read.
-   - Still to do for `mine-v2`: re-run the profile (no new download), commit it, and read a fresh
-     spread of S1 items with `--peek S1` (printed to the terminal only; nothing is written):
-
-         PYTHONPATH=. python3 scripts/profile_registry.py --master data/raw/registry/MASTER.txt \
-             --acftref data/raw/registry/ACFTREF.txt --sdr data/raw/SDR-2026.csv \
-             --out reports/registry_profile.json
-         PYTHONPATH=. python3 scripts/profile_registry.py --master data/raw/registry/MASTER.txt \
-             --acftref data/raw/registry/ACFTREF.txt --sdr data/raw/SDR-2026.csv --peek S1
-
-     If at most 2 of the 20 look like notation, the rule is frozen as is; more, and it is
-     tightened once more and re-profiled, still before any agent run.
+   - Done 2026-11-01 for `mine-v2`: profile re-run and committed (20f6e5a), 20 fresh S1 items
+     read, 0 of 20 notation: the rule is frozen as is.
 
 2. Done 2026-11-01: the two read tools, the task templates and the `record_disagreement` scorer
    (`tripwire/phase2.py`, 100% covered on synthetic records). `python -m tripwire.phase2` runs
@@ -187,13 +204,27 @@ So **about $20 to $60** for two models; the cap is set at freeze.
    reference and a perfect agent score 1.0; an agent that flags everything and one that never
    weighs the registry both score 0.5. There is no live runner yet; it is built only after
    freeze, with the spend approval, as in v1.
-3. Commit the rules' fingerprint, the sample salt and the item-list sha256 here; then freeze.
+3. Owner, on the same machine and the **same files** (do not re-download: the registry changes
+   daily and the freeze pins each input's sha256), draw the items and commit the record:
+
+         PYTHONPATH=. python3 scripts/freeze_phase2.py --master data/raw/registry/MASTER.txt \
+             --acftref data/raw/registry/ACFTREF.txt --sdr data/raw/SDR-2026.csv \
+             --expect-fingerprint 425815509a8e94387d6256f1e9f1f30f5286b383a616f2c727d2c5d0b091d989 \
+             --out reports/phase2_freeze.json --items data/phase2/items.json
+
+   `reports/phase2_freeze.json` holds counts and hashes only (rules fingerprint, salt, sizes,
+   tasks per rule and field, distinct aircraft, item-list sha256, input sha256s) and is
+   committed. `data/phase2/items.json` holds the real tasks and stays local (gitignored). The
+   script calls no model.
+4. Copy the freeze record's fingerprint, salt and item-list sha256 here, record the owner
+   decisions below, and set the status line to `FROZEN <date>` in a reviewed PR.
 
 ## Owner decisions (open)
 
-- Whether `mine-v2` is right, once its profile and a fresh `--peek S1` look are in.
 - Unsettled items (S2, M1): leave them out (this draft's default) or label some, and who labels.
-- Whether to add the 2025 SDR file to grow T1 (free: one more download and profile).
+- Whether to add the 2025 SDR file to grow T1 (free: one more download, profile and look, before
+  the draw; it should roughly double T1 and S1 but not D1, and T1 still would not be large enough
+  to report on its own). Adding it later means a new draw and a new freeze record.
 - Source: registry now, ADs later (this draft's default), or wait for an AD source.
 - The two models, and the budget cap.
 

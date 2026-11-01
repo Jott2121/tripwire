@@ -12,7 +12,8 @@ safe to commit. This is an owner step: the FAA hosts are not reachable from the 
 Fails closed (exit 2) on a file the loaders refuse.
 
 ``--peek RULE`` instead prints a spread of that rule's items (serials, dates, makes; never a
-registrant) to the terminal so the owner can check a rule by eye; it writes nothing.
+registrant) to the terminal so the owner can check a rule by eye, at most one item per aircraft
+(as the study draws them); it writes nothing.
 """
 
 from __future__ import annotations
@@ -24,7 +25,7 @@ from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
-from tripwire import mining, registry
+from tripwire import mining, phase2, registry
 from tripwire.sdr import SDRFormatError, load_sdr_csv
 
 
@@ -35,14 +36,15 @@ def _kinds(rejects: Sequence) -> dict[str, int]:
 
 def peek(master: Path, acftref: Path, sdrs: Sequence[Path], rule: str, n: int) -> list[str]:
     """Up to ``n`` mined items of ``rule`` as tab-separated lines, for the owner's eyes only:
-    printed to the terminal, never written to the report. A spread, not the first rows."""
+    printed to the terminal, never written to the report. A spread, not the first rows, and at
+    most one per aircraft, so one often-reported airframe cannot fill the look."""
     reg = registry.Registry.build(
         registry.load_master(master).records, registry.load_reference(acftref).records
     )
     rows = [r for p in sdrs for r in load_sdr_csv(p).records]
     mined = mining.mine(rows, reg)
     pool = [*mined.settled, *mined.unsettled, *mined.controls]
-    picked = mining.sample([i for i in pool if i.rule == rule], n, salt="peek")
+    picked = phase2.one_per_aircraft([i for i in pool if i.rule == rule], salt="peek")[:n]
     head = "rule\tcontrol_number\tn_number\tfield\tsdr_value\tregistry_value"
     return [head, *(f"{i.rule}\t{i.control_number}\t{i.n_number}\t{i.field}\t{i.sdr_value}\t"
                     f"{i.registry_value}" for i in picked)]  # fmt: skip

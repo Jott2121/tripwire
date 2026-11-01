@@ -153,6 +153,77 @@ def test_peek_prints_a_sample_and_writes_nothing(real_shaped, tmp_path, capsys):
     lines = capsys.readouterr().out.splitlines()
     assert lines[0].startswith("rule\t") and lines[1].startswith("S1\t") and len(lines) <= 6
     assert "OTHER-SERIAL" in "\n".join(lines) and not list(tmp_path.glob("*.json"))
+    marks = [ln.split("\t")[2] for ln in lines[1:]]
+    assert len(marks) == len(set(marks))  # at most one item per aircraft
     with pytest.raises(SystemExit):
         pr.main([*base, "--peek", "Z9"])
     capsys.readouterr()
+
+
+def _freeze_args(real_shaped, tmp_path, items_dir, **extra):
+    master, ref, sdr = real_shaped
+    args = [
+        "--master",
+        str(master),
+        "--acftref",
+        str(ref),
+        "--sdr",
+        str(sdr),
+        "--out",
+        str(tmp_path / "freeze.json"),
+        "--items",
+        str(items_dir / "items.json"),
+    ]
+    return args + [a for k, v in extra.items() for a in (f"--{k.replace('_', '-')}", v)]
+
+
+def test_freeze_writes_counts_to_out_and_rows_only_to_items(real_shaped, tmp_path, capsys,
+                                                             monkeypatch):  # fmt: skip
+    from tripwire import mining, phase2
+
+    fz = _script("freeze_phase2")
+    monkeypatch.setattr(phase2, "MIN_SETTLED_AIRCRAFT", 1)
+    items_dir = tmp_path / "data" / "phase2"
+    args = _freeze_args(real_shaped, tmp_path, items_dir,
+                        expect_fingerprint=mining.fingerprint())  # fmt: skip
+    assert fz.main(args, items_dir=items_dir) == 0
+    rec = json.loads((tmp_path / "freeze.json").read_text())
+    assert rec["rules"] == {"version": "mine-v2", "fingerprint": mining.fingerprint()}
+    assert rec["plan"]["salt"] == phase2.PLAN_SALT and rec["plan"]["n_settled"] == 100
+    assert rec["settled"]["tasks"] >= 1 and rec["settled"]["aircraft"] == rec["settled"]["tasks"]
+    assert rec["controls"]["aircraft"] == rec["controls"]["tasks"]
+    assert rec["tasks"] == rec["settled"]["tasks"] + rec["controls"]["tasks"]
+    master, _, sdr = real_shaped
+    assert rec["inputs"]["master"]["sha256"] == hashlib.sha256(master.read_bytes()).hexdigest()
+    assert rec["inputs"]["sdr"][0]["name"] == "SDR-2026.csv"
+    out_text = (tmp_path / "freeze.json").read_text()
+    assert "OTHER-SERIAL" not in out_text and "REDACTED" not in out_text
+    items = json.loads((items_dir / "items.json").read_text())
+    assert "OTHER-SERIAL" in json.dumps(items)  # real values stay in the local file only
+    tasks = [phase2.make_task(mining.Item(**t["item"])) for t in items["tasks"]]
+    assert phase2.item_list_sha256(tasks) == rec["item_list_sha256"] == items["item_list_sha256"]
+    first = rec["item_list_sha256"]
+    assert fz.main(args, items_dir=items_dir) == 0  # same files, same salt: same list
+    assert json.loads((tmp_path / "freeze.json").read_text())["item_list_sha256"] == first
+    capsys.readouterr()
+
+
+def test_freeze_fails_closed(real_shaped, tmp_path, capsys):
+    fz = _script("freeze_phase2")
+    items_dir = tmp_path / "data" / "phase2"
+    # The synthetic files give far fewer than 60 settled aircraft: the re-scope bar refuses.
+    assert fz.main(_freeze_args(real_shaped, tmp_path, items_dir), items_dir=items_dir) == 2
+    assert "re-scope before freeze" in capsys.readouterr().err
+    bad_fp = _freeze_args(real_shaped, tmp_path, items_dir, expect_fingerprint="0" * 64)
+    assert fz.main(bad_fp, items_dir=items_dir) == 2
+    assert "fingerprint" in capsys.readouterr().err
+    outside = _freeze_args(real_shaped, tmp_path, tmp_path / "elsewhere")
+    assert fz.main(outside, items_dir=items_dir) == 2
+    assert "must be under" in capsys.readouterr().err
+    bad = tmp_path / "bad.txt"
+    bad.write_text("NOPE\n")
+    args = _freeze_args(real_shaped, tmp_path, items_dir)
+    args[1] = str(bad)
+    assert fz.main(args, items_dir=items_dir) == 2
+    assert "REFUSED" in capsys.readouterr().err
+    assert not (tmp_path / "freeze.json").exists() and not items_dir.exists()
