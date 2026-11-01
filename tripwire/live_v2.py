@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -221,9 +222,11 @@ def check_pilot(pilot_dir: Path, row: clients.ModelRow, protocol_sha256: str) ->
         raise runner.RunnerRefused("pilot has RUN_ERROR records: the client is not confirmed")
     if any(r["model_label"] != row.config.label or r["cost_usd"] is None for r in recs):
         raise runner.RunnerRefused("pilot records are for another model or have no cost")
-    est = sum(condition_estimate(Condition(str(r["condition"])), row.pricing, 1.0) for r in recs)
-    ratio = sum(float(str(r["cost_usd"])) for r in recs) / est
-    if ratio > PILOT_COST_RATIO:
+    # fsum: the same result on every Python (3.12 made sum() of floats compensated, 3.11 is not)
+    est = math.fsum(condition_estimate(Condition(str(r["condition"])), row.pricing, 1.0)
+                    for r in recs)  # fmt: skip
+    ratio = math.fsum(float(str(r["cost_usd"])) for r in recs) / est
+    if ratio > PILOT_COST_RATIO + 1e-9:  # inclusive: absorb float rounding only
         raise runner.RunnerRefused(
             f"pilot cost is {ratio:.2f}x the estimate (> {PILOT_COST_RATIO}): owner decision"
         )
