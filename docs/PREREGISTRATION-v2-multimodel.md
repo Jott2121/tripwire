@@ -253,6 +253,57 @@ separate ledger (`runs/spend_ledger_v2.jsonl`), never a raise of v1's $50.
 
 Expected size: roughly six PRs under the repo's ~400-line limit, each with tests and zero spend.
 
+## Phase two (follow-on, NOT part of this preregistration)
+
+**Status: planned scope only, added 2026-11-01 at the owner's request. Nothing above changes.**
+Phase two starts only after phase one's results are committed. It gets its own preregistration,
+frozen before any phase-two run, and its own owner approval for spend. Its numbers are never
+pooled with phase one's.
+
+**Why.** Every phase-one task draws on one shape of data: defect reports and spec limits in the
+SDR conventions, served from a fixed-seed synthetic store, with faults that Tripwire planted. A
+fair objection is that the gate works because it was written for that one schema. Phase two tests
+whether the method transfers to (a) a second real source with a different structure and (b) data
+errors that nobody planted.
+
+**Second source (choose one in the phase-two preregistration; public data only, no employer
+data, no proprietary manuals).**
+- *FAA Airworthiness Directives* (first choice): applicability by make, model and serial range,
+  compliance intervals in hours, cycles or calendar time, and supersession chains. That structure
+  differs from a spec limit, and the supersession chains give a natural stale-revision case.
+  Exact download source to be confirmed in the data PR.
+- *FAA aircraft registry* (releasable database,
+  https://www.faa.gov/licenses_certificates/aircraft_certification/aircraft_registry/releasable_aircraft_download/):
+  N-number to make, model, serial and status. It joins to real SDR rows by `RegistryNNumber`, so
+  tasks can ask the agent to reconcile two real sources.
+
+**Unplanted, real-world faults.** Real records disagree with each other on their own: an SDR row
+whose make, model or serial does not match the registry entry for its N-number, a cited AD that a
+later AD superseded, or a unit or magnitude that is implausible for its field. Phase two mines
+these with deterministic rules written and committed **before** any model sees them. Each item's
+expected outcome (the discrepancy and the right answer or refusal) is fixed by rule or by a
+recorded owner label, again before any run. No judge model is used. Items a rule cannot settle are
+left out, not guessed. Mined items are reported apart from planted ones, because their mix and
+difficulty are not controlled.
+
+**Gate transfer is part of the test.** The gate needs contract checks for the new record types.
+Those checks are written from the source's published format and frozen before any phase-two run.
+They are never tuned on phase-two outcomes, so the result says whether the gate's design
+transfers, not whether it can be refitted.
+
+**Rough size and cost (planning only).** Two models: the one phase one shows benefiting most from
+the gate, and the cheapest model that passes C1. Same two live arms plus the shadow gates; 240
+planted slots (new tasks on the second source) and about 100 mined items per model. That is about
+680 runs per model and 1,360 in all. At the phase-one token profile, the cost is about $25 to $65
+per model for the frontier rows (grok-4.7 measured, Sonnet 5.5 at list price) and under $5 for
+gpt-oss-120b, so **about $30 to $130 total** depending on which two rows phase one picks. The cap
+is set in the phase-two preregistration. Non-spend work: a loader and profiler for the new source
+(like `scripts/profile_sdr.py`), contract types and a store for it, task templates, the mining
+rules with tests, and the gate's new contract checks. That is roughly four to five PRs.
+
+**Owner decisions for phase two, later:** which source, whether the owner labels the mined items
+that a rule cannot settle, and the budget.
+
 ## Halts, exclusions, disclosure
 
 As v1: `BUDGET_HALT` / `QUOTA_HALT` make that model INCONCLUSIVE; a top-up needs a new owner
