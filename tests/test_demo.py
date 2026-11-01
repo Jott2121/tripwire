@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from support import CLOCK, MODEL, PRICE, agent_script, truth_json
 
-from tripwire import demo, harness, live_eval, runner
+from tripwire import demo, harness, live_eval, runner, targets
 from tripwire.prompts import Condition
 from tripwire.xai import ExecPath, ScriptedClient
 
@@ -29,7 +29,11 @@ def test_jobs_are_the_fixed_slot_repeat_major_and_new_to_the_ledger():
     assert [j.repeat for j in js] == [1, 1, 1, 2, 2, 2, 3, 3, 3]
     assert all(j.job_id.startswith(demo.PREFIX) for j in js)
     ledger_ids = {json.loads(x).get("run_id") for x in LEDGER.read_text().splitlines()[1:]}
-    assert not ledger_ids & {j.job_id for j in js}
+    spent = ledger_ids & {j.job_id for j in js}
+    # demo-1 ran once (run 41274944579): all nine ids are in the ledger, never only some
+    assert spent in (set(), {j.job_id for j in js})
+    assert not any(i.startswith(demo.PREFIX) and i not in spent for i in ledger_ids)
+    assert targets.DEMO_PREFIX == demo.PREFIX
     assert demo.FAULT in demo._task().faults
 
 

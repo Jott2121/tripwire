@@ -1071,3 +1071,12 @@
 {"cost_in_usd_ticks": 150240000, "cost_usd": 0.015024000000000001, "kind": "spend", "out_dir": "out/run", "run_id": "H1-T38-r06.grok-4.7.client_side_functions.baseline.k1", "timestamp": "2026-10-13T18:04:13.178497+00:00"}
 {"cost_in_usd_ticks": 465920000, "cost_usd": 0.046592, "kind": "spend", "out_dir": "out/run", "run_id": "H1-T38-r06.grok-4.7.client_side_functions.prompt_fix.k1", "timestamp": "2026-10-13T18:04:51.691120+00:00"}
 {"cost_in_usd_ticks": 648320000, "cost_usd": 0.064832, "kind": "spend", "out_dir": "out/run", "run_id": "H1-T38-r06.grok-4.7.client_side_functions.gate.k1", "timestamp": "2026-10-13T18:05:54.975448+00:00"}
+{"cost_in_usd_ticks": 104980000, "cost_usd": 0.010498, "kind": "spend", "out_dir": "out/run", "run_id": "D1-T01-r01.grok-4.7.client_side_functions.baseline.k1", "timestamp": "2026-11-01T04:56:21.588021+00:00"}
+{"cost_in_usd_ticks": 634980000, "cost_usd": 0.063498, "kind": "spend", "out_dir": "out/run", "run_id": "D1-T01-r01.grok-4.7.client_side_functions.prompt_fix.k1", "timestamp": "2026-11-01T04:57:49.040903+00:00"}
+{"cost_in_usd_ticks": 949040000, "cost_usd": 0.094904, "kind": "spend", "out_dir": "out/run", "run_id": "D1-T01-r01.grok-4.7.client_side_functions.gate.k1", "timestamp": "2026-11-01T04:59:53.889892+00:00"}
+{"cost_in_usd_ticks": 239640000, "cost_usd": 0.023964, "kind": "spend", "out_dir": "out/run", "run_id": "D1-T01-r01.grok-4.7.client_side_functions.baseline.k2", "timestamp": "2026-11-01T05:00:28.337998+00:00"}
+{"cost_in_usd_ticks": 718620000, "cost_usd": 0.071862, "kind": "spend", "out_dir": "out/run", "run_id": "D1-T01-r01.grok-4.7.client_side_functions.prompt_fix.k2", "timestamp": "2026-11-01T05:02:14.639061+00:00"}
+{"cost_in_usd_ticks": 705100000, "cost_usd": 0.07051, "kind": "spend", "out_dir": "out/run", "run_id": "D1-T01-r01.grok-4.7.client_side_functions.gate.k2", "timestamp": "2026-11-01T05:03:53.694274+00:00"}
+{"cost_in_usd_ticks": 210240000, "cost_usd": 0.021024, "kind": "spend", "out_dir": "out/run", "run_id": "D1-T01-r01.grok-4.7.client_side_functions.baseline.k3", "timestamp": "2026-11-01T05:04:17.348494+00:00"}
+{"cost_in_usd_ticks": 1363440000, "cost_usd": 0.13634400000000002, "kind": "spend", "out_dir": "out/run", "run_id": "D1-T01-r01.grok-4.7.client_side_functions.prompt_fix.k3", "timestamp": "2026-11-01T05:06:04.378840+00:00"}
+{"cost_in_usd_ticks": 533940000, "cost_usd": 0.053394, "kind": "spend", "out_dir": "out/run", "run_id": "D1-T01-r01.grok-4.7.client_side_functions.gate.k3", "timestamp": "2026-11-01T05:07:19.775011+00:00"}
