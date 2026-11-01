@@ -179,13 +179,29 @@ with each half reported separately. Task-cluster bootstrap CIs, as v1.
 
 ## Conditions and models
 
-Baseline and prompt_fix, live; the rules-as-gate scored in shadow (Q4). Two models, chosen at
-freeze: the owner's call, with the harness's existing clients (xAI, Anthropic, Together). One
-repeat per item per arm.
+Baseline and prompt_fix, live; the rules-as-gate scored in shadow (Q4). One repeat per item per
+arm: 200 tasks x 2 conditions = 400 runs per model, 800 in all.
 
-**Planning cost (list price, no cache, v1 token profile):** about 800 runs for two models. Roughly
-$2 to $5 for gpt-oss-120b, $19 for grok-4.7 at v1's measured cost, and $38 for Sonnet 5.5 at list.
-So **about $20 to $60** for two models; the cap is set at freeze.
+**Models (owner's choice, 2026-11-01):** `grok-4.7` on xAI and **Muse Spark Open**
+(`meta-models/Muse-Spark-Open-816B-A42B`, Meta's open-weight model released 2026-10-15) on
+Together, both through clients the harness already has (`clients.PHASE2_MODELS`). The pair is a
+closed frontier model and an open-weight one. Before choosing, the owner was shown the cheaper
+options by Artificial Analysis's agentic index (2026-10-29) and Together's prices (2026-11-01):
+GLM-5.3 (53.4, about $22 for the run), DeepSeek V4 Pro (49.6, about $21), DeepSeek V4.1 Flash
+(unscored, about $5), gpt-oss-120b (6.2, about $3). Muse Spark Open has no score on that index.
+
+**Cost (list price, no cache, v1 token profile: baseline 9.4k in / 1.6k out, prompt_fix 45k in /
+6.4k out per run):**
+
+| model | expected | with 1.5x output | note |
+| --- | ---: | ---: | --- |
+| grok-4.7 | $31 | $36 | v1's measured caching put it near $19 |
+| Muse Spark Open | $20 | $24 | no cache discount assumed |
+| wire pilot, 20 runs each | about $2 | about $3 | confirms each client before any scored run |
+| **total** | **about $54** | **about $63** | |
+
+**Proposed cap: $65 for the whole study** (grok-4.7 $38, Muse Spark Open $27), enforced by the
+spend ledger as in v1. It needs the owner's own yes before any run.
 
 ## Pre-freeze steps (no model spend)
 
@@ -240,6 +256,7 @@ So **about $20 to $60** for two models; the cap is set at freeze.
   the draw; it should roughly double T1 and S1 but not D1, and T1 still would not be large enough
   to report on its own). Adding it later means a new draw and a new freeze record.
 - Source: registry now, ADs later (this draft's default), or wait for an AD source.
-- The two models, and the budget cap.
+- Models: decided 2026-11-01, `grok-4.7` and Muse Spark Open.
+- The budget cap: $65 proposed, not yet approved.
 
 ## Deviations log (append-only, empty until freeze)

@@ -309,6 +309,24 @@ def test_make_client_builds_each_confirmed_provider_and_refuses_gemini():
         cl.make_client(cl.v2_row("gemini-3.8-flash"), "k", fake)
 
 
+def test_phase2_rows_are_grok_and_muse_spark_open_on_existing_clients():
+    rows = {r.config.label: r for r in cl.PHASE2_MODELS}
+    assert {k: (r.provider, r.config.model_id, r.config.effort) for k, r in rows.items()} == {
+        "grok-4.7": ("xai", "grok-4.7", "medium"),
+        "muse-spark-open": ("together", "meta-models/Muse-Spark-Open-816B-A42B", None),
+    }
+    assert all(r.config.resolved for r in rows.values())
+    fake = Fake()
+    assert type(cl.make_client(cl.phase2_row("muse-spark-open"), "k", fake)) is (
+        cl.ChatCompletionsClient
+    )
+    assert type(cl.make_client(cl.phase2_row("grok-4.7"), "k", fake)) is xai.LiveClient
+    # list price: 1M in + 1M out = $1.25 + $4.25
+    assert cl.MUSE_SPARK_OPEN_PRICING.cost(1_000_000, 1_000_000) == pytest.approx(5.50)
+    with pytest.raises(KeyError):
+        cl.phase2_row("gpt-oss-120b")
+
+
 # --- end to end through the real harness ---------------------------------------------------------
 def _an_turn(calls, text="", stop="tool_use", usage=(50, 30, 0, 0)):
     blocks = [{"type": "thinking", "thinking": "", "signature": "s"}]

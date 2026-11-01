@@ -9,6 +9,9 @@ stage 2 need beyond xAI:
   ``openai/gpt-oss-120b`` on Together (stage 1).
 * :class:`AnthropicClient`: the Claude Messages API, used for ``claude-sonnet-5-5`` (stage 2).
 
+Phase two (:data:`PHASE2_MODELS`) reuses them: grok-4.7 on xAI and
+``meta-models/Muse-Spark-Open-816B-A42B`` on Together through :class:`ChatCompletionsClient`.
+
 The Gemini row is priced and registered but has no client yet: :func:`make_client` refuses it
 until its wire format is confirmed from Google's own docs (stage 2, before 2026-12-31).
 
@@ -358,6 +361,32 @@ def v2_row(label: str) -> ModelRow:
         if row.config.label == label:
             return row
     raise KeyError(f"no v2 model row {label!r}")
+
+
+# --- the phase two model rows (PREREGISTRATION-phase2-real-data.md, "Conditions and models") ---
+# Owner decision 2026-11-01: grok-4.7 plus Muse Spark Open (Meta, open weights, released
+# 2026-10-15). On Together: "meta-models/Muse-Spark-Open-816B-A42B", NVFP4, 1,048,576 context,
+# function calling, $1.25 input / $4.25 output per 1M tokens
+# (https://docs.together.ai/docs/serverless/models, retrieved 2026-11-01). No effort setting is
+# sent for it (none is confirmed for this model), so the provider's default is used. Both wire
+# formats are confirmed live in the pilot before any scored run, as in v2.
+MUSE_SPARK_OPEN_PRICING = Pricing(
+    1.25, 4.25, "https://docs.together.ai/docs/serverless/models (retrieved 2026-11-01)"
+)
+PHASE2_MODELS: tuple[ModelRow, ...] = (
+    ModelRow("P1", 1, "xai", ModelConfig("grok-4.7", "grok-4.7", "medium", "frontier"),
+             GROK_4_7_PRICING, "XAI_API_KEY"),
+    ModelRow("P2", 1, "together", ModelConfig("muse-spark-open",
+             "meta-models/Muse-Spark-Open-816B-A42B", None, "open-weight"),
+             MUSE_SPARK_OPEN_PRICING, "TOGETHER_API_KEY"),
+)  # fmt: skip
+
+
+def phase2_row(label: str) -> ModelRow:
+    for row in PHASE2_MODELS:
+        if row.config.label == label:
+            return row
+    raise KeyError(f"no phase two model row {label!r}")
 
 
 def make_client(
