@@ -251,23 +251,34 @@ class FaultInjector:
         self.store = store
         self._clock = clock
         self._rng = random.Random(config.seed)
+        # the read-back's own stream (v2 shadow gates): a str seed is hashed deterministically
+        self._side_rng = random.Random(f"{config.seed}/read-back")
+        self._agent_rng = self._rng
         self._phantoms = 0
         self._side: list[dict[str, Any]] | None = None
 
     @contextmanager
-    def side_ledger(self) -> Iterator[list[dict[str, Any]]]:
+    def side_ledger(self, *, isolated: bool = False) -> Iterator[list[dict[str, Any]]]:
         """Divert faults that fire inside the block to a list instead of the run ledger.
 
         The gate's own read-back goes through this injector; a fault it fires was never shown
         to the agent, so it must not count as an injected fault for scoring. The diverted events
         are plain dicts (tool, fault, field, original, served) for the gate's receipt.
+
+        ``isolated=True`` also draws the block's fault decisions from a separate random stream,
+        so the read-back leaves the agent's stream untouched and what the agent is served next is
+        exactly what it would have been with no gate (v2 shadow scoring). The default keeps v1's
+        shared stream, so v1 runs replay unchanged.
         """
         events: list[dict[str, Any]] = []
         self._side = events
+        if isolated:
+            self._rng = self._side_rng
         try:
             yield events
         finally:
             self._side = None
+            self._rng = self._agent_rng
 
     @property
     def head(self) -> LedgerHead:

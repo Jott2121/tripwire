@@ -207,8 +207,12 @@ def _record(rec: Any, cls: type, where: str) -> list[Failure]:
 class Gate:
     """Per-run gate state: checks run, failures seen, and the final-report decision."""
 
-    def __init__(self, store: Store) -> None:
+    def __init__(self, store: Store, *, crosscheck: bool = True) -> None:
         self._store = store
+        # False = the "gate-contract" variant of the v2 study: contract, revision, count and
+        # read-back checks only, no comparison with trusted store values (so no F1/F3 catch and
+        # no downgrade). The default is the v1 gate, unchanged.
+        self.crosscheck = crosscheck
         self.checks_run = 0
         self.quantity_checks = 0  # served quantities compared against the store (issue #44)
         self.downgraded = False  # a clean-run refusal was rewritten to a pass (issue #44)
@@ -248,7 +252,7 @@ class Gate:
     def _crosscheck(self, served: Any, trusted: c.Quantity | None, where: str) -> list[Failure]:
         """Compare one served quantity with the trusted store value; a disagreement is a block."""
         sq = _as_quantity(served)
-        if sq is None or trusted is None:
+        if not self.crosscheck or sq is None or trusted is None:
             return []  # a malformed or absent served quantity is the contract checks' concern
         self.quantity_checks += 1
         kind = classify_value_fault(trusted, sq)
@@ -421,4 +425,5 @@ class Gate:
                          for f in self.failures],
             "blocked": self.blocked,
             "downgraded": self.downgraded,
+            "crosscheck": self.crosscheck,
         }  # fmt: skip

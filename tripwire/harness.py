@@ -60,6 +60,9 @@ class GateUnavailable(RuntimeError):
     """The gate cannot run on this path (server-side results never reach the harness): refuse."""
 
 
+SHADOW_VARIANTS = ("contract", "crosscheck")  # v2: gate-contract and gate-crosscheck
+
+
 @dataclass(frozen=True)
 class RunRecord:
     run_id: str
@@ -88,6 +91,9 @@ class RunRecord:
     cached_input_tokens: int = 0  # parts of input_tokens read from / written to a prompt cache
     cache_write_tokens: int = 0
     refused: bool = False  # the provider ended the final turn as a refusal
+    # v2 shadow gates: variant -> {"verdict", "adjudication", "gate"}, scored on this same
+    # trajectory (the agent never sees a shadow gate). None when no shadow gate ran.
+    shadow: dict[str, Any] | None = None
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True)
@@ -163,10 +169,23 @@ def run_one(
     token_env: str = "TRIPWIRE_SERVER_TOKEN",
     ledger_path: Path | None = None,
     timer: Callable[[], float] = time.perf_counter,
+    shadow_gates: tuple[str, ...] = (),
 ) -> RunRecord:
-    """Run and score one agent run. ``QuotaExhausted`` propagates so the runner can halt."""
+    """Run and score one agent run. ``QuotaExhausted`` propagates so the runner can halt.
+
+    ``shadow_gates`` (v2) scores each named gate variant on this run's own trajectory: every
+    tool result the agent sees is also checked by the shadow gate, every write is read back once
+    through the faulted server on an isolated random stream, and the gate's final decision is
+    adjudicated separately. Nothing a shadow gate does reaches the agent, so the raw adjudication
+    is exactly the ungated run's.
+    """
     if condition is Condition.GATE and path is ExecPath.SERVER_SIDE:
         raise GateUnavailable("server-side tool results run at xAI and never reach the gate")
+    if shadow_gates and (condition is Condition.GATE or path is ExecPath.SERVER_SIDE):
+        raise GateUnavailable("shadow gates score ungated client-side runs only")
+    unknown = set(shadow_gates) - set(SHADOW_VARIANTS)
+    if unknown or len(set(shadow_gates)) != len(shadow_gates):
+        raise ValueError(f"shadow gates must be distinct names from {SHADOW_VARIANTS}")
     store = Store.from_dataset(synthdata.generate(TASK_DATA_SEED))
     ledger = Ledger(ledger_path)
     specs = (FaultSpec(plan.fault),) if plan.fault else ()
@@ -175,6 +194,8 @@ def run_one(
     # the gate reads only the store's spec registry (faults alter what is served, not the store)
     gate = Gate(store) if condition is Condition.GATE else None
     gate_cost: dict[str, Any] = {"extra_tool_calls": 0, "latency_s": 0.0, "read_back_faults": []}
+    shadows = {v: Gate(store, crosscheck=v == "crosscheck") for v in shadow_gates}
+    shadow_cost: dict[str, Any] = {"extra_tool_calls": 0, "latency_s": 0.0, "read_back_faults": []}
     messages: list[Mapping[str, Any]] = [
         {"role": "user", "content": condition_prompt(task, condition)}
     ]
@@ -247,6 +268,10 @@ def run_one(
                         began = timer()
                         _gate_tool(gate, tools, injector, call, out, gate_cost)
                         gate_cost["latency_s"] += timer() - began
+                    if shadows:
+                        began = timer()
+                        _shadow_tool(shadows, tools, injector, call, out, shadow_cost)
+                        shadow_cost["latency_s"] += timer() - began
                     messages.append(
                         {
                             "role": "tool",
@@ -263,31 +288,38 @@ def run_one(
 
     agent_verdict = extract_verdict(final) if final is not None else None
     turn_cap_hit = final is None and error is None and turns >= MAX_TURNS
-    if gate is not None and turn_cap_hit and gate.blocked:
-        # amendment A3: the gate already blocked a fault, so its fail-closed report is the verdict
-        final = ""
-    if gate is not None and final is not None:
-        began = timer()
-        final = gate.report(final)
-        gate_cost["latency_s"] += timer() - began
-    verdict = extract_verdict(final) if final is not None else None
-    if gate is not None and verdict is not None:
-        # the gate verified the served data against the store: drop an agent refusal it disproves
-        verdict = gate.clear_unsupported(verdict)
-    adj: Adjudication | None = None
-    exclusion: Exclusion | None = Exclusion.RUN_ERROR if error else None
-    if not error:
+    began = timer()
+    verdict = _gated_verdict(gate, final, turn_cap_hit) if gate else agent_verdict
+    gate_cost["latency_s"] += timer() - began if gate else 0.0
+
+    def score(v: Verdict | None) -> tuple[Adjudication | None, Exclusion | None]:
+        if error:
+            return None, Exclusion.RUN_ERROR
         try:
-            adj = (
-                adjudicate(ledger.events, ledger.head, store, task, verdict, run_id)
-                if verdict
+            a = (
+                adjudicate(ledger.events, ledger.head, store, task, v, run_id)
+                if v
                 else _no_verdict(run_id, tuple(e.fault for e in ledger.events))
             )
-            # re-reading refires the fault (rate 1.0): only a missing or foreign kind is unverified
-            if plan.fault and set(adj.injected) != {plan.fault.value}:
-                exclusion = Exclusion.INJECTION_UNVERIFIED
         except LedgerError:
-            exclusion = Exclusion.INJECTION_UNVERIFIED
+            return None, Exclusion.INJECTION_UNVERIFIED
+        # re-reading refires the fault (rate 1.0): only a missing or foreign kind is unverified
+        if plan.fault and set(a.injected) != {plan.fault.value}:
+            return a, Exclusion.INJECTION_UNVERIFIED
+        return a, None
+
+    adj, exclusion = score(verdict)
+    shadow_out: dict[str, Any] | None = None
+    if shadows:
+        shadow_out = {}
+        for name, sg in shadows.items():
+            sv = _gated_verdict(sg, final, turn_cap_hit)
+            s_adj, _ = score(sv)  # the run's exclusion is the raw run's; it is shared
+            shadow_out[name] = {
+                "verdict": _verdict_dict(sv),
+                "adjudication": asdict(s_adj) if s_adj else None,
+                "gate": {**sg.summary(), **shadow_cost, "added_tokens": 0},
+            }
     return RunRecord(
         run_id=run_id,
         task_id=task.task_id,
@@ -315,7 +347,45 @@ def run_one(
         cached_input_tokens=tokens[2],
         cache_write_tokens=tokens[3],
         refused=refused,
+        shadow=shadow_out,
     )
+
+
+def _gated_verdict(gate: Gate, final: str | None, turn_cap_hit: bool) -> Verdict | None:
+    """The verdict once ``gate`` has decided the final report (live gate and shadow alike)."""
+    if turn_cap_hit and gate.blocked:
+        # amendment A3: the gate already blocked a fault, so its fail-closed report is the verdict
+        final = ""
+    if final is None:
+        return None
+    verdict = extract_verdict(gate.report(final))
+    if verdict is not None:
+        # the gate verified the served data against the store: drop an agent refusal it disproves
+        verdict = gate.clear_unsupported(verdict)
+    return verdict
+
+
+def _shadow_tool(
+    gates: Mapping[str, Gate],
+    tools: InProcessTools,
+    injector: FaultInjector,
+    call: ToolCallRequest,
+    out: dict[str, Any],
+    cost: dict[str, Any],
+) -> None:
+    """Like :func:`_gate_tool` for every shadow gate, with ONE read-back per write on the
+    injector's isolated stream, so the agent's own fault stream is never advanced."""
+    for g in gates.values():
+        g.observe(call.name, call.args, out)
+    if call.name == "create_work_order" and "error" not in out:
+        wo = out.get("work_order")
+        wo_id = wo.get("work_order_id", "") if isinstance(wo, dict) else ""
+        with injector.side_ledger(isolated=True) as side:
+            back = tools.call("get_work_order", {"work_order_id": wo_id})
+        cost["extra_tool_calls"] += 1
+        cost["read_back_faults"] += side
+        for g in gates.values():
+            g.verify_write(call.args, out, back)
 
 
 def _gate_tool(
