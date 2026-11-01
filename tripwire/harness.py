@@ -85,6 +85,9 @@ class RunRecord:
     error: str | None = None
     turn_cap_hit: bool = False  # the loop ended at MAX_TURNS with no reply: scored incorrect
     gate: dict[str, Any] | None = None  # gate condition only: checks, failures, block, cost
+    cached_input_tokens: int = 0  # parts of input_tokens read from / written to a prompt cache
+    cache_write_tokens: int = 0
+    refused: bool = False  # the provider ended the final turn as a refusal
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True)
@@ -177,7 +180,8 @@ def run_one(
     ]
     served: list[str] = []
     names: list[str] = []
-    tokens = [0, 0]
+    tokens = [0, 0, 0, 0]  # input, output, cached read, cache write
+    refused = False
     ticks: list[int] = []
     costs: list[float | None] = []
     latency = 0.0
@@ -186,7 +190,7 @@ def run_one(
     error: str | None = None
 
     def ask(req: ChatRequest) -> ChatResponse:
-        nonlocal latency, turns
+        nonlocal latency, turns, refused
         start = timer()
         resp = client.chat(req)
         latency += timer() - start
@@ -194,11 +198,23 @@ def run_one(
         served.append(resp.served_model)
         tokens[0] += resp.input_tokens
         tokens[1] += resp.output_tokens
+        tokens[2] += resp.cached_input_tokens
+        tokens[3] += resp.cache_write_tokens
+        refused = refused or resp.refused
         if resp.cost_in_usd_ticks is not None:  # the provider's figure beats our estimate
             ticks.append(resp.cost_in_usd_ticks)
             costs.append(resp.cost_in_usd_ticks / TICKS_PER_USD)
         else:
-            costs.append(pricing.cost(resp.input_tokens, resp.output_tokens) if pricing else None)
+            costs.append(
+                pricing.cost(
+                    resp.input_tokens,
+                    resp.output_tokens,
+                    resp.cached_input_tokens,
+                    resp.cache_write_tokens,
+                )
+                if pricing
+                else None
+            )
         return resp
 
     try:
@@ -296,6 +312,9 @@ def run_one(
         error=error,
         turn_cap_hit=turn_cap_hit,
         gate=_gate_dict(gate, gate_cost, agent_verdict) if gate is not None else None,
+        cached_input_tokens=tokens[2],
+        cache_write_tokens=tokens[3],
+        refused=refused,
     )
 
 
