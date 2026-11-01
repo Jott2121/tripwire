@@ -1,0 +1,74 @@
+{
+  "controls": {
+    "aircraft": 100,
+    "by_field": {
+      "aircraft_serial_number": 86,
+      "aircraft_total_time": 14
+    },
+    "tasks": 100
+  },
+  "inputs": {
+    "acftref": {
+      "bytes": 14877718,
+      "name": "ACFTREF.txt",
+      "sha256": "beb27403b03fcba4024bcd752d79ab94c899f59cae34beda360d8ebb4658f03d"
+    },
+    "master": {
+      "bytes": 195363534,
+      "name": "MASTER.txt",
+      "sha256": "2dcb13d2b3373ab8b7a89751149db9a687d7d176643e0b0007a1eda53ff2675e"
+    },
+    "sdr": [
+      {
+        "bytes": 23421198,
+        "name": "SDR-2026.csv",
+        "sha256": "2976b83e7c54467909fa784de6e91edf9c501d23cf21277afdd093152c064fd4"
+      }
+    ]
+  },
+  "item_list_sha256": "c1d2a8eea5c62650d14f46ce5204c0cd5da9682708f4fc56281fbf4b08182d54",
+  "plan": {
+    "min_settled_aircraft": 60,
+    "n_controls": 100,
+    "n_settled": 100,
+    "salt": "tripwire-phase2-plan-2026-11-01"
+  },
+  "pools": {
+    "aircraft": {
+      "D1": 0,
+      "M1": 1189,
+      "S1": 128,
+      "S2": 84,
+      "T1": 14,
+      "controls": 6292
+    },
+    "counts": {
+      "D1": 0,
+      "M1": 6056,
+      "S1": 271,
+      "S2": 201,
+      "T1": 18,
+      "controls": 82814,
+      "skip:no_n_number": 294,
+      "skip:not_in_registry": 494,
+      "skip:registered_after_report": 466
+    }
+  },
+  "rules": {
+    "fingerprint": "425815509a8e94387d6256f1e9f1f30f5286b383a616f2c727d2c5d0b091d989",
+    "version": "mine-v2"
+  },
+  "settled": {
+    "aircraft": 100,
+    "by_field": {
+      "aircraft_serial_number": 86,
+      "aircraft_total_time": 14
+    },
+    "by_rule": {
+      "S1": 86,
+      "T1": 14
+    },
+    "tasks": 100
+  },
+  "tasks": 200
+}
