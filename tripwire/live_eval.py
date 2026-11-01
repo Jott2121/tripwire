@@ -12,6 +12,10 @@ with no secret and no network. The key is read from the environment here and now
 full matrix (issue #46): the file's ``condition_set`` must equal ``--condition-set``, every job id
 must still be in the plan (a stale list fails closed), the budget may not exceed
 ``targets.BUDGET_USD_CAP``, and the planning estimate must fit the budget. See ``tripwire.targets``.
+
+``--condition-set demo-1`` runs the M8 side-by-side demo (``tripwire.demo``): one fixed slot under
+all three conditions, a ``demo.BUDGET_USD_CAP`` cap, and a recording client. Its transcripts, its
+receipt and its new spend rows are printed between markers so they can be committed from the log.
 """
 
 from __future__ import annotations
@@ -25,7 +29,7 @@ from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
-from tripwire import holdout, runner, targets, tasks, xai
+from tripwire import demo, holdout, runner, targets, tasks, xai
 from tripwire.prompts import Condition
 
 CONFIRM_PHRASE = "I-APPROVE-LIVE-SPEND"
@@ -33,6 +37,7 @@ CONDITION_SETS: Mapping[str, tuple[Condition, ...]] = {
     "baseline-prompt-fix": runner.CONDITIONS,  # the lean first run
     "gate": (Condition.GATE,),  # its own session
     "holdout-1": holdout.CONDITIONS,  # amendment A4: the committed holdout plan, all three
+    "demo-1": demo.CONDITIONS,  # M8 side-by-side demo: one slot, all three, transcripts kept
 }
 KEY_ENV = "XAI_API_KEY"
 DRY_RUN_REPLY = json.dumps(
@@ -190,6 +195,18 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
             raise runner.RunnerRefused(
                 f"holdout-1 needs budget<={holdout.BUDGET_USD_CAP} USD (got {args.budget_usd})"
             )
+    is_demo = args.condition_set == demo.NAME
+    if is_demo:
+        if pilot is not None or args.max_jobs is not None or target_path is not None:
+            raise runner.RunnerRefused("demo-1 excludes --pilot-jobs, --max-jobs, --targets")
+        if resume is not None:
+            raise runner.RunnerRefused("demo-1 excludes --resume-from (rerun it whole)")
+        if args.budget_usd > demo.BUDGET_USD_CAP:
+            raise runner.RunnerRefused(
+                f"demo-1 needs budget<={demo.BUDGET_USD_CAP} USD (got {args.budget_usd})"
+            )
+        if (args.out / demo.RECEIPT_FILE).exists():
+            raise runner.RunnerRefused(f"{args.out} already holds a demo receipt")
     check_budget(args.budget_usd, args.spend_ledger, args.ledger_rows)
     out: Path = resume if resume is not None else args.out
     if (out / "meta.json").exists():  # never mix pilot and scored records in one directory
@@ -209,11 +226,17 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
         if not xai.WIRE_CONFIRMED:  # else every run would be recorded as a RUN_ERROR
             raise runner.RunnerRefused("xai.WIRE_CONFIRMED is False: wire format unconfirmed")
         client = xai.LiveClient(key)
+    recorder: demo.RecordingClient | None = None
+    if is_demo:
+        recorder = demo.RecordingClient(client)
+        client = recorder
     all_tasks = tasks.default_tasks()
     if is_holdout:  # fails closed on a stale or edited plan file
         holdout_file = args.repo / holdout.DEFAULT_PATH
         holdout.verify_document(json.loads(holdout_file.read_text()))
         jobs = holdout.jobs()
+    elif is_demo:
+        jobs = demo.jobs()
     else:
         jobs = runner.plan_matrix(all_tasks, xai.MODEL_CONFIGS, CONDITION_SETS[args.condition_set])
     if resume is not None:
@@ -239,6 +262,8 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
         extra_meta = {"targets": target_path.stem, "target_count": len(jobs)}
     if is_holdout:
         extra_meta = {"targets": holdout.NAME, "target_count": len(jobs), "amendment": "A4"}
+    if is_demo:
+        extra_meta = {"targets": demo.NAME, "target_count": len(jobs), "demo": True}
     code = runner.run_matrix(
         jobs,
         {t.task_id: t for t in all_tasks},
@@ -252,6 +277,14 @@ def _run(args: argparse.Namespace, env: Mapping[str, str]) -> int:
         spend_ledger=ledger,
         extra_meta=extra_meta,
     )
+    if recorder is not None:
+        receipt = out / demo.RECEIPT_FILE
+        records = demo.read_jsonl(receipt) if receipt.exists() else []
+        demo.write_jsonl(
+            out / demo.TRANSCRIPT_FILE, demo.pair_transcripts(records, recorder.segments)
+        )
+        new_rows = _spend_rows(ledger)[args.ledger_rows :]
+        demo.emit(out, new_rows)
     print(f"{code.name}: see {out / 'result.json'}")
     return int(code)
 

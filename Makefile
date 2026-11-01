@@ -1,7 +1,7 @@
 .PHONY: demo check lint test scan help
 
 help:
-	@echo "make demo   - replay recorded run data into artifacts/ (zero API spend)"
+	@echo "make demo   - replay recorded run data into artifacts/ and docs/results/demo-1.md (zero API spend)"
 	@echo "make check  - lint + tests (coverage >= 90%) + no-employer-data scan"
 	@echo "make lint   - ruff check + format check"
 	@echo "make test   - pytest with coverage"
@@ -9,6 +9,7 @@ help:
 
 demo:
 	python scripts/make_results_chart.py
+	python -m tripwire.demo --render runs/demo-1 --out docs/results/demo-1.md
 
 lint:
 	ruff check .

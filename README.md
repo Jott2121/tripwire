@@ -17,7 +17,12 @@ it helps and what it costs. Method ported from [sabot](https://github.com/Jott21
 > "check your data" prompt and **61.1%** for baseline; **0/6** false flags on clean data (prompt 1/6);
 > cost per correct **0.65×** the prompt's. All four criteria fixed in advance (P1–P4) passed.
 > Caveats: small n, same base tasks with new fault draws, one model (grok-4.7).
-> Total spend to date: **$43.48 of the $50 cap**.
+> Total spend to date: **$44.03 of the $50 cap**.
+>
+> **See it in one run:** [demo-1](docs/results/demo-1.md) puts one task side by side under all three
+> conditions, with full transcripts: told nothing, the agent reported a crack limit 25 times too
+> loose in all three repeats (twice while saying the unit looked swapped); the gate blocked all three.
+> A demo, not a result. The 60-second version: [`docs/WALKTHROUGH.md`](docs/WALKTHROUGH.md).
 
 ## The problem
 
@@ -143,8 +148,8 @@ to cite.
 
 *Every live request is booked to the committed ledger; regenerate the chart and
 [`artifacts/results_summary.json`](artifacts/results_summary.json) with `make demo` (zero spend).
-This chart covers the whole ledger (1,072 runs: pilot, scored run, gate runs and holdout), so its
-per-condition means differ from the scored-run table above. Total: $43.48 of the $50 cap.*
+This chart covers the whole ledger (1,081 runs: pilot, scored run, gate runs, holdout and the
+demo), so its per-condition means differ from the scored-run table above. Total: $44.03 of the $50 cap.*
 
 No number on this page is invented; each is traced to a committed file or labelled with its source.
 
@@ -170,8 +175,10 @@ make demo
 ```
 
 Replays the **recorded** run data in `runs/spend_ledger.jsonl` and regenerates the results chart and
-summary under `artifacts/`. It makes **zero API calls and spends nothing** — no `XAI_API_KEY` is
-read. (`make demo` is a thin wrapper over `python scripts/make_results_chart.py`.)
+summary under `artifacts/`, then re-renders the side-by-side page
+[`docs/results/demo-1.md`](docs/results/demo-1.md) from the committed transcripts in `runs/demo-1/`.
+It makes **zero API calls and spends nothing** — no `XAI_API_KEY` is read. (`make demo` wraps
+`python scripts/make_results_chart.py` and `python -m tripwire.demo --render`.)
 
 ## Develop
 

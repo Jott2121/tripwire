@@ -1,6 +1,6 @@
 # Tripwire build status
 
-Updated 2026-10-14. One row per milestone; the assistant directing the build
+Updated 2026-11-01. One row per milestone; the assistant directing the build
 reads this file first. Numbers never appear here unless a committed command
 produced them. Sections below "Live runs" are the build log as written at the
 time; where they say "no live call made" or "open PR", the tables here supersede them.
@@ -19,12 +19,12 @@ time; where they say "no live call made" or "open PR", the tables here supersede
 | M5 | Harness, runner, `docs/PREREGISTRATION.md` | **merged**, with the owner decisions of issue #25: $50 hard ceiling + spend ledger, `grok-4.7`, lean matrix | #24, #27 |
 | M6 | The gate: contract check + write read-back + fail-closed final report | **merged**. Catches F2/F4/F5/F6 by construction; extended to F1/F3 by a store cross-check in exploratory amendment A1 | #28, #45 |
 | M7 | Live eval workflow (manual trigger, budget cap) and results report with CIs | **merged**: `xai.LiveClient`, `tripwire/live_eval.py`, `python -m tripwire.report`, `--resume-from` for `RUN_ERROR` jobs. The server-side remote-MCP path is built but has never run live | #30, #32, #36 |
-| M8 | Demo: side-by-side ungated vs gated run, one-page results README, 60-second walkthrough | **partly done**: results-first README, `WRITEUP.md`, `make demo` offline replay (#41, updated in #54, #55). Not done: side-by-side run, walkthrough | #41 |
+| M8 | Demo: side-by-side ungated vs gated run, one-page results README, 60-second walkthrough | **done** (pending merge): results-first README, `WRITEUP.md`, `make demo` offline replay (#41, #54, #55); side-by-side run `demo-1` with transcripts (`tripwire/demo.py`, `docs/results/demo-1.md`) and `docs/WALKTHROUGH.md` | #41, this PR |
 
 ## Live runs
 
 All runs: grok-4.7, medium effort, client-side function calling. Every request is booked to
-`runs/spend_ledger.jsonl` (1,072 spend rows, **$43.48 of the $50 ceiling**; `make demo`
+`runs/spend_ledger.jsonl` (1,081 spend rows, **$44.03 of the $50 ceiling**; `make demo`
 regenerates `artifacts/results_summary.json` from it).
 
 | Run | Conditions | Jobs | Outcome | Status of the result | PR |
@@ -35,6 +35,7 @@ regenerates `artifacts/results_summary.json` from it).
 | gate `38285916667` | gate | 186 / 240 | `BUDGET_HALT` | pre-registered gate run, never completed; gate then changed (A1) | #43 |
 | gate-confirm-1 `38398347678` + 1b `38421505642` | gate | 60 / 60 | done (gate-confirm-1 halted at its $4 cap; 1b ran the 7 it missed) | **exploratory** (A2, A3) — `docs/results/gate-confirm-1.md` | #47–#49 |
 | holdout-1 `38434106473` | all three | 72 / 72 | done, 0 exclusions | **pre-registered** holdout (A4): **PASS** on P1–P4 — `docs/results/holdout-1.md` | #52, #53 |
+| demo-1 `41274944579` | all three, one slot (T01, F1), 3 repeats | 9 / 9 | done, 0 exclusions, $0.55 | **demo, not a result** (M8): baseline 0/3, prompt_fix 3/3, gate 3/3 — `docs/results/demo-1.md` | this PR |
 
 
 ## Done in M0
@@ -54,8 +55,8 @@ regenerates `artifacts/results_summary.json` from it).
 
 ## Next
 
-1. M8 remainder: a side-by-side ungated vs gated run on one task, and a 60-second walkthrough.
-2. Any further live run needs an owner decision: $6.52 remains under the $50 ceiling.
+1. M8 is done once this PR merges (side-by-side run `demo-1`, `docs/WALKTHROUGH.md`).
+2. Any further live run needs an owner decision: $5.97 remains under the $50 ceiling.
 3. Not tested, by design of the lean matrix: H3 (effort levels) and H5 (server-side vs
    client-side path). H1 and H4 have no verdict under the original protocol because the
    pre-registered gate run halted; the A4 holdout is the gate result to cite.
