@@ -1,4 +1,4 @@
-"""Mining rules mine-v1 over synthetic SDRs and a synthetic registry. No network, no model."""
+"""Mining rules mine-v2 over synthetic SDRs and a synthetic registry. No network, no model."""
 
 from __future__ import annotations
 
@@ -103,6 +103,16 @@ def test_make_codes_match_by_prefix(code, maker, match):
         ("2345", "AW-12345", "partial"),  # a dropped digit may be formatting
         ("ASN100", "ASN1001", "partial"),
         ("ASN9999", "ASN-1001", "differ"),
+        # shapes from the owner's look at real mine-v1 S1 items (2026-11-01); values made up
+        ("3100412", "31000412", "partial"),  # a dropped zero
+        ("310000588", "31000588", "partial"),  # an extra zero
+        ("731C044", "731C0044", "partial"),
+        ("4200071", "520-0071", "partial"),  # ends with the part after the model prefix
+        ("41583", "41853", "differ"),  # a transposition stays settled
+        ("8213354", "8213352", "differ"),  # so does a changed digit
+        ("604D1185", "604D-1785", "differ"),
+        ("57120", "22-6409", "differ"),
+        ("66", "750-66", "partial"),  # contained: unsure, not settled
         ("UNK", "ASN-1001", None),
         ("000", "ASN-1001", None),
         ("N/A", "ASN-1001", None),
@@ -141,6 +151,13 @@ def test_missing_values_skip_a_rule_not_the_row():
     assert one(aircraft_total_time_hours=None, aircraft_serial_number="")[1] == []
 
 
+def test_aircraft_counts_distinct_marks_per_rule():
+    rows = [replace(BASE, control_number=f"A{n}", aircraft_serial_number="X9") for n in range(3)]
+    out = m.mine([*rows, replace(BASE, control_number="B")], REG)
+    assert out.counts()["S1"] == 3 and out.aircraft()["S1"] == 1
+    assert out.aircraft()["controls"] == 1 and out.aircraft()["T1"] == 0
+
+
 def test_mine_splits_settled_unsettled_controls_and_counts():
     rows = [
         replace(BASE),
@@ -166,4 +183,4 @@ def test_fingerprint_is_the_file_hash():
     from pathlib import Path
 
     assert m.fingerprint() == hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()
-    assert set(m.SETTLED) < set(m.RULES) and m.RULES_VERSION == "mine-v1"
+    assert set(m.SETTLED) < set(m.RULES) and m.RULES_VERSION == "mine-v2"

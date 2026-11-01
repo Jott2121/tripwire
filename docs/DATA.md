@@ -92,7 +92,7 @@ aircraft database by N-number.
 - **Field shapes that matter for mining** (from `reports/sdr_profile_2026.json`): the SDR
   `AircraftMake` is a 3 to 6 letter code, not a name, and `AircraftSerialNumber` is digits only
   in about 99% of rows (up to 11 characters), while registry serials carry letters and run to 30
-  characters. `mine-v1` compares accordingly (`tripwire/mining.py`).
+  characters. `mine-v1` and later compare accordingly (`tripwire/mining.py`).
 - **Personal data.** The master file carries registrants' names and street addresses. The loader
   never reads those columns, and its record type has no field for them. Nothing from the master
   file but counts is ever committed.

@@ -313,23 +313,38 @@ def test_demo_shows_blanket_flagging_and_ignoring_the_registry_both_score_half(c
 
 
 def test_plan_items_takes_every_rare_item_and_matches_the_field_mix():
-    def it(rule, n, field, expected="disagree"):
-        return mining.Item(rule, f"C{n}", "101", field, "a", "b", expected)
+    def it(rule, n, field, expected="disagree", aircraft=None):
+        return mining.Item(rule, f"C{n}", aircraft or f"N{n}", field, "a", "b", expected)
 
     mined = mining.Mined(
         settled=[it("S1", n, "aircraft_serial_number") for n in range(50)]
+        + [it("S1", 90 + n, "aircraft_serial_number", aircraft="REPEAT") for n in range(5)]
         + [it("T1", 100 + n, "aircraft_total_time") for n in range(3)]
         + [it("D1", 200, "difficulty_date")],
         unsettled=[it("S2", 300, "aircraft_serial_number")],
         controls=[it("control", 400 + n, "aircraft_serial_number", "agree") for n in range(40)]
-        + [it("control", 500 + n, "aircraft_total_time", "agree") for n in range(40)],
+        + [it("control", 500 + n, "aircraft_total_time", "agree") for n in range(40)]
+        + [it("control", 600, "aircraft_serial_number", "agree", aircraft="N300")]  # has S2
+        + [it("control", 601 + n, "aircraft_serial_number", "agree", aircraft="TWICE")
+           for n in range(30)],
         skips=[],
-    )
+    )  # fmt: skip
     settled, controls = p2.plan_items(mined, 10, 10, salt="s")
     assert len(settled) == 10 and {i.rule for i in settled[:4]} == {"T1", "D1"}
     assert sum(i.rule == "S1" for i in settled) == 6 and all(i.rule != "S2" for i in settled)
     assert len(controls) == 10
     assert sum(c.field == "aircraft_total_time" for c in controls) == 4  # T1 + D1 share
     assert p2.plan_items(mined, 10, 10, salt="s") == (settled, controls)
+    big_s, big_c = p2.plan_items(mined, 100, 200, salt="s")
+    assert len(big_s) == len({i.n_number for i in big_s}) == 55  # REPEAT counted once
+    assert len(big_c) == len({c.n_number for c in big_c})
+    assert "N300" not in {c.n_number for c in big_c} and "TWICE" in {c.n_number for c in big_c}
     empty = mining.Mined([], [], mined.controls, [])
     assert p2.plan_items(empty, 10, 10, salt="s") == ([], [])
+
+
+def test_one_per_aircraft_is_deterministic():
+    items = [mining.Item("S1", f"C{n}", "N1" if n < 3 else f"N{n}", "f", "a", "b", "disagree")
+             for n in range(6)]  # fmt: skip
+    once = p2.one_per_aircraft(items, "s")
+    assert len(once) == 4 and once == p2.one_per_aircraft(list(reversed(items)), "s")

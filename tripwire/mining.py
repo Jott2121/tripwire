@@ -7,16 +7,19 @@ and a run refuses a different file. A rule either **settles** an item (the recor
 right) or **skips** it with a reason; it never guesses. Rules whose answer depends on judgment are
 kept apart as **unsettled** and enter a study only with a recorded owner label.
 
-Rules, version ``mine-v1`` (``mine-v0`` was profiled once on real data, 2026-11-01, and
-tightened from what it showed; ``reports/registry_profile.json`` keeps the v0 counts):
+Rules, version ``mine-v2``. ``mine-v0`` and ``mine-v1`` were each profiled once on real data
+(2026-11-01) and tightened from what the counts and a sample of items showed; no agent has seen
+an item. The history is in ``docs/PREREGISTRATION-phase2-real-data.md``.
 
 * Serials are compared on a **key**: letters and digits only, upper case, leading zeros
   dropped; a placeholder (``UNK``, ``NONE``, ``N/A`` ...) or an all-zero serial counts as blank.
   The SDR serial is digits only in about 99% of real 2026 rows while registry serials often carry
   letters, so an all-digit SDR serial equal to the registry serial's digits also agrees.
-* ``S1 serial``: the two serial keys differ and neither contains the other. Settled.
-* ``S2 serial_partial``: one key contains the other (a model prefix or a dropped suffix may be
-  formatting, not another airframe). Unsettled.
+* ``S1 serial``: the two serial keys differ in a way none of S2's tests explains. Settled.
+* ``S2 serial_partial``: one key contains the other; or they differ only by zeros (a dropped
+  or extra zero, as in ``3100412`` against ``31000412``); or one ends with the part of the other
+  after a model prefix (``4200071`` against ``520-0071``). Each may be notation or a slip on the
+  same airframe, not another one. Unsettled.
 * ``T1 total_time``: the SDR's aircraft total time in hours exceeds the hours in the calendar from
   1 January of the registry's year of manufacture to the report date. Physically impossible.
   Settled.
@@ -47,7 +50,7 @@ from pathlib import Path
 from tripwire.registry import Registry, RegistryRecord, norm_n_number
 from tripwire.sdr import SDRRecord
 
-RULES_VERSION = "mine-v1"
+RULES_VERSION = "mine-v2"
 RULES = {
     "S1": "serial: SDR aircraft serial differs from the registry's for the N-number",
     "S2": "serial_partial: one serial key contains the other (unsettled)",
@@ -89,6 +92,15 @@ class Mined:
     controls: list[Item]
     skips: list[Skip]
 
+    def aircraft(self) -> dict[str, int]:
+        """Distinct aircraft (N-numbers) per rule: one operator can report one airframe often."""
+        seen: dict[str, set[str]] = {r: set() for r in RULES}
+        seen["controls"] = set()
+        for item in [*self.settled, *self.unsettled]:
+            seen[item.rule].add(item.n_number)
+        seen["controls"] = {c.n_number for c in self.controls}
+        return {k: len(v) for k, v in seen.items()}
+
     def counts(self) -> dict[str, int]:
         out: dict[str, int] = {r: 0 for r in RULES}
         for item in [*self.settled, *self.unsettled]:
@@ -129,7 +141,20 @@ def serial_relation(sdr_serial: str, reg_serial: str) -> str | None:
         return "agree"
     if a in b or b in a:
         return "partial"
+    if a.replace("0", "") == b.replace("0", ""):
+        return "partial"  # a dropped or extra zero: a typo of the same serial, or notation
+    for raw, other in ((reg_serial, a), (sdr_serial, b)):
+        tail = _hyphen_tail(raw)
+        if len(tail) >= 3 and other.endswith(tail):
+            return "partial"  # the other side ends with the part after a model prefix
     return "differ"
+
+
+def _hyphen_tail(raw: str) -> str:
+    """The serial's last letters-and-digits run when it has a separator (``520-0071`` ->
+    ``0066``); "" when it has none."""
+    runs = _WORD.findall(raw.upper())
+    return runs[-1] if len(runs) > 1 else ""
 
 
 def make_matches(sdr_make: str, manufacturer: str) -> bool:

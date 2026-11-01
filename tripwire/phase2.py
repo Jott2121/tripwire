@@ -232,16 +232,30 @@ def build_tasks(items: Iterable[mining.Item]) -> list[Task]:
     return tasks
 
 
+def one_per_aircraft(items: Sequence[mining.Item], salt: str) -> list[mining.Item]:
+    """At most one item per N-number, chosen in :func:`mining.sample` order. One operator can
+    report one airframe many times; without this, a few aircraft would carry the result."""
+    seen: set[str] = set()
+    out = []
+    for i in mining.sample(items, len(items), salt):
+        if i.n_number not in seen:
+            seen.add(i.n_number)
+            out.append(i)
+    return out
+
+
 def plan_items(
     mined: mining.Mined, n_settled: int, n_controls: int, salt: str
 ) -> tuple[list[mining.Item], list[mining.Item]]:
-    """The preregistered item mix: every T1 and D1 item, S1 to fill ``n_settled``; then controls
-    with the same field mix as the settled items, so the field never predicts the answer.
-    Unsettled items never enter. Short pools give fewer items, never padding."""
-    rare = [i for i in mined.settled if i.rule != "S1"]
-    rare = mining.sample(rare, n_settled, salt)
-    s1 = [i for i in mined.settled if i.rule == "S1"]
-    settled = rare + mining.sample(s1, n_settled - len(rare), salt)
+    """The preregistered item mix, at most one item per aircraft: every T1 and D1 item, S1 to
+    fill ``n_settled``; then controls with the same field mix as the settled items, so the field
+    never predicts the answer, drawn only from aircraft with no finding at all. Unsettled items
+    never enter. Short pools give fewer items, never padding."""
+    rare = one_per_aircraft([i for i in mined.settled if i.rule != "S1"], salt)[:n_settled]
+    taken = {i.n_number for i in rare}
+    s1 = one_per_aircraft([i for i in mined.settled if i.rule == "S1" and i.n_number not in taken],
+                          salt)  # fmt: skip
+    settled = rare + s1[: n_settled - len(rare)]
     fields: dict[str, int] = {}
     for i in settled:
         fields[i.field] = fields.get(i.field, 0) + 1
@@ -250,12 +264,14 @@ def plan_items(
     for f, k in fields.items():  # a report-date item has no date control; time stands in
         quota[want.get(f, f)] = quota.get(want.get(f, f), 0) + k
     total = sum(quota.values())  # 0 only when settled is empty: no controls then
+    flagged = {i.n_number for i in [*mined.settled, *mined.unsettled]}
+    clean = one_per_aircraft([c for c in mined.controls if c.n_number not in flagged], salt)
     controls: list[mining.Item] = []
     left = n_controls
     for idx, (f, k) in enumerate(sorted(quota.items())):
         share = left if idx == len(quota) - 1 else round(n_controls * k / total)
         left -= share
-        controls += mining.sample([c for c in mined.controls if c.field == f], share, salt)
+        controls += [c for c in clean if c.field == f][:share]
     return settled, controls
 
 

@@ -99,7 +99,8 @@ def test_profile_reports_counts_never_rows(real_shaped, tmp_path, capsys):
         "2 columns, header has 31": 1
     }
     assert rep["sdr"]["rows"] == 30 and rep["sdr"]["found_in_registry"] >= 19
-    assert rep["mining"]["counts"]["S1"] >= 1 and rep["mining"]["version"] == "mine-v1"
+    assert rep["mining"]["counts"]["S1"] >= 1 and rep["mining"]["version"] == "mine-v2"
+    assert rep["mining"]["aircraft"]["S1"] <= rep["mining"]["counts"]["S1"]
     ser = rep["serials"]
     assert sum(ser["relation"].values()) == rep["sdr"]["found_in_registry"]
     assert ser["relation"]["differ"] >= 1 and ser["sdr_digits_only"] >= 0

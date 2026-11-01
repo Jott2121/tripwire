@@ -84,7 +84,7 @@ def profile(master: Path, acftref: Path, sdrs: Sequence[Path]) -> dict:
                 "with_total_time": sum(1 for r in rows if r.aircraft_total_time_hours is not None)},
         "serials": serials,
         "mining": {"version": mining.RULES_VERSION, "fingerprint": mining.fingerprint(),
-                   "counts": mined.counts()},
+                   "counts": mined.counts(), "aircraft": mined.aircraft()},
     }  # fmt: skip
 
 
