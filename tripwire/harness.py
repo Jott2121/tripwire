@@ -24,8 +24,15 @@ from typing import Any
 
 from mcp.shared.memory import create_connected_server_and_client_session
 
-from tripwire import synthdata
-from tripwire.adjudicator import Adjudication, Verdict, VerdictError, adjudicate
+from tripwire import synthdata, tasks_v2
+from tripwire.adjudicator import (
+    FLAG_VOCABULARY,
+    FLAG_VOCABULARY_V2,
+    Adjudication,
+    Verdict,
+    VerdictError,
+    adjudicate,
+)
 from tripwire.faults import Clock, FaultConfig, FaultInjector, FaultSpec
 from tripwire.gate import Gate
 from tripwire.ledger import Ledger, LedgerError
@@ -61,6 +68,18 @@ class GateUnavailable(RuntimeError):
 
 
 SHADOW_VARIANTS = ("contract", "crosscheck")  # v2: gate-contract and gate-crosscheck
+TASK_SETS = ("v1", "v2")  # which dataset the run's store is built from and which flag words
+
+
+def _task_store(task_set: str, task: Task) -> Store:
+    """A fresh clean store for ``task``'s task set; a task from another set is refused."""
+    if task_set not in TASK_SETS:
+        raise ValueError(f"task_set must be one of {TASK_SETS}, got {task_set!r}")
+    if task.task_id.startswith(tasks_v2.TASK_PREFIX) != (task_set == "v2"):
+        raise ValueError(f"task {task.task_id} is not a {task_set} task")
+    if task_set == "v2":
+        return tasks_v2.default_store()
+    return Store.from_dataset(synthdata.generate(TASK_DATA_SEED))
 
 
 @dataclass(frozen=True)
@@ -94,6 +113,7 @@ class RunRecord:
     # v2 shadow gates: variant -> {"verdict", "adjudication", "gate"}, scored on this same
     # trajectory (the agent never sees a shadow gate). None when no shadow gate ran.
     shadow: dict[str, Any] | None = None
+    task_set: str = "v1"
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True)
@@ -170,6 +190,7 @@ def run_one(
     ledger_path: Path | None = None,
     timer: Callable[[], float] = time.perf_counter,
     shadow_gates: tuple[str, ...] = (),
+    task_set: str = "v1",
 ) -> RunRecord:
     """Run and score one agent run. ``QuotaExhausted`` propagates so the runner can halt.
 
@@ -178,6 +199,9 @@ def run_one(
     through the faulted server on an isolated random stream, and the gate's final decision is
     adjudicated separately. Nothing a shadow gate does reaches the agent, so the raw adjudication
     is exactly the ungated run's.
+
+    ``task_set`` picks the dataset the run's store is built from and the flag words the prompt
+    lists: ``"v1"`` (the default, unchanged) or ``"v2"`` (``tasks_v2``, ``FLAG_VOCABULARY_V2``).
     """
     if condition is Condition.GATE and path is ExecPath.SERVER_SIDE:
         raise GateUnavailable("server-side tool results run at xAI and never reach the gate")
@@ -186,7 +210,8 @@ def run_one(
     unknown = set(shadow_gates) - set(SHADOW_VARIANTS)
     if unknown or len(set(shadow_gates)) != len(shadow_gates):
         raise ValueError(f"shadow gates must be distinct names from {SHADOW_VARIANTS}")
-    store = Store.from_dataset(synthdata.generate(TASK_DATA_SEED))
+    store = _task_store(task_set, task)
+    vocabulary = FLAG_VOCABULARY_V2 if task_set == "v2" else FLAG_VOCABULARY
     ledger = Ledger(ledger_path)
     specs = (FaultSpec(plan.fault),) if plan.fault else ()
     injector = FaultInjector(FaultConfig(plan.fault_seed, specs), ledger, run_id, store, clock)
@@ -197,7 +222,7 @@ def run_one(
     shadows = {v: Gate(store, crosscheck=v == "crosscheck") for v in shadow_gates}
     shadow_cost: dict[str, Any] = {"extra_tool_calls": 0, "latency_s": 0.0, "read_back_faults": []}
     messages: list[Mapping[str, Any]] = [
-        {"role": "user", "content": condition_prompt(task, condition)}
+        {"role": "user", "content": condition_prompt(task, condition, vocabulary)}
     ]
     served: list[str] = []
     names: list[str] = []
@@ -348,6 +373,7 @@ def run_one(
         cache_write_tokens=tokens[3],
         refused=refused,
         shadow=shadow_out,
+        task_set=task_set,
     )
 
 
