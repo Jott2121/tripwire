@@ -68,16 +68,17 @@
   "mining": {
     "counts": {
       "D1": 0,
-      "M1": 10571,
-      "S1": 1700,
-      "T1": 17,
-      "controls": 71916,
+      "M1": 6056,
+      "S1": 293,
+      "S2": 179,
+      "T1": 18,
+      "controls": 82814,
       "skip:no_n_number": 294,
       "skip:not_in_registry": 494,
       "skip:registered_after_report": 466
     },
-    "fingerprint": "a764b86450405a3704caa2dbd9084a79ec1e68af73259d40c45ed6ab773db92b",
-    "version": "mine-v0"
+    "fingerprint": "f5a4e1e3ec8e005979e52f249208a10797a34857b086edb834a93dc999757123",
+    "version": "mine-v1"
   },
   "sdr": {
     "files": [
@@ -86,6 +87,17 @@
     "found_in_registry": 49072,
     "rejects": 0,
     "rows": 49860,
-    "with_n_number": 49566
+    "with_n_number": 49566,
+    "with_total_time": 49400
+  },
+  "serials": {
+    "registry_with_letters": 765,
+    "relation": {
+      "None": 40,
+      "agree": 48533,
+      "differ": 309,
+      "partial": 190
+    },
+    "sdr_digits_only": 48366
   }
 }
