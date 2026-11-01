@@ -54,6 +54,8 @@ tripwire/            package: standards, store, server (tool server), faults (F1
                      adjudicator, tasks, tasks_v2, harness, runner, gate, xai, clients,
                      live_eval, live_v2, report, report_v2, gate_determined (offline note),
                      registry + mining (phase two: FAA registry loader, frozen mining rules)
+                     phase2 (phase two: read tools, question templates, record_disagreement
+                     scorer; scripted demo `python -m tripwire.phase2`, no live runner)
 docs/                PREREGISTRATION.md, amendments/ (A1-A4), results/, STATUS.md, DATA.md,
                      MEASUREMENT_STANDARDS.md, PREREGISTRATION-v2-multimodel.md (shelved),
                      PREREGISTRATION-phase2-real-data.md (draft)
