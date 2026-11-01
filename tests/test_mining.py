@@ -1,4 +1,4 @@
-"""Mining rules mine-v0 over synthetic SDRs and a synthetic registry. No network, no model."""
+"""Mining rules mine-v1 over synthetic SDRs and a synthetic registry. No network, no model."""
 
 from __future__ import annotations
 
@@ -80,6 +80,46 @@ def test_make_mismatch_is_unsettled_and_generic_words_do_not_match():
 
 
 @pytest.mark.parametrize(
+    ("code", "maker", "match"),
+    [
+        ("ACME", "ACME AERO WORKS", True),
+        ("ACMEAE", "ACME AERO WORKS", True),  # a 6-letter code that runs across a space
+        ("AERO", "ACME AERO WORKS", True),
+        ("AC", "ACME AERO WORKS", False),  # too short to count
+        ("ZENITH", "ACME AERO WORKS", False),
+    ],
+)
+def test_make_codes_match_by_prefix(code, maker, match):
+    assert m.make_matches(code, maker) is match
+
+
+@pytest.mark.parametrize(
+    ("sdr", "reg", "relation"),
+    [
+        ("asn 1001", "ASN-1001", "agree"),
+        ("0012345", "12345", "agree"),  # leading zeros
+        ("12345", "AW-12345", "agree"),  # the SDR keeps digits only
+        ("12345", "AW12345B", "agree"),
+        ("2345", "AW-12345", "partial"),  # a dropped digit may be formatting
+        ("ASN100", "ASN1001", "partial"),
+        ("ASN9999", "ASN-1001", "differ"),
+        ("UNK", "ASN-1001", None),
+        ("000", "ASN-1001", None),
+        ("N/A", "ASN-1001", None),
+        ("12345", "", None),
+    ],
+)
+def test_serial_relation(sdr, reg, relation):
+    assert m.serial_relation(sdr, reg) == relation
+
+
+def test_partial_serial_is_unsettled_and_gives_no_control():
+    found, controls, _ = one(aircraft_serial_number="ASN100")
+    assert [i.rule for i in found] == ["S2"] and controls == []
+    assert "S2" not in m.SETTLED
+
+
+@pytest.mark.parametrize(
     ("over", "reason"),
     [
         ({"registry_n_number": ""}, "no_n_number"),
@@ -126,4 +166,4 @@ def test_fingerprint_is_the_file_hash():
     from pathlib import Path
 
     assert m.fingerprint() == hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()
-    assert set(m.SETTLED) < set(m.RULES) and m.RULES_VERSION == "mine-v0"
+    assert set(m.SETTLED) < set(m.RULES) and m.RULES_VERSION == "mine-v1"

@@ -7,21 +7,29 @@ and a run refuses a different file. A rule either **settles** an item (the recor
 right) or **skips** it with a reason; it never guesses. Rules whose answer depends on judgment are
 kept apart as **unsettled** and enter a study only with a recorded owner label.
 
-Rules, version ``mine-v0``:
+Rules, version ``mine-v1`` (``mine-v0`` was profiled once on real data, 2026-11-01, and
+tightened from what it showed; ``reports/registry_profile.json`` keeps the v0 counts):
 
-* ``S1 serial``: the SDR's aircraft serial number differs from the registry's for the same
-  N-number (compared on letters and digits only, upper case). Settled.
+* Serials are compared on a **key**: letters and digits only, upper case, leading zeros
+  dropped; a placeholder (``UNK``, ``NONE``, ``N/A`` ...) or an all-zero serial counts as blank.
+  The SDR serial is digits only in about 99% of real 2026 rows while registry serials often carry
+  letters, so an all-digit SDR serial equal to the registry serial's digits also agrees.
+* ``S1 serial``: the two serial keys differ and neither contains the other. Settled.
+* ``S2 serial_partial``: one key contains the other (a model prefix or a dropped suffix may be
+  formatting, not another airframe). Unsettled.
 * ``T1 total_time``: the SDR's aircraft total time in hours exceeds the hours in the calendar from
   1 January of the registry's year of manufacture to the report date. Physically impossible.
   Settled.
 * ``D1 before_build``: the report's year is before the registry's year of manufacture. Settled.
-* ``M1 make``: the SDR make shares no word with the registry manufacturer name. Unsettled: makers
-  rename and merge, so a mismatch may be a stale name, not an error.
+  Expect almost none in one report year: the registry rarely lists a build year in the future.
+* ``M1 make``: no word of the SDR make (a 3 to 6 letter code in the real file) starts a word of
+  the registry manufacturer name, or starts the name with its spaces removed. Unsettled: makers
+  rename and merge, and the code is an abbreviation.
 
 Every rule skips a row whose N-number is blank, absent from the registry, or listed twice, and a
 row whose registration was issued after the report (the mark may have moved to another
 aircraft). ``T1`` and ``D1`` also skip when ``S1`` fires (the registry may describe another
-airframe) or the year of manufacture is blank.
+airframe) or the year of manufacture is blank. A row with any finding gives no control.
 
 Items that every applicable rule checked and found consistent are **controls**: the expected
 answer is that the records agree, which measures false alarms on real data.
@@ -39,12 +47,13 @@ from pathlib import Path
 from tripwire.registry import Registry, RegistryRecord, norm_n_number
 from tripwire.sdr import SDRRecord
 
-RULES_VERSION = "mine-v0"
+RULES_VERSION = "mine-v1"
 RULES = {
     "S1": "serial: SDR aircraft serial differs from the registry's for the N-number",
+    "S2": "serial_partial: one serial key contains the other (unsettled)",
     "T1": "total_time: SDR total hours exceed calendar hours since 1 Jan of the year built",
     "D1": "before_build: report year is before the registry's year of manufacture",
-    "M1": "make: SDR make shares no word with the registry manufacturer (unsettled)",
+    "M1": "make: no SDR make word starts a registry manufacturer word (unsettled)",
 }
 SETTLED = ("S1", "T1", "D1")
 _WORD = re.compile(r"[A-Z0-9]+")
@@ -97,8 +106,37 @@ def fingerprint() -> str:
     return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 
+# Serial placeholders seen in maintenance records, compared after norm_serial.
+_SERIAL_BLANKS = frozenset({"UNK", "UNKN", "UNKNOWN", "NA", "NONE", "TBD", "NIL", "NS", "NSN"})
+
+
 def norm_serial(text: str) -> str:
     return "".join(_WORD.findall(text.upper()))
+
+
+def serial_key(text: str) -> str:
+    """Letters and digits, upper case, leading zeros dropped; "" for a blank or placeholder."""
+    key = norm_serial(text).lstrip("0")
+    return "" if key in _SERIAL_BLANKS else key
+
+
+def serial_relation(sdr_serial: str, reg_serial: str) -> str | None:
+    """``agree``, ``partial`` or ``differ``; ``None`` when either side is blank."""
+    a, b = serial_key(sdr_serial), serial_key(reg_serial)
+    if not a or not b:
+        return None
+    if a == b or (a.isdigit() and "".join(ch for ch in b if ch.isdigit()).lstrip("0") == a):
+        return "agree"
+    if a in b or b in a:
+        return "partial"
+    return "differ"
+
+
+def make_matches(sdr_make: str, manufacturer: str) -> bool:
+    """Whether the SDR's make code names the registry manufacturer (see rule M1)."""
+    joined = "".join(_WORD.findall(manufacturer.upper()))
+    targets = [*words(manufacturer), joined]
+    return any(t.startswith(w) for w in words(sdr_make) if len(w) >= 3 for t in targets)
 
 
 def words(text: str) -> set[str]:
@@ -136,13 +174,14 @@ def mine_one(sdr: SDRRecord, reg: Registry) -> tuple[list[Item], list[Item], Ski
     def item(rule: str, field: str, a: str, b: str, expected: str) -> Item:
         return Item(rule, sdr.control_number, rec.n_number, field, a, b, expected)
 
-    s_sdr, s_reg = norm_serial(sdr.aircraft_serial_number), norm_serial(rec.serial_number)
-    serial_differs = bool(s_sdr and s_reg and s_sdr != s_reg)
-    if s_sdr and s_reg:
-        target = found if serial_differs else agree
-        target.append(item("S1" if serial_differs else "control", "aircraft_serial_number",
-                           sdr.aircraft_serial_number, rec.serial_number,
-                           "disagree" if serial_differs else "agree"))  # fmt: skip
+    relation = serial_relation(sdr.aircraft_serial_number, rec.serial_number)
+    serial_differs = relation == "differ"
+    if relation is not None:
+        rule = {"agree": "control", "partial": "S2", "differ": "S1"}[relation]
+        expected = "agree" if relation == "agree" else "disagree"
+        (agree if relation == "agree" else found).append(item(
+            rule, "aircraft_serial_number", sdr.aircraft_serial_number, rec.serial_number,
+            expected))  # fmt: skip
     if rec.year_mfr is not None and not serial_differs:
         built = str(rec.year_mfr)
         if sdr.difficulty_date.year < rec.year_mfr:
@@ -158,7 +197,7 @@ def mine_one(sdr: SDRRecord, reg: Registry) -> tuple[list[Item], list[Item], Ski
                     "disagree" if bad else "agree"))  # fmt: skip
     ref = reg.reference(rec)
     if ref is not None and sdr.aircraft_make.strip():
-        if not words(sdr.aircraft_make) & words(ref.manufacturer):
+        if not make_matches(sdr.aircraft_make, ref.manufacturer):
             found.append(item("M1", "aircraft_make", sdr.aircraft_make, ref.manufacturer,
                               "disagree"))  # fmt: skip
     controls = [] if found else agree

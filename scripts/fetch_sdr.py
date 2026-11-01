@@ -5,7 +5,7 @@ Stdlib ``urllib`` only. The download function takes an injectable ``opener`` so
 tests can feed a fake response and never touch the network; the real network
 fetch is only exercised when a human runs this script.
 
-    python scripts/fetch_sdr.py --year 2026
+    PYTHONPATH=. python3 scripts/fetch_sdr.py --year 2026
 
 Writes ``data/raw/SDR-<year>.csv`` (gitignored -- real rows are never
 committed; see ``docs/DATA.md``) and ``data/manifest/SDR-<year>.json`` recording

@@ -5,7 +5,13 @@ Stdlib only. The download takes an injectable ``opener`` so tests never touch th
 real fetch runs only when a person runs this script (the FAA hosts are not reachable from the
 build container).
 
-    python scripts/fetch_registry.py
+    PYTHONPATH=. python3 scripts/fetch_registry.py
+    PYTHONPATH=. python3 scripts/fetch_registry.py --from-zip ~/Downloads/ReleasableAircraft.zip
+
+The FAA site sometimes refuses scripted downloads (HTTP 403, seen 2026-11-01). Then download
+the zip in a browser from the URL below and pass it with ``--from-zip``: the same two files and
+the same manifest are written, plus ``source_file`` naming the zip that was loaded. The script
+never retries with a changed client identity; the manual download is the way round a refusal.
 
 Writes ``data/raw/registry/MASTER.txt`` and ``ACFTREF.txt`` (gitignored: real rows are never
 committed, and the master file holds registrants' names and addresses) and
@@ -47,7 +53,7 @@ def fetch(
     opener=urllib.request.urlopen,
     now: datetime | None = None,
 ) -> Path:
-    base = Path("data") if dest_dir is None else Path(dest_dir)
+    """Download the zip from :data:`URL` and extract it (see :func:`extract`)."""
     response = opener(URL)
     try:
         data = response.read()
@@ -55,6 +61,28 @@ def fetch(
         close = getattr(response, "close", None)
         if callable(close):
             close()
+    return extract(data, dest_dir, now)
+
+
+def fetch_from_zip(
+    zip_path: str | Path, dest_dir: str | Path | None = None, now: datetime | None = None
+) -> Path:
+    """Load a ``ReleasableAircraft.zip`` the owner downloaded in a browser, as :func:`fetch`
+    would have; the manifest also names the file it came from."""
+    path = Path(zip_path).expanduser()
+    if not path.is_file():
+        raise FetchError(f"no such file: {path}")
+    return extract(path.read_bytes(), dest_dir, now, source_file=path.name)
+
+
+def extract(
+    data: bytes,
+    dest_dir: str | Path | None = None,
+    now: datetime | None = None,
+    source_file: str | None = None,
+) -> Path:
+    """Write the two named members and the manifest from the zip's bytes."""
+    base = Path("data") if dest_dir is None else Path(dest_dir)
     try:
         zf = zipfile.ZipFile(io.BytesIO(data))
     except zipfile.BadZipFile as exc:
@@ -74,6 +102,8 @@ def fetch(
         "members": members,
         "retrieved_utc": (now or datetime.now(UTC)).astimezone(UTC).isoformat(),
     }
+    if source_file is not None:
+        manifest["source_file"] = source_file  # loaded from a manual download of URL
     out = base / "manifest" / "registry.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -83,8 +113,19 @@ def fetch(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--dest-dir", default=None, help="base dir (default: data/)")
+    parser.add_argument(
+        "--from-zip", default=None, help="a ReleasableAircraft.zip downloaded in a browser"
+    )
     args = parser.parse_args(argv)
-    print(f"wrote {fetch(dest_dir=args.dest_dir)}")
+    try:
+        if args.from_zip:
+            out = fetch_from_zip(args.from_zip, dest_dir=args.dest_dir)
+        else:
+            out = fetch(dest_dir=args.dest_dir)
+    except FetchError as exc:
+        print(f"REFUSED: {exc}", file=sys.stderr)
+        return 2
+    print(f"wrote {out}")
     return 0
 
 

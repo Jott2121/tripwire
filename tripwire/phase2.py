@@ -232,6 +232,33 @@ def build_tasks(items: Iterable[mining.Item]) -> list[Task]:
     return tasks
 
 
+def plan_items(
+    mined: mining.Mined, n_settled: int, n_controls: int, salt: str
+) -> tuple[list[mining.Item], list[mining.Item]]:
+    """The preregistered item mix: every T1 and D1 item, S1 to fill ``n_settled``; then controls
+    with the same field mix as the settled items, so the field never predicts the answer.
+    Unsettled items never enter. Short pools give fewer items, never padding."""
+    rare = [i for i in mined.settled if i.rule != "S1"]
+    rare = mining.sample(rare, n_settled, salt)
+    s1 = [i for i in mined.settled if i.rule == "S1"]
+    settled = rare + mining.sample(s1, n_settled - len(rare), salt)
+    fields: dict[str, int] = {}
+    for i in settled:
+        fields[i.field] = fields.get(i.field, 0) + 1
+    want = {"aircraft_total_time": "aircraft_total_time", "difficulty_date": "aircraft_total_time"}
+    quota: dict[str, int] = {}
+    for f, k in fields.items():  # a report-date item has no date control; time stands in
+        quota[want.get(f, f)] = quota.get(want.get(f, f), 0) + k
+    total = sum(quota.values())  # 0 only when settled is empty: no controls then
+    controls: list[mining.Item] = []
+    left = n_controls
+    for idx, (f, k) in enumerate(sorted(quota.items())):
+        share = left if idx == len(quota) - 1 else round(n_controls * k / total)
+        left -= share
+        controls += mining.sample([c for c in mined.controls if c.field == f], share, salt)
+    return settled, controls
+
+
 def item_list_sha256(tasks: Sequence[Task]) -> str:
     """What the preregistration freezes for the item list (the items themselves stay local)."""
     rows = sorted(json.dumps(asdict(t.item), sort_keys=True) for t in tasks)

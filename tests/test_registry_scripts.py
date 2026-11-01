@@ -99,7 +99,11 @@ def test_profile_reports_counts_never_rows(real_shaped, tmp_path, capsys):
         "2 columns, header has 31": 1
     }
     assert rep["sdr"]["rows"] == 30 and rep["sdr"]["found_in_registry"] >= 19
-    assert rep["mining"]["counts"]["S1"] >= 1 and rep["mining"]["version"] == "mine-v0"
+    assert rep["mining"]["counts"]["S1"] >= 1 and rep["mining"]["version"] == "mine-v1"
+    ser = rep["serials"]
+    assert sum(ser["relation"].values()) == rep["sdr"]["found_in_registry"]
+    assert ser["relation"]["differ"] >= 1 and ser["sdr_digits_only"] >= 0
+    assert rep["sdr"]["with_total_time"] <= rep["sdr"]["rows"]
     text = out.read_text()
     assert "OTHER-SERIAL" not in text and "REDACTED" not in text and "TEST WAY" not in text
     capsys.readouterr()
@@ -112,3 +116,42 @@ def test_profile_refuses_a_bad_file(real_shaped, tmp_path, capsys):
     bad.write_text("NOPE\n")
     assert pr.main(["--master", str(bad), "--acftref", str(ref), "--sdr", str(sdr)]) == 2
     assert "REFUSED" in capsys.readouterr().err
+
+
+def test_from_zip_writes_the_same_files_and_names_the_source(tmp_path, capsys):
+    fr = _script("fetch_registry")
+    data = _zip({"ReleasableAircraft/MASTER.txt": "m", "ACFTREF.txt": "a"})
+    z = tmp_path / "ReleasableAircraft.zip"
+    z.write_bytes(data)
+    net = tmp_path / "net"
+    fr.fetch(net, opener=lambda url: _Resp(data), now=datetime(2026, 11, 1, tzinfo=UTC))
+    out = fr.fetch_from_zip(z, tmp_path / "manual", now=datetime(2026, 11, 1, tzinfo=UTC))
+    man, ref = json.loads(out.read_text()), json.loads((net / "manifest/registry.json").read_text())
+    assert man.pop("source_file") == "ReleasableAircraft.zip" and man == ref
+    assert (tmp_path / "manual/raw/registry/MASTER.txt").read_text() == "m"
+    args = ["--from-zip", str(z), "--dest-dir", str(tmp_path / "cli")]
+    assert fr.main(args) == 0 and "wrote" in capsys.readouterr().out
+
+
+def test_from_zip_refuses_a_missing_or_bad_file(tmp_path, capsys):
+    fr = _script("fetch_registry")
+    assert fr.main(["--from-zip", str(tmp_path / "nope.zip")]) == 2
+    assert "no such file" in capsys.readouterr().err
+    bad = tmp_path / "page.zip"
+    bad.write_bytes(b"<html>403</html>")
+    assert fr.main(["--from-zip", str(bad), "--dest-dir", str(tmp_path)]) == 2
+    assert "not a zip" in capsys.readouterr().err
+    assert not (tmp_path / "raw").exists()
+
+
+def test_peek_prints_a_sample_and_writes_nothing(real_shaped, tmp_path, capsys):
+    pr = _script("profile_registry")
+    master, ref, sdr = real_shaped
+    base = ["--master", str(master), "--acftref", str(ref), "--sdr", str(sdr)]
+    assert pr.main([*base, "--peek", "S1", "--peek-n", "5"]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0].startswith("rule\t") and lines[1].startswith("S1\t") and len(lines) <= 6
+    assert "OTHER-SERIAL" in "\n".join(lines) and not list(tmp_path.glob("*.json"))
+    with pytest.raises(SystemExit):
+        pr.main([*base, "--peek", "Z9"])
+    capsys.readouterr()

@@ -41,23 +41,60 @@ No real row is committed. Downloads go to `data/raw/` (gitignored); mined items 
 
 ## Items: mined by frozen rules
 
-`tripwire/mining.py`, version `mine-v0`, frozen by its sha256 (`mining.fingerprint()`) at freeze:
+`tripwire/mining.py`, version `mine-v1`, frozen by its sha256 (`mining.fingerprint()`) at freeze:
 
 | rule | the records cannot both be right when | settled? |
 | --- | --- | --- |
-| S1 | the SDR's aircraft serial differs from the registry's for that N-number | yes |
+| S1 | the serial keys differ and neither contains the other | yes |
+| S2 | one serial key contains the other | no: may be a model prefix or a dropped suffix |
 | T1 | the SDR's total hours exceed the calendar hours since 1 January of the year built | yes |
-| D1 | the report is dated before the year built | yes |
-| M1 | the SDR make shares no word with the registry manufacturer | no: makers rename and merge |
+| D1 | the report is dated before the year built | yes (expect about none) |
+| M1 | no word of the SDR make code starts a word of the registry manufacturer | no: an abbreviation, and makers rename and merge |
 
-A row is skipped, never guessed, when its N-number is blank, missing from the registry or listed
-twice, or when the registration was issued after the report (the mark may have moved). T1 and D1
-are not applied when S1 fires. **Controls** are rows where every applicable rule ran and found the
-records consistent. M1 items enter only with a recorded owner label, made before any run.
+A serial **key** is letters and digits, upper case, leading zeros dropped; a placeholder (`UNK`,
+`NONE`, `N/A` ...) or an all-zero serial is blank. An all-digit SDR serial that equals the
+registry serial's digits agrees. A row is skipped, never guessed, when its N-number is blank,
+missing from the registry or listed twice, or when the registration was issued after the report
+(the mark may have moved). T1 and D1 are not applied when S1 fires. **Controls** are rows where
+every applicable rule ran and found the records consistent. Unsettled items (S2, M1) enter only
+with a recorded owner label, made before any run; this draft's default is that they do not
+enter at all.
 
-**Planned size per model:** 100 settled items (sampled deterministically with `mining.sample`,
-salt fixed at freeze, spread over S1/T1/D1 as the data allows) and 100 controls. If the profile
-finds fewer than 60 settled items, the design is re-scoped before freeze, with no spend.
+### What the first real profile showed, and why `mine-v0` became `mine-v1`
+
+`mine-v0` was run once on the real files on 2026-11-01 (owner's machine; counts in
+`reports/registry_profile.json` at commit c1bb37d): 49,860 SDR-2026 rows, 49,072 joined to the
+registry; S1 1,700, T1 17, D1 0, M1 10,571 (unsettled), 71,916 controls; skipped 294 with no
+N-number, 494 not in the registry, 466 registered after the report. No agent has seen an item.
+Read against the field shapes in `docs/DATA.md`:
+
+- **M1 is an artefact.** The SDR make is a 3 to 6 letter code, so whole-word overlap with the
+  registry's full manufacturer name fails for most codes. `mine-v1` matches by prefix. M1 stays
+  unsettled and, by default, out of the study.
+- **S1 was likely inflated by format.** The SDR serial is digits only in about 99% of rows; the
+  registry's often carries letters, leading zeros or a model prefix. `mine-v0` compared on all
+  letters and digits, so any of those counted as a settled disagreement. `mine-v1` drops leading
+  zeros and placeholders, lets an all-digit SDR serial match the registry's digits, and moves
+  containment to the unsettled S2. How many of the 1,700 survive is unknown until the profile
+  is re-run (pre-freeze step 1).
+- **D1 at 0 is expected, not a bug.** One report year against a registry whose build years are
+  almost all in the past cannot give many. The year field parses: T1 fired 17 times and the
+  total-time controls need it.
+- **T1 is small.** Seventeen items is too few to report T1 on its own. Impossible values are
+  present in the file (`reports/sdr_profile_2026.json`: whole-number hours up to 7.2 million,
+  about 825 years), so T1 firing rarely is plausible, not a sign the rule is broken.
+
+**Planned size per model:** 100 settled items, picked by `phase2.plan_items` (salt fixed at
+freeze): every T1 and D1 item, then S1 to fill, sampled with `mining.sample`. 100 controls drawn **with the
+same field mix** as the settled items (serial controls for serial items, total-time controls for
+total-time items), so the question's field is not confounded with the expected answer. If
+`mine-v1` leaves fewer than 60 settled items, the design is re-scoped before freeze, with no
+spend. Before freeze the owner checks a spread of S1 items by eye (pre-freeze step 1); if more
+than a few look like formatting rather than another airframe, the rule is tightened again and
+re-profiled, still before any agent run.
+
+Because S1 dominates, this is mainly a study of **serial-number disagreements**; the report says
+so and does not generalise to other fields.
 
 ## Tasks, tools and scoring
 
@@ -85,7 +122,7 @@ Scoring is mechanical, with one outcome per run:
   (`RUN_ERROR`) excludes a run, and it is reported.
 
 Two limits of the item mix, known before any run: controls come only from the serial and
-total-time fields (`mine-v0` emits no agreeing report-date item: a row whose date is consistent
+total-time fields (`mine-v1` emits no agreeing report-date item: a row whose date is consistent
 gives a total-time control instead), so per-rule numbers are reported for the mined half only;
 and one SDR row can give up to two controls, so the control sample is drawn per item, not per row.
 
@@ -106,9 +143,20 @@ So **about $20 to $60** for two models; the cap is set at freeze.
 
 ## Pre-freeze steps (no model spend)
 
-1. Owner: run `python scripts/fetch_sdr.py --year 2026` and `python scripts/fetch_registry.py`,
-   then `python scripts/profile_registry.py ... --out reports/registry_profile.json`, and commit
-   the profile. It holds counts only, and records the files' real headers and the rule hit counts.
+1. Owner, on a local machine (the build container cannot reach the FAA hosts):
+   - Done 2026-11-01 for `mine-v0`: `PYTHONPATH=. python3 scripts/fetch_sdr.py --year 2026`,
+     `PYTHONPATH=. python3 scripts/fetch_registry.py` (if the site answers 403, download
+     `ReleasableAircraft.zip` in a browser and add `--from-zip <path>`), then the profile,
+     committed as c1bb37d.
+   - Still to do for `mine-v1`: re-run the profile (no new download), commit it, and look at a
+     spread of S1 items with `--peek S1` (printed to the terminal only; nothing is written):
+
+         PYTHONPATH=. python3 scripts/profile_registry.py --master data/raw/registry/MASTER.txt \
+             --acftref data/raw/registry/ACFTREF.txt --sdr data/raw/SDR-2026.csv \
+             --out reports/registry_profile.json
+         PYTHONPATH=. python3 scripts/profile_registry.py --master data/raw/registry/MASTER.txt \
+             --acftref data/raw/registry/ACFTREF.txt --sdr data/raw/SDR-2026.csv --peek S1
+
 2. Done 2026-11-01: the two read tools, the task templates and the `record_disagreement` scorer
    (`tripwire/phase2.py`, 100% covered on synthetic records). `python -m tripwire.phase2` runs
    three scripted agents on a seeded fictional registry through the real run loop: the rules-as-
@@ -119,8 +167,11 @@ So **about $20 to $60** for two models; the cap is set at freeze.
 
 ## Owner decisions (open)
 
+- Whether the `mine-v1` tightening is right, once the re-run profile and the `--peek S1` look
+  are in.
+- Unsettled items (S2, M1): leave them out (this draft's default) or label some, and who labels.
+- Whether to add the 2025 SDR file to grow T1 (free: one more download and profile).
 - Source: registry now, ADs later (this draft's default), or wait for an AD source.
-- Whether to label M1 items, and who labels.
 - The two models, and the budget cap.
 
 ## Deviations log (append-only, empty until freeze)

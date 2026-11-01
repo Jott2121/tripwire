@@ -310,3 +310,26 @@ def test_demo_shows_blanket_flagging_and_ignoring_the_registry_both_score_half(c
         p2._scripted_reply("random", MINED)
     assert p2.main(["--rows", "40", "--seed", "2"]) == 0
     assert '"oracle"' in capsys.readouterr().out
+
+
+def test_plan_items_takes_every_rare_item_and_matches_the_field_mix():
+    def it(rule, n, field, expected="disagree"):
+        return mining.Item(rule, f"C{n}", "101", field, "a", "b", expected)
+
+    mined = mining.Mined(
+        settled=[it("S1", n, "aircraft_serial_number") for n in range(50)]
+        + [it("T1", 100 + n, "aircraft_total_time") for n in range(3)]
+        + [it("D1", 200, "difficulty_date")],
+        unsettled=[it("S2", 300, "aircraft_serial_number")],
+        controls=[it("control", 400 + n, "aircraft_serial_number", "agree") for n in range(40)]
+        + [it("control", 500 + n, "aircraft_total_time", "agree") for n in range(40)],
+        skips=[],
+    )
+    settled, controls = p2.plan_items(mined, 10, 10, salt="s")
+    assert len(settled) == 10 and {i.rule for i in settled[:4]} == {"T1", "D1"}
+    assert sum(i.rule == "S1" for i in settled) == 6 and all(i.rule != "S2" for i in settled)
+    assert len(controls) == 10
+    assert sum(c.field == "aircraft_total_time" for c in controls) == 4  # T1 + D1 share
+    assert p2.plan_items(mined, 10, 10, salt="s") == (settled, controls)
+    empty = mining.Mined([], [], mined.controls, [])
+    assert p2.plan_items(empty, 10, 10, salt="s") == ([], [])

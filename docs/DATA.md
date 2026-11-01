@@ -8,7 +8,7 @@ problems found on aircraft.
 
 - Download page: https://www.faa.gov/av-info/download_SDR
 - Annual CSV file pattern: `https://external.apic4e.faa.gov/sdrs/retrieve/SDR-<year>.csv`
-  (e.g. `SDR-2026.csv`). Fetch one with `python scripts/fetch_sdr.py --year 2026`.
+  (e.g. `SDR-2026.csv`). Fetch one with `PYTHONPATH=. python3 scripts/fetch_sdr.py --year 2026`.
 - Field layout (Batch File Layout): https://sdrs.faa.gov/Documents/Batch%20File%20Layout.pdf
 - JASC codes: https://sdrs.faa.gov/documents/JASC_Code.pdf
 
@@ -72,12 +72,27 @@ Phase two (`docs/PREREGISTRATION-phase2-real-data.md`) joins SDRs to the FAA's r
 aircraft database by N-number.
 
 - Download: https://registry.faa.gov/database/ReleasableAircraft.zip (comma-delimited text
-  files). Fetch with `python scripts/fetch_registry.py`; it extracts only `MASTER.txt` and
-  `ACFTREF.txt` to `data/raw/registry/` (gitignored) and writes `data/manifest/registry.json`.
+  files). Fetch with `PYTHONPATH=. python3 scripts/fetch_registry.py`; it extracts only
+  `MASTER.txt` and `ACFTREF.txt` to `data/raw/registry/` (gitignored) and writes
+  `data/manifest/registry.json`. The site sometimes refuses the script (HTTP 403, seen
+  2026-11-01). Then download the zip in a browser and run
+  `PYTHONPATH=. python3 scripts/fetch_registry.py --from-zip ~/Downloads/ReleasableAircraft.zip`:
+  same files, same manifest, plus `source_file`. The script never changes its client identity
+  to get past a refusal.
 - Layout: https://registry.faa.gov/database/ardata.pdf. `tripwire/registry.py` maps columns by
   name and accepts both that document's field names and the text files' short headers; a header
   matching neither fails closed. The header of the current download is confirmed by
   `scripts/profile_registry.py` (counts only, safe to commit).
+- **Observed in the first real download (2026-11-01, `reports/registry_profile.json`).**
+  318,181 master rows, no rejects, no duplicate N-numbers; 94,161 reference rows, one reject (a
+  code that is not 7 characters). The master header is the text-file spelling (`N-NUMBER`,
+  `SERIAL NUMBER`, `YEAR MFR`, ...), with one name padded (` KIT MODEL`) and a trailing empty
+  column; both reference and master headers end in an empty column. 49,072 of 49,860 SDR-2026
+  rows join by N-number.
+- **Field shapes that matter for mining** (from `reports/sdr_profile_2026.json`): the SDR
+  `AircraftMake` is a 3 to 6 letter code, not a name, and `AircraftSerialNumber` is digits only
+  in about 99% of rows (up to 11 characters), while registry serials carry letters and run to 30
+  characters. `mine-v1` compares accordingly (`tripwire/mining.py`).
 - **Personal data.** The master file carries registrants' names and street addresses. The loader
   never reads those columns, and its record type has no field for them. Nothing from the master
   file but counts is ever committed.
