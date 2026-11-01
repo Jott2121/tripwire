@@ -46,7 +46,7 @@ ids are recorded per request, never assumed.
 | --- | --- | --- | --- | --- | --- |
 | M1 | `grok-4.7` | xAI | continuity with v1; harness already speaks its API | $2.00 / $0.50 / $6.00 | docs.x.ai (in `tripwire/xai.py`, retrieved 2026-10-11) |
 | M2 | `claude-sonnet-5-5` | Anthropic | a second frontier lab, mid-size tier | $2.00 / $0.10 / $10.00 | https://platform.claude.com/docs/en/about-claude/pricing (retrieved 2026-11-01) |
-| M3 | `gemini-3.8-flash` | Google | small, fast tier | $0.75 / $0.075 / $3.75 | **UNRESOLVED**: third-party summary only; must be read from ai.google.dev before freeze. The summary says the rate doubles on 2027-01-01 |
+| M3 | `gemini-3.8-flash` | Google | small, fast tier | $0.75 / $0.075 / $3.75 | https://ai.google.dev/gemini-api/docs/pricing (retrieved 2026-11-01); the page says these rates hold to 2026-12-31 and double from 2027-01-01, so M3 runs before then |
 | M4 | `openai/gpt-oss-120b` on Together | open weights (OpenAI) | open-weight row; function calling listed | $0.15 / n/a / $0.60 | https://docs.together.ai/docs/serverless/models (retrieved 2026-11-01) |
 
 Alternates if the owner prefers: an OpenAI closed model in slot M3 instead of Google (prices seen
@@ -209,7 +209,7 @@ assumes 1.5x output on every row and no cache discount.
 | --- | ---: | ---: | --- |
 | M1 grok-4.7 | $75 | $87 | measured v1 cost suggests about $45 |
 | M2 claude-sonnet-5-5 | $91 | $110 | caching needs explicit cache_control in the client |
-| M3 gemini-3.8-flash | $34 | $41 | price UNRESOLVED (third-party) |
+| M3 gemini-3.8-flash | $34 | $41 | 2026 rate; about double from 2027-01-01 |
 | M4 gpt-oss-120b | $6 | $7 | |
 | pilots (60) + bridge (24) | about $6 | about $8 | |
 | **total** | **about $212** | **about $253** | expected with grok-like caching: about $140-170 |
