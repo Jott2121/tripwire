@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 from tripwire import runner, tasks, xai
-from tripwire.faults import FaultKind
+from tripwire.faults import V1_FAULTS, FaultKind
 from tripwire.prompts import Condition
 from tripwire.targets import TargetError
 from tripwire.xai import ExecPath
@@ -61,7 +61,7 @@ def holdout_runs() -> tuple[tasks.PlannedRun, ...]:
 def select_slots(runs: Sequence[tasks.PlannedRun]) -> tuple[tasks.PlannedRun, ...]:
     """Per fault (and clean) the first slots in hash order, at most one per task per stratum."""
     picked: list[tasks.PlannedRun] = []
-    strata: list[tuple[FaultKind | None, int]] = [(f, SLOTS_PER_FAULT) for f in FaultKind]
+    strata: list[tuple[FaultKind | None, int]] = [(f, SLOTS_PER_FAULT) for f in V1_FAULTS]
     strata.append((None, CLEAN_SLOTS))
     for fault, n in strata:
         seen: set[str] = set()

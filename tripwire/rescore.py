@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from tripwire import tasks as tk
-from tripwire.adjudicator import FLAG_VOCABULARY, Status, Verdict, adjudicate
+from tripwire.adjudicator import FLAG_VOCABULARY_V2, Status, Verdict, adjudicate
 from tripwire.faults import FAULT_NAMES, FaultKind
 from tripwire.harness import _verdict_dict
 from tripwire.ledger import read_ledger
@@ -38,7 +38,7 @@ def a3_applies(row: dict[str, Any]) -> bool:
 def blocked_verdict(gate: dict[str, Any]) -> Verdict:
     """The verdict ``Gate.report`` emits for these recorded failures."""
     names = {FAULT_NAMES[FaultKind(f["fault"])] for f in gate.get("failures", []) if f["fault"]}
-    flags = tuple(sorted(names, key=FLAG_VOCABULARY.index))
+    flags = tuple(sorted(names, key=FLAG_VOCABULARY_V2.index))
     return Verdict(Status.BLOCKED, None, None, None, flags)
 
 

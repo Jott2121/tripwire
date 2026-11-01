@@ -297,7 +297,7 @@ def test_first_applicable_fault_wins_and_inapplicable_ones_fall_through():
 def test_config_validation_and_parse():
     assert f.parse_faults("") == ()
     assert f.parse_faults(" f1 , F6 ") == (FaultSpec(FaultKind.F1), FaultSpec(FaultKind.F6))
-    for bad in ("F7", "unit_swap"):
+    for bad in ("F11", "unit_swap"):
         with pytest.raises(f.FaultConfigError):
             f.parse_faults(bad)
     with pytest.raises(f.FaultConfigError):
@@ -319,7 +319,7 @@ def test_every_fault_has_a_name_and_tools():
 
 def test_main_rejects_bad_fault_config(monkeypatch, tmp_path, capsys):
     monkeypatch.setenv(srv.TOKEN_ENV, "tok")
-    assert srv.main(["--seed", "1", "--faults", "F9"]) == 2
+    assert srv.main(["--seed", "1", "--faults", "F11"]) == 2
     path = tmp_path / "ledger.jsonl"
     path.write_text("")
     assert srv.main(["--seed", "1", "--faults", "F1", "--ledger", str(path)]) == 2

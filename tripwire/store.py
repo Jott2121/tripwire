@@ -199,6 +199,16 @@ class Store:
                 return sp
         raise NotFound(f"no revision {revision!r} of {spec_id}|{parameter}|{applies_to}")
 
+    def specs_for_parameter(self, parameter: str) -> tuple[SpecLimit, ...]:
+        """Every spec row (all revisions) for ``parameter``, in spec-key order."""
+        rows = (sp for sp in self._specs.values() if sp.parameter == parameter)
+        return tuple(sorted(rows, key=spec_key))
+
+    def tests_for_parameter(self, parameter: str) -> tuple[TestResult, ...]:
+        """Every test result for ``parameter``, in test-id order."""
+        rows = (t for t in self._tests.values() if t.parameter == parameter)
+        return tuple(sorted(rows, key=lambda t: t.test_id))
+
     def get_test_result(self, test_id: str) -> TestResult:
         """One test result by id."""
         return _get(self._tests, test_id, "test result")

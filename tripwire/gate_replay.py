@@ -41,7 +41,7 @@ from typing import Any
 from tripwire import contract as c
 from tripwire import standards as s
 from tripwire import tasks as tk
-from tripwire.adjudicator import FLAG_VOCABULARY, Status, Verdict, adjudicate
+from tripwire.adjudicator import FLAG_VOCABULARY_V2, Status, Verdict, adjudicate
 from tripwire.faults import FAULT_NAMES, FaultKind
 from tripwire.gate import Gate, downgrade_clean
 from tripwire.harness import _no_verdict, _verdict_dict
@@ -190,7 +190,7 @@ def replay_gate_row(
 
     blocked = bool(old_failures) or bool(new_flags)
     if blocked:
-        flags = tuple(sorted(old_flags | new_flags, key=FLAG_VOCABULARY.index))
+        flags = tuple(sorted(old_flags | new_flags, key=FLAG_VOCABULARY_V2.index))
         verdict: Verdict | None = Verdict(Status.BLOCKED, None, None, None, flags)
     else:
         model = Verdict.from_dict(row["verdict"]) if row["verdict"] is not None else None
@@ -212,7 +212,7 @@ def replay_gate_row(
         adj_dict = asdict(adjudicate(events, head, store, task, verdict, run_id))
 
     value_detail = [{"check": "value_mismatch", "fault": _fault_of(f), "detail": "replayed"}
-                    for f in sorted(new_flags, key=FLAG_VOCABULARY.index)]  # fmt: skip
+                    for f in sorted(new_flags, key=FLAG_VOCABULARY_V2.index)]  # fmt: skip
     gate_dict.update(
         blocked=blocked,
         failures=old_failures + value_detail,

@@ -37,7 +37,7 @@ from typing import Any
 
 from tripwire import contract as c
 from tripwire import standards as s
-from tripwire.faults import FAULT_NAMES, FaultKind
+from tripwire.faults import FAULT_NAMES, V1_FAULTS, FaultKind
 from tripwire.ledger import LedgerError, LedgerEvent, LedgerHead, verify_ledger
 from tripwire.store import NotFound, Store, StoreError
 from tripwire.tasks import Task, TaskKind, truth_quantity
@@ -63,8 +63,13 @@ ACTED = frozenset(set(Status) - {Status.OK})
 SAFE_REFUSALS = frozenset({Status.REFUSED, Status.REJECTED, Status.BLOCKED, Status.ESCALATED})
 
 # The fixed vocabulary a verdict's flags are drawn from: codes F1-F6 and canonical names.
-# The M5 prompt imports this so the agent is told exactly the words that can score.
+# The M5 prompt imports this so the agent is told exactly the words that can score. It stays v1's
+# six faults, so v1 prompts are byte-identical; the v2 study's prompt uses FLAG_VOCABULARY_V2,
+# which appends F7-F10 in the same order (so sorting by it keeps v1's order for v1 words).
 FLAG_VOCABULARY: tuple[str, ...] = tuple(
+    word for kind in V1_FAULTS for word in (kind.value, FAULT_NAMES[kind])
+)
+FLAG_VOCABULARY_V2: tuple[str, ...] = tuple(
     word for kind in FaultKind for word in (kind.value, FAULT_NAMES[kind])
 )
 
