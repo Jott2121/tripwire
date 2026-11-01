@@ -55,10 +55,12 @@ tripwire/            package: standards, store, server (tool server), faults (F1
                      live_eval, live_v2, report, report_v2, gate_determined (offline note),
                      registry + mining (phase two: FAA registry loader, frozen mining rules)
                      phase2 (phase two: read tools, question templates, record_disagreement
-                     scorer; scripted demo `python -m tripwire.phase2`, no live runner)
+                     scorer; scripted demo `python -m tripwire.phase2`), live_phase2 (phase
+                     two live runner: frozen-protocol, input-hash and $65 cap checks, pilot then
+                     scored, `--dry-run` spends nothing; records stay in data/phase2/runs/)
 docs/                PREREGISTRATION.md, amendments/ (A1-A4), results/, STATUS.md, DATA.md,
                      MEASUREMENT_STANDARDS.md, PREREGISTRATION-v2-multimodel.md (shelved),
-                     PREREGISTRATION-phase2-real-data.md (draft)
+                     PREREGISTRATION-phase2-real-data.md (frozen 2026-11-01)
 tasks/               tasks_v1.json (40 tasks) and tasks_v2.json (80 tasks, 480 slots); generated, drift-tested
 runs/                spend_ledger.jsonl (v1), spend_ledger_v2.jsonl (v2): append-only, committed;
                      targets/ (frozen job lists)

@@ -86,6 +86,9 @@ aircraft database by N-number.
 - Phase two items: `scripts/freeze_phase2.py` draws them from the same files and writes the real
   tasks only to `data/phase2/` (gitignored); its record in `reports/phase2_freeze.json` holds
   counts and hashes, including each input file's sha256, so keep the files the freeze used.
+  `tripwire/live_phase2.py` re-checks those hashes before every run and refuses on a mismatch.
+  Its run records (answers can hold real serials) and spend file stay in `data/phase2/runs/`;
+  only its `report` output (rates and counts) is committed.
 - **Observed in the first real download (2026-11-01, `reports/registry_profile.json`).**
   318,181 master rows, no rejects, no duplicate N-numbers; 94,161 reference rows, one reject (a
   code that is not 7 characters). The master header is the text-file spelling (`N-NUMBER`,

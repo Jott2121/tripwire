@@ -1,11 +1,11 @@
-# Tripwire phase two preregistration: real FAA records, real disagreements (DRAFT)
+# Tripwire phase two preregistration: real FAA records, real disagreements
 
-**Status: DRAFT, not approved, not frozen.** Written 2026-11-01, before any phase-two run. No paid
-call has been made. Nothing here may run until the owner has made the decisions listed at the end,
-the pre-freeze steps are done, and a reviewed PR sets the status line to `FROZEN <date>`. Model
-spend needs its own owner approval in the live workflow, as in v1. As of 2026-11-01 the mining
-rules (`mine-v2`) meet the freeze bar; what is left is the item draw on the owner's files and the
-owner decisions.
+**Status: FROZEN 2026-11-01.** Written and frozen 2026-11-01, before any phase-two run; no paid
+call had been made. The mining rules (`mine-v2`), the item draw (`reports/phase2_freeze.json`),
+the models and the $65 cap are fixed below, and every owner decision is recorded. The live runner
+(`tripwire.live_phase2`) refuses a live run unless this line reads `FROZEN` and this file carries
+the freeze record's rules fingerprint and item-list sha256. Any change after this point goes in
+the deviations log, never into the sections above.
 
 ## Why this study, and why now
 
@@ -59,7 +59,7 @@ registry serial's digits agrees. A row is skipped, never guessed, when its N-num
 missing from the registry or listed twice, or when the registration was issued after the report
 (the mark may have moved). T1 and D1 are not applied when S1 fires. **Controls** are rows where
 every applicable rule ran and found the records consistent. Unsettled items (S2, M1) enter only
-with a recorded owner label, made before any run; this draft's default is that they do not
+with a recorded owner label, made before any run; the owner decided they do not
 enter at all.
 
 ### What the real profiles showed: `mine-v0` to `mine-v2`
@@ -200,8 +200,13 @@ GLM-5.3 (53.4, about $22 for the run), DeepSeek V4 Pro (49.6, about $21), DeepSe
 | wire pilot, 20 runs each | about $2 | about $3 | confirms each client before any scored run |
 | **total** | **about $54** | **about $63** | |
 
-**Proposed cap: $65 for the whole study** (grok-4.7 $38, Muse Spark Open $27), enforced by the
-spend ledger as in v1. It needs the owner's own yes before any run.
+**Cap: $65 for the whole study, pilots included** (grok-4.7 $38, Muse Spark Open $27), approved
+by the owner on 2026-11-01. `tripwire.live_phase2` enforces both: a run states its own
+`--budget-usd`, refused if it plus what the spend file already holds would pass the model's cap or
+the study's; during a run, a job starts only if its planning estimate (list price, no cache, 1.5x
+output) still fits that budget. A quota refusal or an unknown cost halts the run; re-running the
+same command resumes. Each model's 20-run pilot (10 per condition) must finish with no RUN_ERROR
+and every cost known before its scored run is allowed.
 
 ## Pre-freeze steps (no model spend)
 
@@ -218,8 +223,9 @@ spend ledger as in v1. It needs the owner's own yes before any run.
    (`tripwire/phase2.py`, 100% covered on synthetic records). `python -m tripwire.phase2` runs
    three scripted agents on a seeded fictional registry through the real run loop: the rules-as-
    reference and a perfect agent score 1.0; an agent that flags everything and one that never
-   weighs the registry both score 0.5. There is no live runner yet; it is built only after
-   freeze, with the spend approval, as in v1.
+   weighs the registry both score 0.5. The live runner, `tripwire.live_phase2`, was built at
+   freeze, after the cap was approved (see Conditions and models); `--dry-run` runs every check on
+   the owner's files with a scripted agent and spends nothing.
 3. Owner, on the same machine and the **same files** (do not re-download: the registry changes
    daily and the freeze pins each input's sha256), draw the items and commit the record:
 
@@ -247,16 +253,19 @@ spend ledger as in v1. It needs the owner's own yes before any run.
 
    The draw matches the plan exactly. These values are fixed: a run whose item list or inputs
    hash differently is not this study.
-4. Record the owner decisions below, and set the status line to `FROZEN <date>` in a reviewed PR.
+4. Done 2026-11-01: the owner decisions below are recorded and the status line reads
+   `FROZEN 2026-11-01`, in PR #60.
 
-## Owner decisions (open)
+## Owner decisions (recorded 2026-11-01)
 
-- Unsettled items (S2, M1): leave them out (this draft's default) or label some, and who labels.
-- Whether to add the 2025 SDR file to grow T1 (free: one more download, profile and look, before
-  the draw; it should roughly double T1 and S1 but not D1, and T1 still would not be large enough
-  to report on its own). Adding it later means a new draw and a new freeze record.
-- Source: registry now, ADs later (this draft's default), or wait for an AD source.
-- Models: decided 2026-11-01, `grok-4.7` and Muse Spark Open.
-- The budget cap: $65 proposed, not yet approved.
+- Unsettled items (S2, M1): left out, the draft's default. The draw used only `mined.settled`.
+- The 2025 SDR file: not added. The draw used the 2026 file only; adding it now would mean a new
+  draw and a new freeze record, so T1 stays at 14 tasks and is not reported on its own.
+- Source: the registry now, ADs later, the draft's default.
+- Models: `grok-4.7` and Muse Spark Open, the owner's choice.
+- The budget cap: $65 for the whole study (grok-4.7 $38, Muse Spark Open $27), owner-approved.
+
+The owner ran the draw on these terms (a7a2032), then chose the models and approved the cap and
+the freeze on 2026-11-01.
 
 ## Deviations log (append-only, empty until freeze)
