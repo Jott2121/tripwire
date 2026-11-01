@@ -328,3 +328,20 @@ def test_merge_writes_an_over_cap_ledger_but_exits_nonzero(ledger, tmp_path, cap
 def test_the_v2_task_store_is_what_the_driver_runs():
     assert {t.task_id for t in tasks_v2.default_tasks()} >= {j.plan.task_id for j in
                                                             live_v2.scored_jobs(M1)}  # fmt: skip
+
+
+def test_the_proposed_v2_workflow_is_manual_and_exposes_only_the_rows_key():
+    text = (ROOT / "docs" / "live-eval-v2.workflow.yml").read_text()
+    head = text[text.index("\non:") : text.index("\njobs:")]
+    assert "workflow_dispatch:" in head and "cancel-in-progress: false" in head
+    for trigger in ("push:", "pull_request", "schedule:"):
+        assert trigger not in head
+    for row in (M1, M2, M3, M4):
+        guard = f"!inputs.dry_run && inputs.model == '{row.config.label}' && secrets.{row.key_env}"
+        assert text.count(f"secrets.{row.key_env}") == 1 and guard in text
+        assert row.config.label in text
+    assert "python -m tripwire.live_v2 run" in text and "python -m tripwire.live_v2 merge" in text
+    assert "live-eval-v2.yml/runs" in text and "cp docs/live-eval-v2.workflow.yml" in text
+    assert not (ROOT / ".github" / "workflows" / "live-eval-v2.yml").exists() or (
+        (ROOT / ".github" / "workflows" / "live-eval-v2.yml").read_text() == text
+    )
