@@ -272,3 +272,15 @@ def test_main_writes_a_report(tmp_path):
     assert gr.main([str(prior_dir), str(gate_dir), "--out", str(out), "--name", "t",
                     "--resamples", "200"]) == 0  # fmt: skip
     assert (out / "t.md").exists() and (out / "t.json").exists()
+
+
+def test_replay_refuses_v2_runs(tmp_path):
+    prior_dir, gate_dir = _mini_dirs(tmp_path)
+    receipt = gate_dir / "receipt.jsonl"
+    rows = [json.loads(x) for x in receipt.read_text().splitlines()]
+    receipt.write_text("\n".join(json.dumps({**r, "task_set": "v2"}) for r in rows) + "\n")
+    with pytest.raises(gr.ReplayError, match="shadow scoring"):
+        gr.replay(prior_dir, gate_dir)
+    with pytest.raises(gr.ReplayError, match="v2 run"):
+        gr.replay_gate_row({"run_id": "V01-s1.m", "task_id": "V01"}, STORE, BY_ID, tmp_path)
+    gr.refuse_v2([{"run_id": "T01-r01", "task_id": "T01"}, {"task_set": "v1", "task_id": "T02"}])

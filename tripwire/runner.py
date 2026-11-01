@@ -20,7 +20,7 @@ import math
 import os
 import random
 import subprocess
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
@@ -162,9 +162,19 @@ def read_spend(path: Path) -> float:
     return total
 
 
-def _append_spend(path: Path, rec: RunRecord, out_dir: Path, fallback_usd: float) -> None:
-    """Append one run's cost (ticks-based when the provider sent it) and flush it to disk."""
+def _append_spend(
+    path: Path,
+    rec: RunRecord,
+    out_dir: Path,
+    fallback_usd: float,
+    tags: Mapping[str, Any] | None = None,
+) -> None:
+    """Append one run's cost (ticks-based when the provider sent it) and flush it to disk.
+
+    ``tags`` (v2: model slot, pilot, shard) are extra keys on the row; ``read_spend`` ignores them.
+    """
     row = {
+        **(tags or {}),
         "kind": "spend",
         "run_id": rec.run_id,
         "out_dir": str(out_dir),
@@ -183,13 +193,21 @@ def _append_row(path: Path, row: Mapping[str, Any]) -> None:
 
 
 def _append_halted_spend(
-    path: Path, job: Job, out_dir: Path, paid_usd: float, paid_ticks: int, est: float, ts: str
+    path: Path,
+    job: Job,
+    out_dir: Path,
+    paid_usd: float,
+    paid_ticks: int,
+    est: float,
+    ts: str,
+    tags: Mapping[str, Any] | None = None,
 ) -> None:
     """Book a halted run: the known cost of its completed turns PLUS one run's estimate, because
     the request that halted it may have been paid (a 200 with no usage). Over-count, never under."""
     _append_row(
         path,
         {
+            **(tags or {}),
             "kind": "spend",
             "run_id": job.job_id,
             "out_dir": str(out_dir),
@@ -255,6 +273,10 @@ def run_matrix(
     spend_ledger: Path,
     ceiling_usd: float = HARD_CEILING_USD,
     extra_meta: Mapping[str, Any] | None = None,
+    hard_ceiling_usd: float = HARD_CEILING_USD,
+    estimate: Callable[[Job, Pricing], float] | None = None,
+    run_kwargs: Mapping[str, Any] | None = None,
+    spend_tags: Mapping[str, Any] | None = None,
 ) -> ExitCode:
     """Run ``jobs`` (resuming any already in the receipt); returns the exit code.
 
@@ -263,9 +285,14 @@ def run_matrix(
     can only be lowered from ``HARD_CEILING_USD``. A missing or corrupt ledger refuses the run.
     ``extra_meta`` (e.g. ``{"pilot": True, "pilot_jobs": 12}``) is written into meta.json and
     result.json so such records are never mistaken for the scored run.
+
+    The v2 study (``tripwire.live_v2``) passes its own ``hard_ceiling_usd`` and separate ledger,
+    a per-job ``estimate``, ``run_kwargs`` for ``run_one`` (task set, shadow gates) and
+    ``spend_tags`` for every spend row. The defaults are v1's, unchanged.
     """
-    if not 0 < ceiling_usd <= HARD_CEILING_USD:
-        raise RunnerRefused(f"ceiling must be in (0, {HARD_CEILING_USD}] USD, got {ceiling_usd}")
+    if not 0 < ceiling_usd <= hard_ceiling_usd:
+        raise RunnerRefused(f"ceiling must be in (0, {hard_ceiling_usd}] USD, got {ceiling_usd}")
+    est_of = estimate or _flat_estimate
     commit, digest = assert_protocol_committed(protocol, repo)
     ledger_spent = read_spend(spend_ledger)
     meta_path, receipt = out_dir / "meta.json", out_dir / "receipt.jsonl"
@@ -273,7 +300,7 @@ def run_matrix(
         raise RunnerRefused("receipt directory belongs to a different protocol version")
     done, spent = _read_receipt(receipt)
     pending = [j for j in jobs if j.job_id not in done]
-    _preflight(pending, pricing, cap_usd, spent, ledger_spent, ceiling_usd)
+    _preflight(pending, pricing, cap_usd, spent, ledger_spent, ceiling_usd, est_of)
     out_dir.mkdir(parents=True, exist_ok=True)
     now = clock().isoformat()
     session = {
@@ -309,7 +336,7 @@ def run_matrix(
         price = pricing[job.model.label]
         assert price is not None  # _preflight guarantees it
         ledger_spent = read_spend(spend_ledger)  # re-read: other sessions may have spent since
-        est = estimate_run_cost(price)
+        est = est_of(job, price)
         if spent + est > cap_usd or ledger_spent + est > ceiling_usd:
             code = ExitCode.BUDGET_HALT
             break
@@ -326,16 +353,18 @@ def run_matrix(
                 clock=clock,
                 pricing=price,
                 ledger_path=out_dir / "ledgers" / f"{job.job_id}.jsonl",
+                **(run_kwargs or {}),
             )
         except QuotaExhausted as exc:
             # nothing reaches the receipt, but the money already spent must reach the ledger
             _append_halted_spend(
-                spend_ledger, job, out_dir, exc.paid_usd, exc.paid_ticks, est, clock().isoformat()
-            )
+                spend_ledger, job, out_dir, exc.paid_usd, exc.paid_ticks, est,
+                clock().isoformat(), spend_tags,
+            )  # fmt: skip
             spent += exc.paid_usd + est
             code = ExitCode.QUOTA_HALT
             break
-        _append_spend(spend_ledger, rec, out_dir, est)  # first: an over-count beats an under-count
+        _append_spend(spend_ledger, rec, out_dir, est, spend_tags)  # first: over-count beats under
         with receipt.open("a") as fh:
             fh.write(rec.to_json() + "\n")
         spent += rec.cost_usd or 0.0
@@ -376,6 +405,11 @@ def _supersede_ledger(ledgers: Path, job_id: str) -> None:
             p.rename(parked / p.name.replace(job_id, f"{job_id}.{n}", 1))
 
 
+def _flat_estimate(_job: Job, price: Pricing) -> float:
+    """v1's estimate: the same planning profile for every job."""
+    return estimate_run_cost(price)
+
+
 def _preflight(
     jobs: Sequence[Job],
     pricing: Mapping[str, Pricing | None],
@@ -383,7 +417,9 @@ def _preflight(
     spent: float,
     ledger_spent: float,
     ceiling_usd: float,
+    est_of: Callable[[Job, Pricing], float] | None = None,
 ) -> None:
+    est_of = est_of or _flat_estimate
     if not cap_usd > 0:
         raise RunnerRefused("a positive budget cap is required")
     total = spent
@@ -394,8 +430,8 @@ def _preflight(
             raise RunnerRefused(f"model or pricing UNRESOLVED for {job.model.label!r}")
         if job.condition is Condition.GATE and job.path is ExecPath.SERVER_SIDE:
             raise RunnerRefused("the gate cannot run on the server-side path")
-        total += estimate_run_cost(price)
-        projected += estimate_run_cost(price)
+        total += est_of(job, price)
+        projected += est_of(job, price)
     if ledger_spent + projected > ceiling_usd:
         raise RunnerRefused(
             f"spent {ledger_spent:.2f} + projected {projected:.2f} USD exceeds the "

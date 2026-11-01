@@ -165,10 +165,18 @@ def _clean_gate(store: Store, task: tk.Task, tool_calls: Sequence[str]) -> Gate:
     return gate
 
 
+def refuse_v2(rows: Iterable[Mapping[str, Any]]) -> None:
+    """v2 runs are scored by their shadow gates (preregistration v2), never replayed here."""
+    for row in rows:
+        if row.get("task_set", "v1") != "v1" or str(row.get("task_id", "")).startswith("V"):
+            raise ReplayError(f"{row.get('run_id')}: a v2 run; v2 uses shadow scoring, not replay")
+
+
 def replay_gate_row(
     row: dict[str, Any], store: Store, tasks_by_id: Mapping[str, tk.Task], ledger_dir: Path
 ) -> dict[str, Any]:
     """One replayed gate receipt row. Non-gate or excluded rows are returned unchanged."""
+    refuse_v2([row])
     if row["condition"] != GATE or row["exclusion"] is not None:
         return row
     run_id, task = row["run_id"], tasks_by_id[row["task_id"]]
@@ -242,6 +250,7 @@ def replay(
     ledger_dir = gate_dir / "ledgers"
     prior_rows, prior_src = load_records([prior_dir])
     gate_rows, gate_src = load_records([gate_dir])
+    refuse_v2([*prior_rows, *gate_rows])
     gate_slots = {slot(r["run_id"]) for r in gate_rows if r["condition"] == GATE}
     keep = _fold_tasks(tasks, fold)
     comparator = [r for r in _filter_to_slots(prior_rows, gate_slots) if r["task_id"] in keep]

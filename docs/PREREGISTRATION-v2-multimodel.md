@@ -158,6 +158,9 @@ be asked.
 - **Pilots.** 20 jobs per new model (M2-M4), stratified, own directory, never scored. Their only
   use is to confirm the client works and to replace the token estimate below. A pilot that shows
   per-run cost above 1.5x the estimate stops the study for an owner decision, before any scored run.
+  "The estimate" is the planning token profile at list price with no output margin
+  (`tripwire.live_v2.check_pilot`). A pilot between the cap's margin and 1.5x passes this check,
+  and the runner then halts the scored run at the cap (`BUDGET_HALT`), also an owner decision.
 
 Matrix per model: 480 slots x 2 live arms = **960 runs**. Total scored: **3,840 runs**, plus
 60 pilot runs and 24 bridge runs.
@@ -239,10 +242,16 @@ assumes 1.5x output on every row and no cache discount.
 | --- | ---: | ---: | --- |
 | M1 grok-4.7 | $75 | $87 | measured v1 cost suggests about $45 |
 | M2 claude-sonnet-5-5 | $91 | $110 | caching needs explicit cache_control in the client |
-| M3 gemini-3.8-flash | $34 | $41 | 2026 rate; about double from 2027-01-01 |
-| M4 gpt-oss-120b | $6 | $7 | |
+| M3 gemini-3.8-flash | $34 | $42 | 2026 rate; about double from 2027-01-01 |
+| M4 gpt-oss-120b | $6 | $8 | |
 | pilots (60) + bridge (24) | about $6 | about $8 | |
-| **total** | **about $212** | **about $253** | expected with grok-like caching: about $140-170 |
+| **total** | **about $212** | **about $255** | expected with grok-like caching: about $140-170 |
+
+Pre-freeze correction (2026-11-01, while building the driver): the M3 and M4 caps were first
+written as $41 and $7, rounded down. The driver's own estimate at this profile is $41.18 and $7.37,
+so it would have refused both rows before a single run. They are now $42 and $8, rounded up; the
+ceiling is unchanged. `tripwire.live_v2.BUCKET_CAPS` holds these numbers and the pilot and bridge
+estimate (about $6.63 at the cap's margin) sits inside its $8.
 
 **Owner decision recorded: full, $260 ceiling, staged.** v1's ceiling is $50 with $5.97 left;
 v2 has its own. The options that were weighed:
