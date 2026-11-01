@@ -190,6 +190,15 @@ C1; C2-C5 are per-model at 0.05 and reported without a cross-model claim unless 
 | C5 | negative control: prompt_fix+gate-crosscheck minus prompt_fix on the gate-blind class | expected within +/-5 points; a lift outside that band is reported as a construct problem to investigate, not as a gate win |
 | C6 | clean false-flag rate, prompt_fix+gate-crosscheck vs prompt_fix | gate <= prompt_fix on each model, and gate's upper CI bound <= 5% |
 
+Pre-freeze clarification (2026-11-01, written with `tripwire/report_v2.py`, owner to confirm or
+change before freeze): C6's upper bound is the larger of the bootstrap upper bound and the exact
+one-sided binomial bound. With no false flag the bootstrap interval collapses to [0, 0], which
+would make the 5% rule free; the exact bound is about 3.7% at 0 of 80 (the Power section's
+figure) and about 5.8% at 1 of 80. So, as written, C6 passes only with zero strict false flags in
+the 80 clean gated runs, and a clean run excluded for any reason counts as a flag. C1's Holm step
+uses two-sided bootstrap p-values over the fixed family of four models; a model with no records
+stays in the family at p = 1.
+
 **Headline verdict per model:** GATE GENERALISES if C1 and C6 pass; DOES NOT GENERALISE if
 either fails; INCONCLUSIVE if fewer than 960 records were recorded for the model or a halt cut
 its run short. The study headline names how many of the four models pass.

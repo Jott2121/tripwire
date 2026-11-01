@@ -52,7 +52,7 @@ A task is not done until lint + tests pass locally (or in the cloud agent VM) an
 ```
 tripwire/            package: standards, store, server (tool server), faults (F1-F10), ledger,
                      adjudicator, tasks, tasks_v2, harness, runner, gate, xai, clients,
-                     live_eval, live_v2, report
+                     live_eval, live_v2, report, report_v2
 docs/                PREREGISTRATION.md, amendments/ (A1-A4), results/, STATUS.md, DATA.md,
                      MEASUREMENT_STANDARDS.md
 tasks/               tasks_v1.json (40 tasks) and tasks_v2.json (80 tasks, 480 slots); generated, drift-tested
