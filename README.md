@@ -24,6 +24,14 @@ tool result before the agent may act on it. Method ported from
 > **Caveats:** small n (3 runs per fault per condition), the base tasks are the ones used in
 > development with new fault draws, and one model (grok-4.7). Total spend to date: **$44.03 of the
 > $50 cap**.
+>
+> **Read the 100% as a property of the gate, not of the model.** The gate's F1/F3 check compares
+> served values with the same trusted store the tools read, so it blocks every fired fault whatever
+> the agent does. An offline note with scripted agents and zero spend shows the gate column comes
+> out at 100% for an always-right, an always-wrong and two always-refusing agent alike
+> ([note](docs/results/gate-determined-NOTE.md)). What the holdout measured about grok-4.7 is the
+> plain and prompted columns. The multi-model v2 run was shelved for this reason
+> ([decision](docs/PREREGISTRATION-v2-multimodel.md)).
 
 ## See it in one run
 
@@ -285,7 +293,10 @@ and that the protocol is committed, before any request. Tests never make live ca
   Nothing here is shown to generalise to other models.
 - **Same base tasks.** The holdout drew new faults and slots, but on the committed 40-task set used
   during development.
-- **Untested hypotheses.** H1 and H4 cannot be confirmed by interval at this size, and H3 (effort)
+- **H1 was refuted.** H1 said an ungated agent gets silent writes (F4) right under 10% of the time.
+  The baseline got F4 right 80% [61-95] of the time on 20 runs and 3 of 3 in the holdout.
+- **The gate's catch rate is set by its design.** See the offline note linked in the headline.
+- **Untested hypotheses.** H4 cannot be confirmed by interval at this size, and H3 (effort)
   and H5 (server-side vs client-side path) were not tested: there is one effort row and no
   server-side runs. The gate cannot be applied on the server-side path by design, since xAI runs
   the tools there.

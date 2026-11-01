@@ -1,10 +1,82 @@
-# Tripwire v2 preregistration: multi-model, multi-fault (DRAFT)
+# Tripwire v2 preregistration: multi-model, multi-fault (DRAFT, SHELVED)
 
-**Status: DRAFT, not approved, not frozen.** Written 2026-11-01, before any v2 run and before any
-v2 code exists. No paid call has been made for v2. Nothing here may be run until the owner
-has approved the owner decisions (recorded below) and this file's status line is changed to
-`FROZEN <date>` in a reviewed PR. After that, changes go only in the deviations log at the end.
-The v1 protocol (`docs/PREREGISTRATION.md`) and amendments A1-A4 are unchanged by this file.
+**Status: DRAFT, not approved, not frozen, shelved 2026-11-01: stage one was NOT run.** Written
+2026-11-01, before any v2 run. No paid call has been made for v2. The owner decided on 2026-11-01
+to spend nothing on this design (next section). It is kept as the record of what was planned and
+why it was not run; nothing below may run unless a later reviewed PR revives it and sets the
+status line to `FROZEN <date>`. The v1 protocol (`docs/PREREGISTRATION.md`) and amendments A1-A4
+are unchanged by this file. The follow-on study is
+[`PREREGISTRATION-phase2-real-data.md`](PREREGISTRATION-phase2-real-data.md).
+
+## Decision 2026-11-01: stage one not run, phase two becomes the main study
+
+After the owner approved the staged design below, an independent code review and a prior-art
+search, then a second outside review, all advised spending nothing on it yet. The owner agreed the
+same day. The reasons, each checked against the code or the cited page:
+
+1. **The headline tests are decided by the code, not by a run.** The cross-check gate compares
+   served values with the same clean store the tools read, so it blocks every fired F1, F3, F7 and
+   F8 whatever the agent does, and the contract-only gate adds nothing on them. C1, C4 and most of
+   C6 follow from that. The offline note
+   [`docs/results/gate-determined-NOTE.md`](results/gate-determined-NOTE.md) shows it with four
+   scripted agents through the real harness (zero spend): the cross-check column is 100% on every
+   catchable fault for all four, and the contract-only column equals the agent's own rate on value
+   faults.
+2. **The faults are gate-classifiable by design.** The gate imports the decimal-slip factors and
+   names F7 by finding another record's value, so it names exactly the planted code. An agent
+   without the store cannot tell F3 from F7 from F8, so strict scoring by exact code asks for a
+   distinction only the oracle can make.
+3. **The clean-run downgrade uses the oracle.** It rewrites an agent's value-code refusal on clean
+   data as `ok`, which removes some false alarms by construction (the note measures it: a value-code
+   refusal on clean data drops from 100% to 25% under the gate; a stale-revision refusal stays at
+   100%).
+4. **Blanket flagging is rewarded.** A refusal naming extra codes still scores correct, so an agent
+   that refuses everything naming all four value codes scores 100% on value faults ungated.
+5. **The gate never feeds the agent counterevidence.** It only replaces the final answer, so it
+   cannot test whether agents use a verification result when they get one.
+6. **What a paid run would still measure is already published.** Only ungated behaviour per model
+   and fault, plus what the warning prompt costs. That is covered across 6 to 10 models by the
+   work under Prior work below.
+7. **The cost estimate was low.** Stage one's scored runs are about $81 at list price with no
+   cache (M1 $75.26, M4 $6.22 from `live_v2.condition_estimate` at the planning profile), before
+   the pilot and the bridge; the "about $50" figure assumed v1's prompt-cache savings would carry
+   over.
+8. **v1's H1 was refuted, not untested.** H1 said an ungated agent gets silent writes right under
+   10% of the time. Baseline F4 was 80% [61-95] correct on 20 runs (`reports/gate_240_mixed.md`)
+   and 3 of 3 in the holdout. The README now says so.
+
+What stays: the zero-spend harness built for this design (provider clients, shadow gates,
+F7-F10, the v2 task set, the spend-capped sharded driver `tripwire/live_v2.py`, the report
+`tripwire/report_v2.py`, and the proposed workflow) is reusable by phase two. The gates are kept
+as a **deterministic reference**, reported beside agent results but never as an empirical finding
+about a model.
+
+## Prior work
+
+Found by a prior-art search on 2026-11-01. The first three were re-read on their arXiv pages the
+same day; the rest are listed as found and must be re-read before any claim relies on them.
+
+- *Loud Failures, Quiet Failures: Fault Detection and Recovery in Tool-Using Language Model
+  Agents* (arXiv 2610.10062, Oct 2026): six models, 1,920 trials over 24 tasks; a "check each
+  result" prompt line did not change detection.
+- *RITE: Evaluating End-to-End Resilience to Silent Tool Errors in E-Commerce Agentic Systems*
+  (arXiv 2610.27777, Oct 2026): 10 models; silent errors roughly halve task success.
+- *Reason Less, Verify More: Deterministic Gates Recover a Silent Policy-Violation Failure Mode in
+  Tool-Using LLM Agents* (arXiv 2607.07405): deterministic pre-execution gates on the tau2-bench
+  airline domain, about +12 points, replicated on a disjoint seed set. It checks planned writes
+  against policy, not served values.
+- Found, not re-read: AgentCheck (an MCP fault proxy, 12 fault types), AgentProp-Bench
+  (wrong-parameter injection, 9 models), TrueCall (deterministic write read-back on tau2-bench,
+  not a paper), SSCBench (planted-fault results as weak evidence when counterevidence arrives
+  late). Aviation work found was knowledge Q&A, not agents over faulty FAA data.
+
+What still looked open after the search: agents over real FAA records, with errors nobody
+planted, scored without a judge model. That is phase two.
+
+## Original plan (2026-11-01, not run)
+
+Everything below is the design as approved before the decision above. It is unchanged except for
+this heading, so the record shows what was planned.
 
 ## Owner decisions (recorded 2026-11-01)
 
@@ -305,7 +377,12 @@ separate ledger (`runs/spend_ledger_v2.jsonl`), never a raise of v1's $50.
 
 Expected size: roughly seven PRs under the repo's ~400-line limit, each with tests and zero spend.
 
-## Phase two (follow-on, NOT part of this preregistration)
+## Phase two (moved)
+
+Phase two now has its own draft, [`PREREGISTRATION-phase2-real-data.md`](PREREGISTRATION-phase2-real-data.md),
+which replaces the scope sketch kept below.
+
+### Original phase two sketch (2026-11-01)
 
 **Status: planned scope only, added 2026-11-01 at the owner's request. Nothing above changes.**
 Phase two starts only after phase one's results are committed. It gets its own preregistration,
