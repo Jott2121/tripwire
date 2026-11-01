@@ -1,0 +1,91 @@
+{
+  "acftref": {
+    "header": [
+      "CODE",
+      "MFR",
+      "MODEL",
+      "TYPE-ACFT",
+      "TYPE-ENG",
+      "AC-CAT",
+      "BUILD-CERT-IND",
+      "NO-ENG",
+      "NO-SEATS",
+      "AC-WEIGHT",
+      "SPEED",
+      "TC-DATA-SHEET",
+      "TC-DATA-HOLDER",
+      ""
+    ],
+    "reject_kinds": {
+      "code is not 7 characters": 1
+    },
+    "rejects": 1,
+    "rows": 94161
+  },
+  "master": {
+    "duplicate_n_numbers": 0,
+    "header": [
+      "N-NUMBER",
+      "SERIAL NUMBER",
+      "MFR MDL CODE",
+      "ENG MFR MDL",
+      "YEAR MFR",
+      "TYPE REGISTRANT",
+      "NAME",
+      "STREET",
+      "STREET2",
+      "CITY",
+      "STATE",
+      "ZIP CODE",
+      "REGION",
+      "COUNTY",
+      "COUNTRY",
+      "LAST ACTION DATE",
+      "CERT ISSUE DATE",
+      "CERTIFICATION",
+      "TYPE AIRCRAFT",
+      "TYPE ENGINE",
+      "STATUS CODE",
+      "MODE S CODE",
+      "FRACT OWNER",
+      "AIR WORTH DATE",
+      "OTHER NAMES(1)",
+      "OTHER NAMES(2)",
+      "OTHER NAMES(3)",
+      "OTHER NAMES(4)",
+      "OTHER NAMES(5)",
+      "EXPIRATION DATE",
+      "UNIQUE ID",
+      "KIT MFR",
+      " KIT MODEL",
+      "MODE S CODE HEX",
+      ""
+    ],
+    "reject_kinds": {},
+    "rejects": 0,
+    "rows": 318181
+  },
+  "mining": {
+    "counts": {
+      "D1": 0,
+      "M1": 10571,
+      "S1": 1700,
+      "T1": 17,
+      "controls": 71916,
+      "skip:no_n_number": 294,
+      "skip:not_in_registry": 494,
+      "skip:registered_after_report": 466
+    },
+    "fingerprint": "a764b86450405a3704caa2dbd9084a79ec1e68af73259d40c45ed6ab773db92b",
+    "version": "mine-v0"
+  },
+  "sdr": {
+    "files": [
+      "SDR-2026.csv"
+    ],
+    "found_in_registry": 49072,
+    "rejects": 0,
+    "rows": 49860,
+    "with_n_number": 49566
+  }
+}
