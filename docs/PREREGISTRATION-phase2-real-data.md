@@ -216,8 +216,22 @@ So **about $20 to $60** for two models; the cap is set at freeze.
    tasks per rule and field, distinct aircraft, item-list sha256, input sha256s) and is
    committed. `data/phase2/items.json` holds the real tasks and stays local (gitignored). The
    script calls no model.
-4. Copy the freeze record's fingerprint, salt and item-list sha256 here, record the owner
-   decisions below, and set the status line to `FROZEN <date>` in a reviewed PR.
+   Done 2026-11-01 (owner, commit a7a2032). The record, `reports/phase2_freeze.json`:
+
+   | what | value |
+   | --- | --- |
+   | rules | `mine-v2`, fingerprint `425815509a8e94387d6256f1e9f1f30f5286b383a616f2c727d2c5d0b091d989` |
+   | salt and sizes | `tripwire-phase2-plan-2026-11-01`, 100 settled, 100 controls, bar 60 aircraft |
+   | settled | 100 tasks from 100 aircraft: S1 86, T1 14 |
+   | controls | 100 tasks from 100 aircraft: serial 86, total time 14 |
+   | item-list sha256 | `c1d2a8eea5c62650d14f46ce5204c0cd5da9682708f4fc56281fbf4b08182d54` |
+   | MASTER.txt sha256 | `2dcb13d2b3373ab8b7a89751149db9a687d7d176643e0b0007a1eda53ff2675e` |
+   | ACFTREF.txt sha256 | `beb27403b03fcba4024bcd752d79ab94c899f59cae34beda360d8ebb4658f03d` |
+   | SDR-2026.csv sha256 | `2976b83e7c54467909fa784de6e91edf9c501d23cf21277afdd093152c064fd4` |
+
+   The draw matches the plan exactly. These values are fixed: a run whose item list or inputs
+   hash differently is not this study.
+4. Record the owner decisions below, and set the status line to `FROZEN <date>` in a reviewed PR.
 
 ## Owner decisions (open)
 
