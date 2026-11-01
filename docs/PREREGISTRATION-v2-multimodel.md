@@ -294,9 +294,9 @@ transfers, not whether it can be refitted.
 **Rough size and cost (planning only).** Two models: the one phase one shows benefiting most from
 the gate, and the cheapest model that passes C1. Same two live arms plus the shadow gates; 240
 planted slots (new tasks on the second source) and about 100 mined items per model. That is about
-680 runs per model and 1,360 in all. At the phase-one token profile, the cost is about $25 to $65
+680 runs per model and 1,360 in all. At the phase-one token profile, the cost is about $30 to $65
 per model for the frontier rows (grok-4.7 measured, Sonnet 5.5 at list price) and under $5 for
-gpt-oss-120b, so **about $30 to $130 total** depending on which two rows phase one picks. The cap
+gpt-oss-120b, so **about $35 to $130 total** depending on which two rows phase one picks. The cap
 is set in the phase-two preregistration. Non-spend work: a loader and profiler for the new source
 (like `scripts/profile_sdr.py`), contract types and a store for it, task templates, the mining
 rules with tests, and the gate's new contract checks. That is roughly four to five PRs.
