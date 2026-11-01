@@ -65,3 +65,21 @@ free text are unverified. Therefore:
   `SubmitterTypeCode` set, two-letter `StageOfOperationCode`) and its
   control-number shape (fictional designator `TWSY` + `YYYYMMDD` + 4-digit
   sequence), with whole-number totals and `N`-less registration marks.
+
+# Data: FAA aircraft registry (phase two)
+
+Phase two (`docs/PREREGISTRATION-phase2-real-data.md`) joins SDRs to the FAA's releasable
+aircraft database by N-number.
+
+- Download: https://registry.faa.gov/database/ReleasableAircraft.zip (comma-delimited text
+  files). Fetch with `python scripts/fetch_registry.py`; it extracts only `MASTER.txt` and
+  `ACFTREF.txt` to `data/raw/registry/` (gitignored) and writes `data/manifest/registry.json`.
+- Layout: https://registry.faa.gov/database/ardata.pdf. `tripwire/registry.py` maps columns by
+  name and accepts both that document's field names and the text files' short headers; a header
+  matching neither fails closed. The header of the current download is confirmed by
+  `scripts/profile_registry.py` (counts only, safe to commit).
+- **Personal data.** The master file carries registrants' names and street addresses. The loader
+  never reads those columns, and its record type has no field for them. Nothing from the master
+  file but counts is ever committed.
+- The FAA hosts are not reachable from the build container, so fetching and profiling are owner
+  steps on a local machine.

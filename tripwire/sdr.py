@@ -140,6 +140,9 @@ class SDRRecord:
     part_condition: str
     crack_length_in: float | None
     discrepancy: str
+    # Phase two joins an SDR to the aircraft registry by these; optional columns, "" when absent.
+    registry_n_number: str = ""
+    aircraft_serial_number: str = ""
 
 
 @dataclass(frozen=True)
@@ -197,7 +200,11 @@ def _parse_row(row: list[str], index: dict[str, int]) -> SDRRecord:
         part_condition=col("PartCondition"),
         crack_length_in=_opt_float(col("CrackLength")),
         discrepancy=col("Discrepancy"),
-    )
+        registry_n_number=row[index["RegistryNNumber"]].strip() if "RegistryNNumber" in index
+        else "",
+        aircraft_serial_number=row[index["AircraftSerialNumber"]].strip()
+        if "AircraftSerialNumber" in index else "",
+    )  # fmt: skip
 
 
 def load_sdr_csv(path: str | Path) -> LoadResult:
