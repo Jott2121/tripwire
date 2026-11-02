@@ -129,6 +129,8 @@ def test_pilot_then_scored_then_report(study, monkeypatch, capsys):
     muse = rep["models"]["muse-spark-open"]
     assert muse["conditions"]["baseline"]["runs"] == study["rec"]["tasks"]
     assert muse["rules_as_gate"]["balanced_accuracy"] == 1.0
+    gate = muse["rules_as_gate"]  # each task once, not once per condition
+    assert gate["mined"]["n"] + gate["controls"]["n"] == study["rec"]["tasks"]
     want = 1000 * 1.25 / 1e6 + 100 * 4.25 / 1e6
     assert rep["spend_usd"] == pytest.approx(want * (2 + 2 * study["rec"]["tasks"]), abs=1e-3)
     assert "X" not in json.dumps(muse["conditions"]["baseline"]["summary"])

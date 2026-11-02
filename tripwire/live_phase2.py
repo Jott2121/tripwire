@@ -301,7 +301,10 @@ def report(runs_dir: Path) -> dict[str, Any]:
                 "tokens": {"input": sum(r.input_tokens for r in rs),
                            "output": sum(r.output_tokens for r in rs)},
             }  # fmt: skip
-        ref = [phase2.Score(**r.reference) for r in recs if r.reference is not None]
+        # the reference is a property of the item, not the run: count each task once, not once
+        # per condition (both conditions carry the same reference score)
+        first = {r.task_id: r for r in reversed(recs) if r.reference is not None}
+        ref = [phase2.Score(**r.reference) for r in first.values()]
         out["models"][label] = {
             "conditions": per,
             "rules_as_gate": phase2.summarize(ref),
