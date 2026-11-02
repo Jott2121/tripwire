@@ -174,7 +174,8 @@ Full method, hypotheses and design decisions: [WRITEUP.md](WRITEUP.md).
 
 ## Results
 
-Three result sets, in order of strength. Only the first is both pre-registered and about the gate.
+Three result sets on planted faults, in order of strength (only the first is both pre-registered
+and about the gate), then phase two on real records.
 
 ### Confirmed: the gate on a pre-registered holdout (A4)
 
@@ -251,6 +252,22 @@ Small n (48 faulted, 12 clean runs per condition, same slots); 95% task-cluster 
 
 The CIs overlap, which is why the holdout above, with its criteria fixed in advance, is the result
 to cite.
+
+### Phase two: agents on real FAA records (pre-registered, 2026-11-02)
+
+200 questions from real FAA Service Difficulty Reports, where the report and the aircraft registry
+either disagree (100, errors nobody planted) or agree (100 controls). Balanced accuracy, 95% CI:
+
+| model | baseline | "check your data" prompt | false alarms with the prompt |
+| --- | --- | --- | ---: |
+| grok-4.7 | 0.505 (0.49 to 0.525) | **0.81** (0.75 to 0.865) | 21% |
+| Muse Spark Open | 0.50 (0.50 to 0.50) | 0.515 (0.50 to 0.535) | 0% |
+
+Both models flagged the disagreement on 97 to 99% of mismatches at baseline and answered from the
+report anyway. The prompt made grok-4.7 act on it, at one false alarm in five clean records; it did
+not move Muse Spark Open. 800 runs, $7.86 of a separate $65 cap.
+[Write-up](docs/results/phase2-real-data.md), [numbers](reports/phase2_results.json),
+[preregistration](docs/PREREGISTRATION-phase2-real-data.md).
 
 ### Spend across all runs
 

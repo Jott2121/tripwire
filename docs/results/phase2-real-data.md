@@ -1,8 +1,5 @@
 # Phase two results: agents on real FAA records, real disagreements
 
-**Status: DRAFT 2026-11-02.** The numbers are from the owner's report run; the committed
-`reports/phase2_results.json` and a check of served models and registry reads are still to come.
-
 Preregistration: [`PREREGISTRATION-phase2-real-data.md`](../PREREGISTRATION-phase2-real-data.md),
 frozen 2026-11-01 before any run. Numbers: [`reports/phase2_results.json`](../../reports/phase2_results.json),
 written by `python -m tripwire.live_phase2 report`. Runs made on the owner's machine on 2026-11-02.
@@ -22,7 +19,10 @@ number. The question names only the report.
 Two models, `grok-4.7` (xAI) and Muse Spark Open (open weights, served by Together through
 OpenRouter), each in two conditions: **baseline** and **prompt_fix** (the "check your data"
 instruction). One run per item per condition: 400 runs per model, 800 in all. Every run finished:
-no client errors, no run hit the turn cap, no reply was unparseable.
+no client errors, no run hit the turn cap, no reply was unparseable. Every one of the 800 runs
+called the registry tool, about three model turns per run, and every turn was answered by the
+requested model (`grok-4.7`; `meta/muse-spark-open`). OpenRouter's reply names the model, not the
+server; the Together pin with fallbacks off is what keeps Muse on Together.
 
 The primary metric is **balanced accuracy**, the mean of the mined and control correct rates, so
 flagging everything scores 0.5, not 1.0. 95% CIs are item bootstraps.
@@ -40,8 +40,9 @@ By rule, mined correct: grok-4.7 S1 2% and T1 0% at baseline, S1 83% and T1 93% 
 Muse Spark Open S1 0% and T1 0% at baseline, S1 1% and T1 14% with the prompt (T1 is 14 items).
 
 **Q1: do agents report the disagreement instead of answering from one source?** At baseline,
-almost never. But both models *noticed* it almost every time: they set the disagreement flag on
-97% (grok-4.7) and 99% (Muse Spark Open) of mined items, then answered
+almost never. But both models *noticed* it almost every time: every run read the registry, and
+they set the disagreement flag on 97% (grok-4.7) and 99% (Muse Spark Open) of mined items, then
+answered
 `ok` with the report's value anyway (88% and 85% of mined items answered from the report). The
 gap is between noticing and acting, not between looking and not looking.
 
