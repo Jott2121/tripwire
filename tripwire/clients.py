@@ -9,8 +9,8 @@ stage 2 need beyond xAI:
   ``openai/gpt-oss-120b`` on Together (stage 1).
 * :class:`AnthropicClient`: the Claude Messages API, used for ``claude-sonnet-5-5`` (stage 2).
 
-Phase two (:data:`PHASE2_MODELS`) reuses them: grok-4.7 on xAI and
-``meta-models/Muse-Spark-Open-816B-A42B`` on Together through :class:`ChatCompletionsClient`.
+Phase two (:data:`PHASE2_MODELS`) reuses them: grok-4.7 on xAI and ``meta/muse-spark-open``
+through OpenRouter, pinned to Together's endpoint, with :class:`ChatCompletionsClient`.
 
 The Gemini row is priced and registered but has no client yet: :func:`make_client` refuses it
 until its wire format is confirmed from Google's own docs (stage 2, before 2026-12-31).
@@ -109,6 +109,16 @@ class _Keyed:
 # usage has prompt_tokens / completion_tokens and no cached-token field; finish_reason is one of
 # stop, eos, length, tool_calls, function_call.
 TOGETHER_URL = "https://api.together.ai/v1/chat/completions"
+# OpenRouter speaks the same format (https://openrouter.ai/docs/faq: it implements the OpenAI
+# spec for /chat/completions). Its ``provider`` request field routes the call
+# (https://openrouter.ai/docs/features/provider-routing, retrieved 2026-11-02): ``order`` lists
+# provider slugs, ``allow_fallbacks: false`` makes the call fail rather than move to another
+# provider, ``require_parameters: true`` skips any provider that does not support every parameter
+# sent (tools included). The pin keeps every phase two Muse run on one provider's serving.
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+OPENROUTER_PIN: Mapping[str, Any] = {
+    "order": ["together"], "allow_fallbacks": False, "require_parameters": True,
+}  # fmt: skip
 _FINAL = frozenset({"stop", "eos", "tool_calls"})
 
 
@@ -167,7 +177,8 @@ def parse_chat_completion(body: Mapping[str, Any]) -> ChatResponse:
 
 
 class ChatCompletionsClient(_Keyed):
-    """OpenAI-compatible client (Together). HTTP 402/429/529 halt the runner (resumable)."""
+    """OpenAI-compatible client (Together, or OpenRouter with ``extra`` holding its provider
+    pin). HTTP 402/429/529 halt the runner (resumable)."""
 
     def __init__(
         self,
@@ -175,9 +186,11 @@ class ChatCompletionsClient(_Keyed):
         transport: Transport = urllib_transport,
         timeout_s: float = 600.0,
         url: str = TOGETHER_URL,
+        extra: Mapping[str, Any] | None = None,
     ) -> None:
         super().__init__(api_key, transport, timeout_s)
         self._url = url
+        self._extra = dict(extra or {})
 
     def chat(self, request: ChatRequest) -> ChatResponse:
         if request.remote_mcp is not None:
@@ -187,6 +200,7 @@ class ChatCompletionsClient(_Keyed):
             "messages": _cc_messages(request.messages),
             "tools": [dict(t) for t in request.tools],
             "max_tokens": MAX_OUTPUT_TOKENS,
+            **self._extra,
         }
         if request.effort is not None:
             body["reasoning_effort"] = request.effort
@@ -338,7 +352,7 @@ class ModelRow:
 
     slot: str
     stage: int
-    provider: str  # xai | together | anthropic | google
+    provider: str  # xai | together | openrouter | anthropic | google
     config: ModelConfig
     pricing: Pricing
     key_env: str
@@ -370,15 +384,18 @@ def v2_row(label: str) -> ModelRow:
 # (https://docs.together.ai/docs/serverless/models, retrieved 2026-11-01). No effort setting is
 # sent for it (none is confirmed for this model), so the provider's default is used. Both wire
 # formats are confirmed live in the pilot before any scored run, as in v2.
+# Deviation 1 (2026-11-02, owner's choice): the owner's card was declined at Together, so Muse
+# runs through OpenRouter as "meta/muse-spark-open", pinned to Together (OPENROUTER_PIN). Same
+# rate on OpenRouter's model page (https://openrouter.ai/meta/muse-spark-open, retrieved
+# 2026-11-02): $1.25 input / $4.25 output per 1M, for Together and every other listed provider.
 MUSE_SPARK_OPEN_PRICING = Pricing(
-    1.25, 4.25, "https://docs.together.ai/docs/serverless/models (retrieved 2026-11-01)"
+    1.25, 4.25, "https://openrouter.ai/meta/muse-spark-open (retrieved 2026-11-02)"
 )
 PHASE2_MODELS: tuple[ModelRow, ...] = (
     ModelRow("P1", 1, "xai", ModelConfig("grok-4.7", "grok-4.7", "medium", "frontier"),
              GROK_4_7_PRICING, "XAI_API_KEY"),
-    ModelRow("P2", 1, "together", ModelConfig("muse-spark-open",
-             "meta-models/Muse-Spark-Open-816B-A42B", None, "open-weight"),
-             MUSE_SPARK_OPEN_PRICING, "TOGETHER_API_KEY"),
+    ModelRow("P2", 1, "openrouter", ModelConfig("muse-spark-open", "meta/muse-spark-open",
+             None, "open-weight"), MUSE_SPARK_OPEN_PRICING, "OPENROUTER_API_KEY"),
 )  # fmt: skip
 
 
@@ -397,6 +414,10 @@ def make_client(
         return LiveClient(api_key, transport)
     if row.provider == "together":
         return ChatCompletionsClient(api_key, transport)
+    if row.provider == "openrouter":
+        return ChatCompletionsClient(
+            api_key, transport, url=OPENROUTER_URL, extra={"provider": OPENROUTER_PIN}
+        )
     if row.provider == "anthropic":
         return AnthropicClient(api_key, transport)
     raise LiveCallsDisabled(f"no confirmed client for provider {row.provider!r} yet")

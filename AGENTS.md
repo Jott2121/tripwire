@@ -31,7 +31,7 @@ A task is not done until lint + tests pass locally (or in the cloud agent VM) an
 5. **Tests and CI are the definition of done.** New behavior ships with a test that fails without it. Bug fixes ship with a regression test. Do not lower coverage floors or `--cov-fail-under` values. Do not mark tests `skip`/`xfail` to get green.
 6. **Model never grades its own output.** Fault adjudication is mechanical (the injection ledger vs. what the agent did). Where a judge model is unavoidable, use a different lineage from the model under test and record both.
 7. **Irreversible = human-gated.** No force-push, no history rewrite, no publishing to PyPI, no tagging releases, no posting anywhere. Open a PR; a human merges. `main` is branch-protected.
-8. **No live model calls in the default test path.** Tests use mocked or recorded clients (xAI, Together, Anthropic, and any later provider). No API key (`XAI_API_KEY`, `TOGETHER_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) is read by tests or printed; the live drivers read only the one key the run needs, from the environment.
+8. **No live model calls in the default test path.** Tests use mocked or recorded clients (xAI, Together, OpenRouter, Anthropic, and any later provider). No API key (`XAI_API_KEY`, `TOGETHER_API_KEY`, `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) is read by tests or printed; the live drivers read only the one key the run needs, from the environment.
 
 ## Code style
 - Python 3.11+; stdlib-first; every new runtime dependency needs a one-line justification in the PR.

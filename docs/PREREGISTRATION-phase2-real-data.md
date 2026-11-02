@@ -268,4 +268,16 @@ and every cost known before its scored run is allowed.
 The owner ran the draw on these terms (a7a2032), then chose the models and approved the cap and
 the freeze on 2026-11-01.
 
-## Deviations log (append-only, empty until freeze)
+## Deviations log (append-only)
+
+- **Deviation 1, 2026-11-02, route only (owner's choice, before any run).** The owner's card
+  was declined at Together, so Muse Spark Open is reached through OpenRouter (`meta/muse-spark-open`,
+  `OPENROUTER_API_KEY`) instead of Together's own API. Every call is pinned to Together's
+  endpoint on OpenRouter (`provider: {"order": ["together"], "allow_fallbacks": false,
+  "require_parameters": true}`), so the serving is the one this plan assumed, and a call fails as
+  a RUN_ERROR rather than move to another provider. OpenRouter lists the same rate, $1.25 input
+  and $4.25 output per 1M tokens (https://openrouter.ai/meta/muse-spark-open, retrieved
+  2026-11-02). The model, items, prompts, tools, scoring, the $27 Muse cap and the $65 study cap
+  are unchanged. OpenRouter's fee on buying credit is paid outside the study and is not counted
+  against the cap. Meta's own API does not serve this model (its model page lists outside hosts
+  only), so it was not an option.

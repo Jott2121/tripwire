@@ -75,7 +75,7 @@ class _Answerer:
 
 def _live(monkeypatch, client):
     monkeypatch.setattr(live_phase2.clients, "make_client", lambda row, key: client)
-    return {"TOGETHER_API_KEY": "k", "XAI_API_KEY": "k"}
+    return {"OPENROUTER_API_KEY": "k", "XAI_API_KEY": "k"}
 
 
 def _run(study, *extra, environ=None, today=None):
@@ -158,12 +158,12 @@ def test_budget_and_quota_halt_resumably(study, monkeypatch, capsys):
         ("items", "does not rebuild"),
         ("over-model-cap", "exceeds its"),
         ("zero-budget", "must be positive"),
-        ("no-key", "TOGETHER_API_KEY is not set"),
+        ("no-key", "OPENROUTER_API_KEY is not set"),
     ],
 )
 def test_refusals_spend_nothing(study, monkeypatch, capsys, change, message):
     confirm = ["--confirm", live_phase2.CONFIRM_PHRASE]
-    budget, env = "2", {"TOGETHER_API_KEY": "k"}
+    budget, env = "2", {"OPENROUTER_API_KEY": "k"}
     monkeypatch.setattr(live_phase2.clients, "make_client", lambda row, key: _Answerer())
     if change == "no-confirm":
         confirm = []

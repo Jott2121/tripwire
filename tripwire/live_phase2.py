@@ -21,7 +21,7 @@ Fail closed, in this order, before any call:
    2026-11-01). During the run, a job starts only if its planning estimate (list price, no cache,
    1.5x output) still fits the budget; otherwise the run halts, resumable.
 6. A scored run needs this model's pilot: ``PILOT_JOBS`` records, no RUN_ERROR, every cost known.
-7. Live only: the row's API key from the environment (``XAI_API_KEY`` or ``TOGETHER_API_KEY``),
+7. Live only: the row's API key from the environment (``XAI_API_KEY`` or ``OPENROUTER_API_KEY``),
    read here and nowhere else, never printed or written.
 
 Records (``RunRecord`` JSONL; answers can hold real serials) and the spend file stay under

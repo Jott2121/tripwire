@@ -89,6 +89,22 @@ def test_chat_completions_round_trip_echoes_reasoning_and_sends_tool_results():
     assert body["messages"][2] == {"role": "tool", "tool_call_id": "k1", "content": '{"ok": true}'}
 
 
+def test_openrouter_client_pins_one_provider_and_sends_no_effort():
+    served = {**CC_FINAL, "model": "meta/muse-spark-open"}
+    fake = Fake((200, served))
+    client = cl.make_client(cl.phase2_row("muse-spark-open"), "or-key", fake)
+    one = ({"role": "user", "content": "q"},)
+    resp = client.chat(ChatRequest("meta/muse-spark-open", None, one, TOOLS))
+    assert resp.served_model == "meta/muse-spark-open" and resp.content == "done"
+    url, headers, body = fake.sent[0]
+    assert url == cl.OPENROUTER_URL == "https://openrouter.ai/api/v1/chat/completions"
+    assert headers["Authorization"] == "Bearer or-key"
+    assert body["provider"] == {"order": ["together"], "allow_fallbacks": False,
+                                "require_parameters": True}  # fmt: skip
+    assert "reasoning_effort" not in body and body["tools"] == [dict(t) for t in TOOLS]
+    assert "or-key" not in repr(client)
+
+
 @pytest.mark.parametrize(
     ("change", "error"),
     [
@@ -313,7 +329,7 @@ def test_phase2_rows_are_grok_and_muse_spark_open_on_existing_clients():
     rows = {r.config.label: r for r in cl.PHASE2_MODELS}
     assert {k: (r.provider, r.config.model_id, r.config.effort) for k, r in rows.items()} == {
         "grok-4.7": ("xai", "grok-4.7", "medium"),
-        "muse-spark-open": ("together", "meta-models/Muse-Spark-Open-816B-A42B", None),
+        "muse-spark-open": ("openrouter", "meta/muse-spark-open", None),
     }
     assert all(r.config.resolved for r in rows.values())
     fake = Fake()
@@ -321,6 +337,7 @@ def test_phase2_rows_are_grok_and_muse_spark_open_on_existing_clients():
         cl.ChatCompletionsClient
     )
     assert type(cl.make_client(cl.phase2_row("grok-4.7"), "k", fake)) is xai.LiveClient
+    assert cl.phase2_row("muse-spark-open").key_env == "OPENROUTER_API_KEY"
     # list price: 1M in + 1M out = $1.25 + $4.25
     assert cl.MUSE_SPARK_OPEN_PRICING.cost(1_000_000, 1_000_000) == pytest.approx(5.50)
     with pytest.raises(KeyError):
