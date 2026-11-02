@@ -281,3 +281,10 @@ the freeze on 2026-11-01.
   are unchanged. OpenRouter's fee on buying credit is paid outside the study and is not counted
   against the cap. Meta's own API does not serve this model (its model page lists outside hosts
   only), so it was not an option.
+- **Deviation 2, 2026-11-02, a pilot attempt discarded (before any scored run).** The first live
+  Muse Spark Open pilot ran with a malformed key (pasted twice). All 20 calls failed at the first
+  request with HTTP 401, zero turns, nothing reached the model and $0 was spent; the owner's check
+  of the records showed exactly that. Those 20 records and their $0 spend rows were deleted and
+  the pilot re-run with a working key. The runner (`tripwire.live_phase2`, 8b4fd17) now halts
+  without recording when a session's first call fails before reaching the model, so a bad key
+  can no longer leave failed records behind. No item, rule, model, prompt or cap changed.
