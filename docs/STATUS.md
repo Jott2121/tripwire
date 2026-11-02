@@ -19,8 +19,8 @@ time; where they say "no live call made" or "open PR", the tables here supersede
 | M5 | Harness, runner, `docs/PREREGISTRATION.md` | **merged**, with the owner decisions of issue #25: $50 hard ceiling + spend ledger, `grok-4.7`, lean matrix | #24, #27 |
 | M6 | The gate: contract check + write read-back + fail-closed final report | **merged**. Catches F2/F4/F5/F6 by construction; extended to F1/F3 by a store cross-check in exploratory amendment A1 | #28, #45 |
 | M7 | Live eval workflow (manual trigger, budget cap) and results report with CIs | **merged**: `xai.LiveClient`, `tripwire/live_eval.py`, `python -m tripwire.report`, `--resume-from` for `RUN_ERROR` jobs. The server-side remote-MCP path is built but has never run live | #30, #32, #36 |
-| M8 | Demo: side-by-side ungated vs gated run, one-page results README, 60-second walkthrough | **done** (pending merge): results-first README, `WRITEUP.md`, `make demo` offline replay (#41, #54, #55); side-by-side run `demo-1` with transcripts (`tripwire/demo.py`, `docs/results/demo-1.md`) and `docs/WALKTHROUGH.md` | #41, this PR |
-| P2 | Phase two on real FAA records: registry loader, frozen mining rules `mine-v2`, item draw, frozen preregistration, capped live runner, owner-run results | **done** (PR #60, pending merge): 800 runs, $7.86 of $65, `reports/phase2_results.json`, `docs/results/phase2-real-data.md` | #60 |
+| M8 | Demo: side-by-side ungated vs gated run, one-page results README, 60-second walkthrough | **merged**: results-first README, `WRITEUP.md`, `make demo` offline replay (#41, #54, #55); side-by-side run `demo-1` with transcripts (`tripwire/demo.py`, `docs/results/demo-1.md`) and `docs/WALKTHROUGH.md` | #41, #54, #55, #58, #59 |
+| P2 | Phase two on real FAA records: registry loader, frozen mining rules `mine-v2`, item draw, frozen preregistration, capped live runner, owner-run results | **merged**: 800 runs, $7.86 of $65, `reports/phase2_results.json`, `docs/results/phase2-real-data.md` | #60 |
 
 ## Live runs
 
@@ -36,7 +36,7 @@ regenerates `artifacts/results_summary.json` from it).
 | gate `38285916667` | gate | 186 / 240 | `BUDGET_HALT` | pre-registered gate run, never completed; gate then changed (A1) | #43 |
 | gate-confirm-1 `38398347678` + 1b `38421505642` | gate | 60 / 60 | done (gate-confirm-1 halted at its $4 cap; 1b ran the 7 it missed) | **exploratory** (A2, A3) — `docs/results/gate-confirm-1.md` | #47–#49 |
 | holdout-1 `38434106473` | all three | 72 / 72 | done, 0 exclusions | **pre-registered** holdout (A4): **PASS** on P1–P4 — `docs/results/holdout-1.md` | #52, #53 |
-| demo-1 `41274944579` | all three, one slot (T01, F1), 3 repeats | 9 / 9 | done, 0 exclusions, $0.55 | **demo, not a result** (M8): baseline 0/3, prompt_fix 3/3, gate 3/3 — `docs/results/demo-1.md` | this PR |
+| demo-1 `41274944579` | all three, one slot (T01, F1), 3 repeats | 9 / 9 | done, 0 exclusions, $0.55 | **demo, not a result** (M8): baseline 0/3, prompt_fix 3/3, gate 3/3 — `docs/results/demo-1.md` | #58 |
 
 
 ## Done in M0
@@ -56,7 +56,9 @@ regenerates `artifacts/results_summary.json` from it).
 
 ## Next
 
-1. M8 is done once this PR merges (side-by-side run `demo-1`, `docs/WALKTHROUGH.md`).
+1. M8 and phase two are merged. Phase two's 800 runs (grok-4.7 and Muse Spark Open, run by the
+   owner on his own machine, $7.86 of a separate $65 cap) are booked in
+   `reports/phase2_results.json`, not in the v1 ledger above.
 2. Any further live run needs an owner decision: $5.97 remains under the $50 ceiling.
 3. Not tested, by design of the lean matrix: H3 (effort levels) and H5 (server-side vs
    client-side path). H1 and H4 have no verdict under the original protocol because the

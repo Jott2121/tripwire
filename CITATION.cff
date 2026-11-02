@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use Tripwire's method, code or results, please cite it as below."
+title: "Tripwire: do tool-using AI agents notice wrong engineering data, and do they act on it?"
+abstract: >-
+  Tripwire puts tool-using AI agents in front of engineering data that is wrong and scores what
+  they do mechanically, with no LLM judge. v1 plants six kinds of fault in synthetic records
+  served through an MCP tool server and measures a fail-closed gate against a "check your data"
+  prompt on a pre-registered holdout. Phase two tests agents on real FAA Service Difficulty
+  Reports that disagree with the FAA aircraft registry, under a frozen preregistration.
+type: software
+authors:
+  - family-names: Otterson
+    given-names: Jeff
+repository-code: "https://github.com/Jott2121/tripwire"
+url: "https://github.com/Jott2121/tripwire"
+license: MIT
+version: 0.0.1
+keywords:
+  - AI agents
+  - LLM evaluation
+  - tool use
+  - Model Context Protocol
+  - data integrity
+  - fail-closed
+  - preregistration
