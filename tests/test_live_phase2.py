@@ -74,7 +74,7 @@ class _Answerer:
 
 
 def _live(monkeypatch, client):
-    monkeypatch.setattr(live_phase2.clients, "make_client", lambda row, key: client)
+    monkeypatch.setattr(live_phase2.clients, "make_client", lambda row, key, transport: client)
     return {"OPENROUTER_API_KEY": "k", "XAI_API_KEY": "k"}
 
 
@@ -336,3 +336,58 @@ def test_an_error_after_a_good_run_is_recorded_as_a_run_error(study, monkeypatch
     ]
     assert len(recs) == live_phase2.PILOT_JOBS and recs[-1]["exclusion"] == "RUN_ERROR"
     capsys.readouterr()
+
+
+def _replies(*statuses):
+    sent = []
+
+    def transport(url, headers, body, t):
+        sent.append(body)
+        return statuses[len(sent) - 1], b"{}"
+
+    return transport, sent
+
+
+def test_retrying_resends_a_rate_limited_request_until_it_goes_through(capsys):
+    transport, sent = _replies(429, 529, 200)
+    waits = []
+    send = live_phase2.retrying(transport, waits=(1.0, 2.0, 3.0), sleep=waits.append)
+    assert send("u", {}, b"same", 5.0) == (200, b"{}")
+    assert sent == [b"same"] * 3 and waits == [1.0, 2.0]
+    assert "HTTP 429: waiting 1 s" in capsys.readouterr().err
+
+
+def test_retrying_gives_up_after_the_last_wait_so_the_run_halts():
+    transport, sent = _replies(429, 429, 429)
+    waits = []
+    send = live_phase2.retrying(transport, waits=(1.0, 2.0), sleep=waits.append)
+    assert send("u", {}, b"b", 5.0)[0] == 429
+    assert len(sent) == 3 and waits == [1.0, 2.0]
+    again = live_phase2.retrying(_replies(429, 429)[0], waits=(1.0,), sleep=waits.append)
+    with pytest.raises(QuotaExhausted):  # the client still halts on the status that comes through
+        clients._post(again, "u", {}, {}, 5.0)
+
+
+@pytest.mark.parametrize("status", [200, 402, 401, 500])
+def test_retrying_passes_other_statuses_straight_through(status):
+    transport, sent = _replies(status)
+    waits = []
+    send = live_phase2.retrying(transport, waits=(1.0,), sleep=waits.append)
+    assert send("u", {}, b"b", 5.0)[0] == status
+    assert len(sent) == 1 and waits == []
+
+
+def test_the_live_client_gets_the_retrying_transport(study, monkeypatch, capsys):
+    seen = {}
+
+    def make(row, key, transport):
+        seen["transport"] = transport
+        return _Answerer()
+
+    monkeypatch.setattr(live_phase2.clients, "make_client", make)
+    monkeypatch.setattr(live_phase2, "urllib_transport", _replies(429, 200)[0])
+    monkeypatch.setattr(live_phase2.time, "sleep", lambda s: None)
+    env = {"OPENROUTER_API_KEY": "k", "XAI_API_KEY": "k"}
+    assert _run(study, "--arm", "pilot", "--budget-usd", "2", "--confirm",
+                live_phase2.CONFIRM_PHRASE, environ=env) == 0  # fmt: skip
+    assert seen["transport"]("u", {}, b"b", 1.0)[0] == 200

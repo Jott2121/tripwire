@@ -27,8 +27,10 @@ Fail closed, in this order, before any call:
 Records (``RunRecord`` JSONL; answers can hold real serials) and the spend file stay under
 ``data/phase2/runs/`` (gitignored). A run with an unknown cost halts the run; a quota or rate
 refusal halts it, booking what was paid. If the session's first call fails before reaching the
-model (a bad key, say), nothing is recorded and the run halts. Re-running the same command
-resumes: jobs already recorded are skipped. ``report`` writes rates and counts only, safe to commit.
+model (a bad key, say), nothing is recorded and the run halts. A 429 or 529 is first resent
+after waits of 10 to 60 s (``retrying``, about four minutes in all) before it halts. Re-running
+the same command resumes: jobs already recorded are skipped. ``report`` writes rates and counts
+only, safe to commit.
 
 ``--dry-run`` swaps in a scripted agent (the rules-as-reference policy) and a throwaway output
 directory: no key, no network, no spend, but every file check above runs on the real files.
@@ -43,6 +45,7 @@ import os
 import re
 import sys
 import tempfile
+import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict
 from datetime import UTC, date, datetime
@@ -51,7 +54,7 @@ from typing import Any
 
 from tripwire import clients, mining, phase2, registry
 from tripwire.sdr import SDRFormatError, load_sdr_csv
-from tripwire.xai import LiveCallsDisabled, QuotaExhausted, XaiClient
+from tripwire.xai import LiveCallsDisabled, QuotaExhausted, Transport, XaiClient, urllib_transport
 
 CONFIRM_PHRASE = "I-APPROVE-LIVE-SPEND"
 PROTOCOL = Path("docs/PREREGISTRATION-phase2-real-data.md")
@@ -69,6 +72,8 @@ ARMS = ("pilot", "scored")
 CONDITIONS = (phase2.Condition.BASELINE, phase2.Condition.PROMPT_FIX)
 PILOT_JOBS = 20  # 10 per condition, to confirm the wire before any scored run
 OUTPUT_MARGIN = 1.5
+RETRY_STATUSES = frozenset({429, 529})  # rate limited or overloaded: refused, so not billed
+RETRY_WAITS_S = (10.0, 20.0, 40.0, 60.0, 60.0, 60.0)  # after the last, the run halts as before
 PROFILE: Mapping[phase2.Condition, tuple[int, int]] = {  # planning tokens per run (in, out)
     phase2.Condition.BASELINE: (9_400, 1_600),
     phase2.Condition.PROMPT_FIX: (45_000, 6_400),
@@ -191,6 +196,32 @@ def _record_from(d: Mapping[str, Any]) -> phase2.RunRecord:
     return phase2.RunRecord(**{**d, **fixed})
 
 
+def retrying(
+    transport: Transport,
+    waits: Sequence[float] = RETRY_WAITS_S,
+    sleep: Callable[[float], None] = time.sleep,
+) -> Transport:
+    """Resend one refused request after a wait when the provider answers 429 or 529.
+
+    A rate-limit refusal is not a model answer and is not billed, so resending the same request
+    keeps the run's conversation whole. After the last wait the status goes through unchanged and
+    the run halts, resumable, as before. Out of credit (402) is never retried. A run's recorded
+    latency includes any waits; the analysis does not use latency.
+    """
+
+    def send(url: str, headers: Mapping[str, str], body: bytes, t: float) -> tuple[int, bytes]:
+        status, raw = transport(url, headers, body, t)
+        for wait in waits:
+            if status not in RETRY_STATUSES:
+                break
+            print(f"HTTP {status}: waiting {wait:.0f} s, then resending", file=sys.stderr)
+            sleep(wait)
+            status, raw = transport(url, headers, body, t)
+        return status, raw
+
+    return send
+
+
 def execute(
     jobs: Sequence[Job],
     row: clients.ModelRow,
@@ -311,7 +342,7 @@ def run(args: argparse.Namespace, environ: Mapping[str, str] = os.environ,
             key = environ.get(row.key_env, "")
             if not key:
                 raise Refused(f"{row.key_env} is not set in this shell")
-            client = clients.make_client(row, key)
+            client = clients.make_client(row, key, retrying(urllib_transport))
 
             def client_for(_task: phase2.Task) -> XaiClient:
                 return client

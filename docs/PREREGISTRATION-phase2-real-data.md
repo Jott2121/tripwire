@@ -288,3 +288,12 @@ the freeze on 2026-11-01.
   the pilot re-run with a working key. The runner (`tripwire.live_phase2`, 8b4fd17) now halts
   without recording when a session's first call fails before reaching the model, so a bad key
   can no longer leave failed records behind. No item, rule, model, prompt or cap changed.
+- **Deviation 3, 2026-11-02, rate limits are resent before the run halts (runner only).** The
+  re-run Muse Spark Open pilot halted after 9 of its 20 runs on an HTTP 429 (rate limit), $0.077
+  spent; the 9 records are complete and kept, and the halted run's paid part is booked. A 429 or
+  529 is a refusal, not a model answer, and is not billed, so the runner (`tripwire.live_phase2`
+  `retrying`) now resends that one request after waits of 10, 20, 40, 60, 60 and 60 s, and halts
+  as before only if it is still refused. The conversation in progress is kept, so a rate limit no
+  longer restarts a run. 402 (out of credit) still halts at once. A run's recorded latency
+  includes any waits; latency is not in the analysis. No item, rule, model, prompt, scoring or
+  cap changed.
