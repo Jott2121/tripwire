@@ -26,8 +26,9 @@ Fail closed, in this order, before any call:
 
 Records (``RunRecord`` JSONL; answers can hold real serials) and the spend file stay under
 ``data/phase2/runs/`` (gitignored). A run with an unknown cost halts the run; a quota or rate
-refusal halts it, booking what was paid. Re-running the same command resumes: jobs already
-recorded are skipped. ``report`` writes rates and counts only, safe to commit.
+refusal halts it, booking what was paid. If the session's first call fails before reaching the
+model (a bad key, say), nothing is recorded and the run halts. Re-running the same command
+resumes: jobs already recorded are skipped. ``report`` writes rates and counts only, safe to commit.
 
 ``--dry-run`` swaps in a scripted agent (the rules-as-reference policy) and a throwaway output
 directory: no key, no network, no spend, but every file check above runs on the real files.
@@ -229,6 +230,14 @@ def execute(
                 book(run_id + ":halted", paid)
                 session += paid
             halted = f"quota or rate limit: {exc}"
+            break
+        if rec.exclusion and rec.turns == 0 and ran == 0:
+            # the session's first call never reached the model (a bad key, a refused route, no
+            # network): record nothing, so a fixed key re-runs the same job
+            halted = (
+                f"the first call failed before reaching the model ({rec.error}); nothing was "
+                "recorded or spent: check the key and connection, then re-run"
+            )
             break
         with out.open("a") as f:
             f.write(json.dumps(asdict(rec), sort_keys=True) + "\n")

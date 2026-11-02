@@ -13,7 +13,7 @@ import pytest
 from tests.test_registry import ACFTREF, MASTER_HEADER, master_row
 from tripwire import clients, live_phase2, mining, phase2
 from tripwire.synth import make_sdr_rows, write_sdr_csv
-from tripwire.xai import ChatResponse, QuotaExhausted
+from tripwire.xai import ChatResponse, QuotaExhausted, XaiError
 
 _FREEZE = Path(__file__).resolve().parents[1] / "scripts" / "freeze_phase2.py"
 
@@ -293,3 +293,46 @@ def _any_record():
     fields = {f.name: None for f in dataclasses.fields(phase2.RunRecord)}
     return fields | {"served_models": (), "tool_calls": (), "input_tokens": 0,
                      "output_tokens": 0, "latency_s": 0.0, "turns": 1}  # fmt: skip
+
+
+class _Refuser:
+    """A client whose every call fails at the HTTP layer, as a bad key does."""
+
+    def __init__(self):
+        self.calls = 0
+
+    def chat(self, request):
+        self.calls += 1
+        raise XaiError("HTTP 401")
+
+
+def test_a_bad_key_records_nothing_and_a_fixed_key_resumes(study, monkeypatch, capsys):
+    confirm = ["--confirm", live_phase2.CONFIRM_PHRASE]
+    bad = _Refuser()
+    env = _live(monkeypatch, bad)
+    assert _run(study, "--arm", "pilot", "--budget-usd", "2", *confirm, environ=env) == 3
+    out = json.loads(capsys.readouterr().out)
+    assert bad.calls == 1 and out["ran"] == 0 and "HTTP 401" in out["halted"]
+    pilot = study["runs"] / "muse-spark-open" / "pilot.jsonl"
+    assert not pilot.exists() and live_phase2.spent(study["runs"] / "spend.jsonl") == 0
+    env = _live(monkeypatch, _Answerer())
+    assert _run(study, "--arm", "pilot", "--budget-usd", "2", *confirm, environ=env) == 0
+    assert json.loads(capsys.readouterr().out)["ran"] == live_phase2.PILOT_JOBS
+
+
+def test_an_error_after_a_good_run_is_recorded_as_a_run_error(study, monkeypatch, capsys):
+    class _Flaky(_Answerer):
+        def chat(self, request):
+            if self.calls >= 1:
+                raise XaiError("HTTP 500")
+            return super().chat(request)
+
+    confirm = ["--confirm", live_phase2.CONFIRM_PHRASE]
+    env = _live(monkeypatch, _Flaky())
+    assert _run(study, "--arm", "pilot", "--budget-usd", "2", *confirm, environ=env) == 0
+    recs = [
+        json.loads(x)
+        for x in (study["runs"] / "muse-spark-open" / "pilot.jsonl").read_text().splitlines()
+    ]
+    assert len(recs) == live_phase2.PILOT_JOBS and recs[-1]["exclusion"] == "RUN_ERROR"
+    capsys.readouterr()
