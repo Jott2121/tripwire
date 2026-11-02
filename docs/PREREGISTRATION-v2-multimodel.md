@@ -396,7 +396,7 @@ whether the method transfers to (a) a second real source with a different struct
 errors that nobody planted.
 
 **Second source (choose one in the phase-two preregistration; public data only, no employer
-data, no proprietary manuals).**
+data, no non-public manuals).**
 - *FAA Airworthiness Directives* (first choice): applicability by make, model and serial range,
   compliance intervals in hours, cycles or calendar time, and supersession chains. That structure
   differs from a spec limit, and the supersession chains give a natural stale-revision case.
