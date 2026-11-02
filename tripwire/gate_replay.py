@@ -41,7 +41,7 @@ from typing import Any
 from tripwire import contract as c
 from tripwire import standards as s
 from tripwire import tasks as tk
-from tripwire.adjudicator import FLAG_VOCABULARY, Status, Verdict, adjudicate
+from tripwire.adjudicator import FLAG_VOCABULARY_V2, Status, Verdict, adjudicate
 from tripwire.faults import FAULT_NAMES, FaultKind
 from tripwire.gate import Gate, downgrade_clean
 from tripwire.harness import _no_verdict, _verdict_dict
@@ -165,10 +165,18 @@ def _clean_gate(store: Store, task: tk.Task, tool_calls: Sequence[str]) -> Gate:
     return gate
 
 
+def refuse_v2(rows: Iterable[Mapping[str, Any]]) -> None:
+    """v2 runs are scored by their shadow gates (preregistration v2), never replayed here."""
+    for row in rows:
+        if row.get("task_set", "v1") != "v1" or str(row.get("task_id", "")).startswith("V"):
+            raise ReplayError(f"{row.get('run_id')}: a v2 run; v2 uses shadow scoring, not replay")
+
+
 def replay_gate_row(
     row: dict[str, Any], store: Store, tasks_by_id: Mapping[str, tk.Task], ledger_dir: Path
 ) -> dict[str, Any]:
     """One replayed gate receipt row. Non-gate or excluded rows are returned unchanged."""
+    refuse_v2([row])
     if row["condition"] != GATE or row["exclusion"] is not None:
         return row
     run_id, task = row["run_id"], tasks_by_id[row["task_id"]]
@@ -190,7 +198,7 @@ def replay_gate_row(
 
     blocked = bool(old_failures) or bool(new_flags)
     if blocked:
-        flags = tuple(sorted(old_flags | new_flags, key=FLAG_VOCABULARY.index))
+        flags = tuple(sorted(old_flags | new_flags, key=FLAG_VOCABULARY_V2.index))
         verdict: Verdict | None = Verdict(Status.BLOCKED, None, None, None, flags)
     else:
         model = Verdict.from_dict(row["verdict"]) if row["verdict"] is not None else None
@@ -212,7 +220,7 @@ def replay_gate_row(
         adj_dict = asdict(adjudicate(events, head, store, task, verdict, run_id))
 
     value_detail = [{"check": "value_mismatch", "fault": _fault_of(f), "detail": "replayed"}
-                    for f in sorted(new_flags, key=FLAG_VOCABULARY.index)]  # fmt: skip
+                    for f in sorted(new_flags, key=FLAG_VOCABULARY_V2.index)]  # fmt: skip
     gate_dict.update(
         blocked=blocked,
         failures=old_failures + value_detail,
@@ -242,6 +250,7 @@ def replay(
     ledger_dir = gate_dir / "ledgers"
     prior_rows, prior_src = load_records([prior_dir])
     gate_rows, gate_src = load_records([gate_dir])
+    refuse_v2([*prior_rows, *gate_rows])
     gate_slots = {slot(r["run_id"]) for r in gate_rows if r["condition"] == GATE}
     keep = _fold_tasks(tasks, fold)
     comparator = [r for r in _filter_to_slots(prior_rows, gate_slots) if r["task_id"] in keep]

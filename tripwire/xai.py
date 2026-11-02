@@ -17,6 +17,7 @@ import urllib.error
 import urllib.request
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import date
 from enum import StrEnum
 from typing import Any, Protocol
 
@@ -81,9 +82,11 @@ class Pricing:
     """USD per million tokens, with the page it came from.
 
     A request whose prompt is ``long_context_tokens`` or more bills every token at the
-    ``long_*`` rates. ``cached_input_per_mtok`` is recorded for the docs; the planning cost
-    ignores caching, so it is an upper bound. The authoritative cost is the provider's
-    ``cost_in_usd_ticks`` when the response carries it.
+    ``long_*`` rates. :meth:`cost` prices cached reads and cache writes when the caller passes
+    their counts (both are subsets of ``input_tokens``); with none passed it is the uncached
+    upper bound used for planning. The authoritative cost is the provider's
+    ``cost_in_usd_ticks`` when the response carries it (xAI only). ``valid_until`` is the last
+    day the page says these rates hold, if it says one; the v2 runner refuses a run after it.
     """
 
     input_per_mtok: float
@@ -93,15 +96,36 @@ class Pricing:
     long_context_tokens: int | None = None
     long_input_per_mtok: float | None = None
     long_output_per_mtok: float | None = None
+    cache_write_per_mtok: float | None = None
+    valid_until: date | None = None
 
-    def cost(self, input_tokens: int, output_tokens: int) -> float:
-        """Estimated cost of one request."""
+    def in_force(self, day: date) -> bool:
+        return self.valid_until is None or day <= self.valid_until
+
+    def cost(
+        self, input_tokens: int, output_tokens: int, cached_tokens: int = 0, write_tokens: int = 0
+    ) -> float:
+        """Estimated cost of one request. ``cached_tokens``/``write_tokens`` are the parts of
+        ``input_tokens`` read from or written to the provider's prompt cache. A cached read with
+        no cached rate is billed as plain input (an upper bound); a cache write with no write rate
+        raises, because the premium is unknown and cost is never guessed low."""
+        if min(input_tokens, output_tokens, cached_tokens, write_tokens) < 0:
+            raise ValueError("token counts must be non-negative")
+        if cached_tokens + write_tokens > input_tokens:
+            raise ValueError("cached and written tokens exceed the input tokens")
+        if write_tokens and self.cache_write_per_mtok is None:
+            raise ValueError("cache writes reported but this price row has no write rate")
         long_ = self.long_context_tokens is not None and input_tokens >= self.long_context_tokens
         if long_ and self.long_input_per_mtok is not None and self.long_output_per_mtok is not None:
             rin, rout = self.long_input_per_mtok, self.long_output_per_mtok
+            rcache = rin  # no long-context cached rate is recorded: bill it as plain input
         else:
             rin, rout = self.input_per_mtok, self.output_per_mtok
-        return (input_tokens * rin + output_tokens * rout) / 1e6
+            rcache = self.cached_input_per_mtok if self.cached_input_per_mtok is not None else rin
+        plain = input_tokens - cached_tokens - write_tokens
+        rwrite = self.cache_write_per_mtok or 0.0
+        total = plain * rin + cached_tokens * rcache + write_tokens * rwrite + output_tokens * rout
+        return total / 1e6
 
 
 GROK_4_7_PRICING = Pricing(
@@ -163,9 +187,14 @@ class ChatResponse:
     # the provider's output items, verbatim, echoed back next turn (encrypted reasoning must be
     # passed back unchanged); empty for scripted responses
     output_items: tuple[Mapping[str, Any], ...] = ()
+    cached_input_tokens: int = 0  # part of input_tokens read from the provider's prompt cache
+    cache_write_tokens: int = 0  # part of input_tokens written to it (billed at a premium)
+    refused: bool = False  # the provider ended the turn as a refusal (kept as the final reply)
 
 
 class XaiClient(Protocol):
+    """The one client protocol every provider implements (``clients.ModelClient`` is this)."""
+
     def chat(self, request: ChatRequest) -> ChatResponse: ...
 
 

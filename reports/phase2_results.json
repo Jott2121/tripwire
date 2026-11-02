@@ -1,0 +1,185 @@
+{
+  "models": {
+    "grok-4.7": {
+      "conditions": {
+        "baseline": {
+          "run_errors": 0,
+          "runs": 200,
+          "summary": {
+            "balanced_accuracy": 0.505,
+            "balanced_ci95": [
+              0.49,
+              0.525
+            ],
+            "controls": {
+              "correct": 0.99,
+              "false_alarm": 0.01,
+              "n": 100
+            },
+            "mined": {
+              "answered_from_sdr": 0.88,
+              "by_rule": {
+                "S1": 0.023255813953488372,
+                "T1": 0.0
+              },
+              "correct": 0.02,
+              "flagged": 0.97,
+              "n": 100
+            },
+            "no_verdict": 0
+          },
+          "tokens": {
+            "input": 1074560,
+            "output": 103174
+          }
+        },
+        "prompt_fix": {
+          "run_errors": 0,
+          "runs": 200,
+          "summary": {
+            "balanced_accuracy": 0.81,
+            "balanced_ci95": [
+              0.75,
+              0.865
+            ],
+            "controls": {
+              "correct": 0.78,
+              "false_alarm": 0.21,
+              "n": 100
+            },
+            "mined": {
+              "answered_from_sdr": 0.13,
+              "by_rule": {
+                "S1": 0.8255813953488372,
+                "T1": 0.9285714285714286
+              },
+              "correct": 0.84,
+              "flagged": 1.0,
+              "n": 100
+            },
+            "no_verdict": 0
+          },
+          "tokens": {
+            "input": 1101744,
+            "output": 249208
+          }
+        }
+      },
+      "rules_as_gate": {
+        "balanced_accuracy": 1.0,
+        "balanced_ci95": [
+          1.0,
+          1.0
+        ],
+        "controls": {
+          "correct": 1.0,
+          "false_alarm": 0.0,
+          "n": 100
+        },
+        "mined": {
+          "answered_from_sdr": 0.0,
+          "by_rule": {
+            "S1": 1.0,
+            "T1": 1.0
+          },
+          "correct": 1.0,
+          "flagged": 1.0,
+          "n": 100
+        },
+        "no_verdict": 0
+      },
+      "spend_usd": 3.9471
+    },
+    "muse-spark-open": {
+      "conditions": {
+        "baseline": {
+          "run_errors": 0,
+          "runs": 200,
+          "summary": {
+            "balanced_accuracy": 0.5,
+            "balanced_ci95": [
+              0.5,
+              0.5
+            ],
+            "controls": {
+              "correct": 1.0,
+              "false_alarm": 0.0,
+              "n": 100
+            },
+            "mined": {
+              "answered_from_sdr": 0.85,
+              "by_rule": {
+                "S1": 0.0,
+                "T1": 0.0
+              },
+              "correct": 0.0,
+              "flagged": 0.99,
+              "n": 100
+            },
+            "no_verdict": 0
+          },
+          "tokens": {
+            "input": 707796,
+            "output": 148052
+          }
+        },
+        "prompt_fix": {
+          "run_errors": 0,
+          "runs": 200,
+          "summary": {
+            "balanced_accuracy": 0.515,
+            "balanced_ci95": [
+              0.5,
+              0.535
+            ],
+            "controls": {
+              "correct": 1.0,
+              "false_alarm": 0.0,
+              "n": 100
+            },
+            "mined": {
+              "answered_from_sdr": 0.91,
+              "by_rule": {
+                "S1": 0.011627906976744186,
+                "T1": 0.14285714285714285
+              },
+              "correct": 0.03,
+              "flagged": 1.0,
+              "n": 100
+            },
+            "no_verdict": 0
+          },
+          "tokens": {
+            "input": 725478,
+            "output": 309583
+          }
+        }
+      },
+      "rules_as_gate": {
+        "balanced_accuracy": 1.0,
+        "balanced_ci95": [
+          1.0,
+          1.0
+        ],
+        "controls": {
+          "correct": 1.0,
+          "false_alarm": 0.0,
+          "n": 100
+        },
+        "mined": {
+          "answered_from_sdr": 0.0,
+          "by_rule": {
+            "S1": 1.0,
+            "T1": 1.0
+          },
+          "correct": 1.0,
+          "flagged": 1.0,
+          "n": 100
+        },
+        "no_verdict": 0
+      },
+      "spend_usd": 3.9158
+    }
+  },
+  "spend_usd": 7.8629
+}

@@ -32,3 +32,6 @@ data/raw/
 
 # OS
 .DS_Store
+
+# Phase two item lists hold real serials -- local only (see docs/PREREGISTRATION-phase2-real-data.md)
+data/phase2/

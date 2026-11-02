@@ -231,11 +231,13 @@ def test_read_back_missing_record_is_f4():
 
 def test_read_back_mismatch_and_truncation_and_dropped_field():
     other = _verify({"work_order": {**WO, "defect_id": "z"}})
-    assert other.failures[0].check == "read_back_mismatch" and other.flags() == ()
+    # v2: any stored difference other than a cut text is a write drift (F9)
+    assert other.failures[0].check == "read_back_mismatch"
+    assert other.flags() == ("write_field_drift",)
     cut = _verify({"work_order": {**WO, "action": "replace"}})
     assert cut.flags() == ("silent_truncation",)
     differs = _verify({"work_order": {**WO, "action": "something else"}})
-    assert differs.blocked and differs.flags() == ()
+    assert differs.blocked and differs.flags() == ("write_field_drift",)
     dropped = {k: v for k, v in WO.items() if k != "provenance"}
     assert _verify({"work_order": dropped}).flags() == ("dropped_field",)
 

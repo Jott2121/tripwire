@@ -4,7 +4,7 @@
 > Keep this file under ~150 lines. Put procedures in `.cursor/skills/`, scoped rules in `.cursor/rules/*.mdc`, review rules in `.cursor/BUGBOT.md`.
 
 ## What this repo is (one paragraph, no hype)
-Tripwire feeds a Grok agent deliberately corrupted engineering data through a tool server, measures whether the agent notices, and ships a fail-closed check. The server serves public data (e.g. FAA service difficulty reports) and synthetic work orders from a committed, seeded generator, and can plant faults on command: swapped units, stale spec revisions, truncated results, and writes that report success but never happened. Every planted fault is recorded, so adjudication (noticed / acted / correct outcome) is deterministic, with no LLM judge. The fix is a fail-closed read-back gate, measured for lift and cost. Method ported from [sabot](https://github.com/Jott2121/sabot). **Headline:** the gate passed a pre-registered 72-job holdout (A4: 100% correct on faulted data vs 66.7% for the "check your data" prompt; small n, one model). Results and their sources live in README.md and `docs/results/`; build state in `docs/STATUS.md`.
+Tripwire feeds an LLM agent (grok-4.7 in v1; four models from four vendors in the v2 study, `docs/PREREGISTRATION-v2-multimodel.md`) deliberately corrupted engineering data through a tool server, measures whether the agent notices, and ships a fail-closed check. The server serves public data (e.g. FAA service difficulty reports) and synthetic work orders from a committed, seeded generator, and can plant faults on command: swapped units, stale spec revisions, truncated results, and writes that report success but never happened. Every planted fault is recorded, so adjudication (noticed / acted / correct outcome) is deterministic, with no LLM judge. The fix is a fail-closed read-back gate, measured for lift and cost. Method ported from [sabot](https://github.com/Jott2121/sabot). **Headline:** the gate passed a pre-registered 72-job holdout (A4: 100% correct on faulted data vs 66.7% for the "check your data" prompt; small n, one model). Results and their sources live in README.md and `docs/results/`; build state in `docs/STATUS.md`.
 
 - **Status:** experiment (work in progress) · **License:** MIT · **Package:** n/a (not published)
 - **Entry points:** `tripwire/`, `tests/`, `scripts/`, `docs/PREREGISTRATION.md` (+ `docs/amendments/`)
@@ -18,7 +18,8 @@ ruff check . && ruff format --check .         # lint
 python -m pytest -q --cov=tripwire --cov-report=term-missing --cov-fail-under=90   # test
 python scripts/scan_blocked_terms.py          # no-employer-data gate (same as CI)
 make demo                                     # offline replay of the committed spend ledger (zero spend)
-# live runs: only via the manually dispatched .github/workflows/live-eval.yml (confirm=I-APPROVE-LIVE-SPEND, spends real money)
+# live runs: only via the manually dispatched .github/workflows/live-eval.yml (confirm=I-APPROVE-LIVE-SPEND, spends real money);
+# v2 runs only via the v2 workflow proposed in docs/live-eval-v2.workflow.yml, once installed, through tripwire.live_v2
 ```
 A task is not done until lint + tests pass locally (or in the cloud agent VM) and the output is pasted in the PR.
 
@@ -30,7 +31,7 @@ A task is not done until lint + tests pass locally (or in the cloud agent VM) an
 5. **Tests and CI are the definition of done.** New behavior ships with a test that fails without it. Bug fixes ship with a regression test. Do not lower coverage floors or `--cov-fail-under` values. Do not mark tests `skip`/`xfail` to get green.
 6. **Model never grades its own output.** Fault adjudication is mechanical (the injection ledger vs. what the agent did). Where a judge model is unavoidable, use a different lineage from the model under test and record both.
 7. **Irreversible = human-gated.** No force-push, no history rewrite, no publishing to PyPI, no tagging releases, no posting anywhere. Open a PR; a human merges. `main` is branch-protected.
-8. **No live model calls in the default test path.** Tests use a mocked or recorded xAI client. `XAI_API_KEY` is never read by tests and never printed.
+8. **No live model calls in the default test path.** Tests use mocked or recorded clients (xAI, Together, OpenRouter, Anthropic, and any later provider). No API key (`XAI_API_KEY`, `TOGETHER_API_KEY`, `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) is read by tests or printed; the live drivers read only the one key the run needs, from the environment.
 
 ## Code style
 - Python 3.11+; stdlib-first; every new runtime dependency needs a one-line justification in the PR.
@@ -49,16 +50,25 @@ A task is not done until lint + tests pass locally (or in the cloud agent VM) an
 
 ## Directory map
 ```
-tripwire/            package: standards, store, server (tool server), faults (F1-F6), ledger,
-                     adjudicator, tasks, harness, runner, gate, xai, live_eval, report
+tripwire/            package: standards, store, server (tool server), faults (F1-F10), ledger,
+                     adjudicator, tasks, tasks_v2, harness, runner, gate, xai, clients,
+                     live_eval, live_v2, report, report_v2, gate_determined (offline note),
+                     registry + mining (phase two: FAA registry loader, frozen mining rules)
+                     phase2 (phase two: read tools, question templates, record_disagreement
+                     scorer; scripted demo `python -m tripwire.phase2`), live_phase2 (phase
+                     two live runner: frozen-protocol, input-hash and $65 cap checks, pilot then
+                     scored, `--dry-run` spends nothing; records stay in data/phase2/runs/)
 docs/                PREREGISTRATION.md, amendments/ (A1-A4), results/, STATUS.md, DATA.md,
-                     MEASUREMENT_STANDARDS.md
-tasks/               tasks_v1.json (40-task set with ground truth; generated, drift-tested)
-runs/                spend_ledger.jsonl (append-only, committed), targets/ (frozen job lists)
+                     MEASUREMENT_STANDARDS.md, PREREGISTRATION-v2-multimodel.md (shelved),
+                     PREREGISTRATION-phase2-real-data.md (frozen 2026-11-01)
+tasks/               tasks_v1.json (40 tasks) and tasks_v2.json (80 tasks, 480 slots); generated, drift-tested
+runs/                spend_ledger.jsonl (v1), spend_ledger_v2.jsonl (v2): append-only, committed;
+                     targets/ (frozen job lists)
 reports/             committed tripwire.report outputs
 artifacts/           results chart + summary, regenerated by `make demo`
 tests/               pytest suite, incl. the blocked-term scanner tests
-scripts/             scan_blocked_terms.py (CI gate), make_results_chart.py, *_report.py, run-brief.sh
+scripts/             scan_blocked_terms.py (CI gate), make_results_chart.py, *_report.py, run-brief.sh,
+                     fetch_sdr.py / fetch_registry.py, profile_sdr.py / profile_registry.py, freeze_phase2.py
 .github/workflows/   ci.yml (ruff, pytest, no-employer-data), claude.yml (@claude Action),
                      live-eval.yml (manual, budget-capped live runs)
 .claude/             settings.json: permission allow/deny list + Stop hook

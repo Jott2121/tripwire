@@ -1,0 +1,17 @@
+{
+  "bytes": 73083137,
+  "layout": "https://registry.faa.gov/database/ardata.pdf",
+  "members": {
+    "ACFTREF.txt": {
+      "bytes": 14877718,
+      "sha256": "beb27403b03fcba4024bcd752d79ab94c899f59cae34beda360d8ebb4658f03d"
+    },
+    "MASTER.txt": {
+      "bytes": 195363534,
+      "sha256": "2dcb13d2b3373ab8b7a89751149db9a687d7d176643e0b0007a1eda53ff2675e"
+    }
+  },
+  "retrieved_utc": "2026-11-01T17:17:39.651530+00:00",
+  "sha256": "6dbc3e48d4cea13ddac110dea9ec7d6275d40070a43a0d6d8691f04754b27b37",
+  "url": "https://registry.faa.gov/database/ReleasableAircraft.zip"
+}

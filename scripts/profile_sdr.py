@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """Profile a locally downloaded FAA SDR CSV to close the M0 open items.
 
-    python scripts/profile_sdr.py data/raw/SDR-2026.csv --out reports/sdr_profile_2026.json
+    PYTHONPATH=. python3 scripts/profile_sdr.py data/raw/SDR-2026.csv \\
+        --out reports/sdr_profile_2026.json
 
 Prints and writes statistics only, never narrative text: free-text columns
 (``Discrepancy``, makes, models, names, numbers, serials, locations) contribute

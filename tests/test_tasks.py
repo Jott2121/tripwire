@@ -14,7 +14,7 @@ from mcp.shared.memory import create_connected_server_and_client_session
 from tripwire import server as srv
 from tripwire import tasks as tk
 from tripwire.adjudicator import FLAG_VOCABULARY, Verdict, adjudicate
-from tripwire.faults import FaultConfig, FaultInjector, FaultKind, FaultSpec
+from tripwire.faults import V1_FAULTS, FaultConfig, FaultInjector, FaultKind, FaultSpec
 from tripwire.ledger import Ledger
 from tripwire.prompts import answer_format, render_prompt
 from tripwire.tasks import Task, TaskError, TaskKind, ToolCall
@@ -58,7 +58,7 @@ def test_task_set_shape():
     assert all(t.calls and t.prompt for t in TASKS)
     assert sum(t.control for t in TASKS) >= 3
     per_fault = Counter(f for t in TASKS for f in t.faults)
-    assert all(per_fault[f] >= 3 for f in FaultKind), per_fault
+    assert all(per_fault[f] >= 3 for f in V1_FAULTS), per_fault
 
 
 def test_ground_truth_resolves_and_adjudicates_correct_on_a_clean_run():
@@ -147,7 +147,7 @@ def test_plan_is_seeded_balanced_and_never_faults_a_control():
         assert all(r.fault in t.faults for r in mine if r.fault)
     assert all(r.task_id in by_task for r in a)
     faults = Counter(r.fault for r in a if r.fault)
-    assert set(faults) == set(FaultKind)  # every fault is exercised
+    assert set(faults) == set(V1_FAULTS)  # every v1 fault is exercised
 
 
 def test_plan_extremes_and_bad_arguments():

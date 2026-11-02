@@ -185,7 +185,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
-    parser.add_argument("--faults", default="", help="comma list of F1..F6; blank = clean mode")
+    parser.add_argument("--faults", default="", help="comma list of F1..F10; blank = clean mode")
     parser.add_argument("--fault-seed", type=int, default=0)
     parser.add_argument("--ledger", help="JSONL path for the injection ledger (new file only)")
     parser.add_argument("--run-id", default="run-0")

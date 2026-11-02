@@ -1,6 +1,6 @@
 # Tripwire build status
 
-Updated 2026-11-01. One row per milestone; the assistant directing the build
+Updated 2026-11-02. One row per milestone; the assistant directing the build
 reads this file first. Numbers never appear here unless a committed command
 produced them. Sections below "Live runs" are the build log as written at the
 time; where they say "no live call made" or "open PR", the tables here supersede them.
@@ -20,6 +20,7 @@ time; where they say "no live call made" or "open PR", the tables here supersede
 | M6 | The gate: contract check + write read-back + fail-closed final report | **merged**. Catches F2/F4/F5/F6 by construction; extended to F1/F3 by a store cross-check in exploratory amendment A1 | #28, #45 |
 | M7 | Live eval workflow (manual trigger, budget cap) and results report with CIs | **merged**: `xai.LiveClient`, `tripwire/live_eval.py`, `python -m tripwire.report`, `--resume-from` for `RUN_ERROR` jobs. The server-side remote-MCP path is built but has never run live | #30, #32, #36 |
 | M8 | Demo: side-by-side ungated vs gated run, one-page results README, 60-second walkthrough | **done** (pending merge): results-first README, `WRITEUP.md`, `make demo` offline replay (#41, #54, #55); side-by-side run `demo-1` with transcripts (`tripwire/demo.py`, `docs/results/demo-1.md`) and `docs/WALKTHROUGH.md` | #41, this PR |
+| P2 | Phase two on real FAA records: registry loader, frozen mining rules `mine-v2`, item draw, frozen preregistration, capped live runner, owner-run results | **done** (PR #60, pending merge): 800 runs, $7.86 of $65, `reports/phase2_results.json`, `docs/results/phase2-real-data.md` | #60 |
 
 ## Live runs
 

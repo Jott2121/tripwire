@@ -1,0 +1,111 @@
+{
+  "acftref": {
+    "header": [
+      "CODE",
+      "MFR",
+      "MODEL",
+      "TYPE-ACFT",
+      "TYPE-ENG",
+      "AC-CAT",
+      "BUILD-CERT-IND",
+      "NO-ENG",
+      "NO-SEATS",
+      "AC-WEIGHT",
+      "SPEED",
+      "TC-DATA-SHEET",
+      "TC-DATA-HOLDER",
+      ""
+    ],
+    "reject_kinds": {
+      "code is not 7 characters": 1
+    },
+    "rejects": 1,
+    "rows": 94161
+  },
+  "master": {
+    "duplicate_n_numbers": 0,
+    "header": [
+      "N-NUMBER",
+      "SERIAL NUMBER",
+      "MFR MDL CODE",
+      "ENG MFR MDL",
+      "YEAR MFR",
+      "TYPE REGISTRANT",
+      "NAME",
+      "STREET",
+      "STREET2",
+      "CITY",
+      "STATE",
+      "ZIP CODE",
+      "REGION",
+      "COUNTY",
+      "COUNTRY",
+      "LAST ACTION DATE",
+      "CERT ISSUE DATE",
+      "CERTIFICATION",
+      "TYPE AIRCRAFT",
+      "TYPE ENGINE",
+      "STATUS CODE",
+      "MODE S CODE",
+      "FRACT OWNER",
+      "AIR WORTH DATE",
+      "OTHER NAMES(1)",
+      "OTHER NAMES(2)",
+      "OTHER NAMES(3)",
+      "OTHER NAMES(4)",
+      "OTHER NAMES(5)",
+      "EXPIRATION DATE",
+      "UNIQUE ID",
+      "KIT MFR",
+      " KIT MODEL",
+      "MODE S CODE HEX",
+      ""
+    ],
+    "reject_kinds": {},
+    "rejects": 0,
+    "rows": 318181
+  },
+  "mining": {
+    "aircraft": {
+      "D1": 0,
+      "M1": 1189,
+      "S1": 128,
+      "S2": 84,
+      "T1": 14,
+      "controls": 6292
+    },
+    "counts": {
+      "D1": 0,
+      "M1": 6056,
+      "S1": 271,
+      "S2": 201,
+      "T1": 18,
+      "controls": 82814,
+      "skip:no_n_number": 294,
+      "skip:not_in_registry": 494,
+      "skip:registered_after_report": 466
+    },
+    "fingerprint": "425815509a8e94387d6256f1e9f1f30f5286b383a616f2c727d2c5d0b091d989",
+    "version": "mine-v2"
+  },
+  "sdr": {
+    "files": [
+      "SDR-2026.csv"
+    ],
+    "found_in_registry": 49072,
+    "rejects": 0,
+    "rows": 49860,
+    "with_n_number": 49566,
+    "with_total_time": 49400
+  },
+  "serials": {
+    "registry_with_letters": 765,
+    "relation": {
+      "None": 40,
+      "agree": 48533,
+      "differ": 287,
+      "partial": 212
+    },
+    "sdr_digits_only": 48366
+  }
+}

@@ -8,6 +8,7 @@ experimental variable (owner decision, docs/PREREGISTRATION.md).
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from enum import StrEnum
 
 from tripwire.adjudicator import FLAG_VOCABULARY, Status
@@ -16,10 +17,13 @@ from tripwire.tasks import Task
 _TOOLS = "query_defects, get_spec, get_test_result, create_work_order, get_work_order"
 
 
-def answer_format() -> str:
-    """The reply contract, built from the adjudicator's enums so the two cannot drift."""
+def answer_format(vocabulary: Sequence[str] = FLAG_VOCABULARY) -> str:
+    """The reply contract, built from the adjudicator's enums so the two cannot drift.
+
+    ``vocabulary`` is v1's by default; the v2 study passes ``adjudicator.FLAG_VOCABULARY_V2``.
+    """
     statuses = ", ".join(st.value for st in Status)
-    words = ", ".join(FLAG_VOCABULARY)
+    words = ", ".join(vocabulary)
     return (
         f"Use the tools ({_TOOLS}) to answer. End with one JSON object with keys "
         f'"status" (one of: {statuses}), "value" (number or null), "unit" (string or null), '
@@ -29,8 +33,8 @@ def answer_format() -> str:
     )
 
 
-def render_prompt(task: Task) -> str:
-    return f"{task.prompt}\n\n{answer_format()}"
+def render_prompt(task: Task, vocabulary: Sequence[str] = FLAG_VOCABULARY) -> str:
+    return f"{task.prompt}\n\n{answer_format(vocabulary)}"
 
 
 class Condition(StrEnum):
@@ -45,8 +49,10 @@ PROMPT_FIX_TEXT = (
 )
 
 
-def condition_prompt(task: Task, condition: Condition) -> str:
+def condition_prompt(
+    task: Task, condition: Condition, vocabulary: Sequence[str] = FLAG_VOCABULARY
+) -> str:
     """The agent-facing prompt for one condition (gate adds the gate, not more text)."""
     if condition is Condition.BASELINE:
-        return render_prompt(task)
-    return f"{task.prompt}\n\n{PROMPT_FIX_TEXT}\n\n{answer_format()}"
+        return render_prompt(task, vocabulary)
+    return f"{task.prompt}\n\n{PROMPT_FIX_TEXT}\n\n{answer_format(vocabulary)}"
