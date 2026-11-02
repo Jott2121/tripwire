@@ -297,3 +297,11 @@ the freeze on 2026-11-01.
   longer restarts a run. 402 (out of credit) still halts at once. A run's recorded latency
   includes any waits; latency is not in the analysis. No item, rule, model, prompt, scoring or
   cap changed.
+- **Deviation 4, 2026-11-02, noted after the scored runs (reporting only).** The scoring section
+  says "task-cluster bootstrap CIs, as v1". v1 uses 10,000 resamples; the phase-two scorer
+  (`phase2.balanced_ci`, frozen before any run) uses 2,000 with seed 20261101, over items. The
+  results report the CIs as computed and state the resample count, rather than re-run them with a
+  setting chosen after seeing the data. An independent review also found that a control's answer
+  is matched against the report's serial (letters and digits, zeros kept), which is stricter than
+  the mining rules' agreement test; this can affect at most one of the 400 control runs, and the
+  scorer is left as frozen. No item, rule, model, prompt, scoring rule or cap changed.
