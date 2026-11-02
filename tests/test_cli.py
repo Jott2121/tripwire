@@ -17,6 +17,13 @@ def test_no_args_prints_usage(capsys):
     assert "usage" in captured.out.lower()
 
 
+def test_help_lists_the_zero_spend_commands(capsys):
+    assert main([]) == 0
+    out = capsys.readouterr().out
+    for command in ("make demo", "make check", "python -m tripwire.phase2", "docs/README.md"):
+        assert command in out
+
+
 def test_dunder_main_wires_up_cli():
     import tripwire.__main__ as dunder_main
 
