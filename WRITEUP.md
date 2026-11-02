@@ -121,7 +121,7 @@ holdout is the gate result to cite.
   directories.
 - **The server-side remote-MCP path was not run** (needs a reachable HTTPS tunnel and per-run
   tokens). The gate cannot be applied there, by design, since xAI runs the tools.
-- **Public/synthetic data only.** No real FAA narrative rows and no proprietary data are ever
+- **Public/synthetic data only.** No real FAA narrative rows and no non-public data are ever
   committed; fixtures are seeded synthetic rows over the real column layout
   ([`docs/DATA.md`](docs/DATA.md)).
 
@@ -130,7 +130,7 @@ holdout is the gate result to cite.
 ```bash
 pip install -e ".[dev]"
 make demo     # regenerate the cost chart + summary from the committed ledger (zero spend)
-make check    # ruff + pytest (coverage >= 90%) + the proprietary-data scan
+make check    # ruff + pytest (coverage >= 90%) + the no-employer-data scan
 ```
 
 The committed reports under `reports/` are rebuilt from downloaded run directories with

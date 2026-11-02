@@ -32,7 +32,16 @@ jobs:
         env:
           EMPLOYER_MARKERS: ${{ secrets.EMPLOYER_MARKERS }}
         run: python scripts/scan_blocked_terms.py
+      # Each check reads its exit code explicitly and fails closed: 0 = found, 1 = clean, anything
+      # else = the scan itself failed. A bare `! cmd` line does not stop a bash -e step, so before
+      # this only the last such line decided the step and the marker grep could never fail.
       - name: Block export-control markers and committed build junk
         run: |
-          ! git grep -nIiE '\bCUI\b|ITAR|EXPORT CONTROLLED|PROPRIETARY' -- . ':!.cursor' ':!AGENTS.md' ':!.github'
-          ! git ls-files | grep -E '(__pycache__/|\.pyc$|^\.coverage$)'
+          rc=0
+          git grep -nIiE '\bCUI\b|ITAR|EXPORT CONTROLLED|PROPRIETARY' -- . ':!.cursor' ':!AGENTS.md' ':!.github' || rc=$?
+          if [ "$rc" -eq 0 ]; then echo "::error::export-control or proprietary marker in a tracked file (lines above)"; exit 1; fi
+          if [ "$rc" -ne 1 ]; then echo "::error::marker scan failed (git grep exit $rc)"; exit 1; fi
+          rc=0
+          git ls-files | grep -E '(__pycache__/|\.pyc$|^\.coverage$)' || rc=$?
+          if [ "$rc" -eq 0 ]; then echo "::error::build output is tracked (files above)"; exit 1; fi
+          if [ "$rc" -ne 1 ]; then echo "::error::build-junk scan failed (exit $rc)"; exit 1; fi
