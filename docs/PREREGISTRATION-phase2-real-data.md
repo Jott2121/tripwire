@@ -305,3 +305,21 @@ the freeze on 2026-11-01.
   is matched against the report's serial (letters and digits, zeros kept), which is stricter than
   the mining rules' agreement test; this can affect at most one of the 400 control runs, and the
   scorer is left as frozen. No item, rule, model, prompt, scoring rule or cap changed.
+- **Deviation 5, 2026-11-02, after the scored runs: the serial match in scoring follows the
+  rules (scoring only).** Deviation 4 noted that the scorer matched a serial answer on letters and
+  digits with zeros kept (`mining.norm_serial`), while the rules that chose the controls call two
+  serials the same on their key (leading zeros dropped, an all-digit serial matching the other's
+  digits; `mining.serial_relation` is `agree`). So a control answered in the registry's form, for
+  example `AB-012345` for the report's `12345`, scored wrong although the rules call it the same
+  serial. An outside review flagged it again on 2026-11-02 and the owner asked for the fix.
+  `phase2.serials_agree` now matches a serial answer by the rules' own test, tried both ways round.
+  The control selection was already the rules' (`mining.mine_one`), so `tripwire/mining.py`, its
+  fingerprint, the item list and its sha256 are unchanged and no control enters or leaves. The
+  stored per-run scores and `reports/phase2_results.json` are left as computed; the committed
+  rates bound the effect at one of the 400 control runs (grok-4.7 with the prompt: 78% correct,
+  21% false alarms, one run neither), which would move that arm's control correct rate to 79% and
+  its balanced accuracy from 0.81 to 0.815, and no false-alarm rate. `python -m
+  tripwire.live_phase2 rescore` (offline, no model, no spend) scores the stored verdicts with the
+  new scorer on the owner's machine and reports what moved, as counts. It can also move the
+  diagnostic `answered_from_sdr` rate on mined items, never their correct rate, which does not
+  read the answer. No item, rule, model, prompt, status rule or cap changed, and no run was added.

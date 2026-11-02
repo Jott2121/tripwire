@@ -209,6 +209,37 @@ def test_answers_are_matched_per_field_and_attributed_to_a_source():
     assert not p2._matches("aircraft_make", "X", "")
 
 
+@pytest.mark.parametrize(
+    ("sdr", "reg", "answer"),
+    [
+        ("12345", "AB-012345", "AB-012345"),  # the registry's form: letters and a leading zero
+        ("12345", "AB-012345", "AB12345"),
+        ("0012345", "12345", "12345"),  # leading zeros dropped, as the rules do
+        ("12345", "12345", "0012345"),
+    ],
+)
+def test_a_control_answered_in_either_agreeing_form_is_correct(sdr, reg, answer):
+    """Deviation 5: the scorer uses the mining rules' agreement test, the one that chose the
+    control. Before, ``AB-012345`` for a report's ``12345`` scored wrong (zeros kept, letters
+    compared), although the rules call the two the same serial."""
+    control = task(sdr=sdr, reg=reg)
+    assert mining.serial_relation(sdr, reg) == "agree"  # a control by the rules
+    s = p2.score(control, v("ok", answer))
+    assert s.correct and not s.false_alarm and s.answered_from in ("sdr", "both")
+
+
+@pytest.mark.parametrize("answer", ["12346", "AB-12346", "UNK", "000", "", "1234"])
+def test_a_control_answered_with_another_serial_is_still_wrong(answer):
+    s = p2.score(task(sdr="12345", reg="AB-012345"), v("ok", answer))
+    assert not s.correct and s.answered_from == "neither"
+
+
+def test_serials_agree_is_the_rules_test_both_ways_round():
+    assert p2.serials_agree("AB12345", "12345") and p2.serials_agree("12345", "AB12345")
+    assert not p2.serials_agree("AB12345", "CD12345")  # letters differ: not the digits rule
+    assert not p2.serials_agree("NONE", "NONE")  # a placeholder is blank, never a match
+
+
 def test_reference_is_right_by_construction():
     for t in (MINED, CONTROL, HOURS):
         assert p2.score(t, p2.reference_verdict(t)).correct

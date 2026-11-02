@@ -350,6 +350,17 @@ def _norm_flag(text: str) -> str:
     return "_".join(text.strip().lower().replace("-", " ").replace("_", " ").split())
 
 
+def serials_agree(answer: str, value: str) -> bool:
+    """Whether an answered serial is the same serial as ``value`` by the mining rules' own
+    agreement test (:func:`mining.serial_relation` is ``agree``, tried both ways round because an
+    answer may be written in either source's form). Deviation 5: until 2026-11-02 the scorer
+    compared letters and digits with zeros kept, which is stricter than the test that chose the
+    controls, so a control answered in the registry's form (``AB-012345`` for the report's
+    ``12345``) scored wrong although the rules call the two the same serial. A blank or
+    placeholder never matches."""
+    return "agree" in (mining.serial_relation(value, answer), mining.serial_relation(answer, value))
+
+
 def _matches(field: str, answer: str | float | None, value: str) -> bool:
     """Whether an answer gives ``value`` for ``field`` (a source's value, as text)."""
     if answer is None or value == "":
@@ -361,9 +372,7 @@ def _matches(field: str, answer: str | float | None, value: str) -> bool:
             return False
     text = str(answer)
     if field == "aircraft_serial_number":
-        return mining.norm_serial(text) != "" and mining.norm_serial(text) == mining.norm_serial(
-            value
-        )
+        return serials_agree(text, value)
     if field == "difficulty_date":
         try:
             return date.fromisoformat(text.strip()) == date.fromisoformat(value)
