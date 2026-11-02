@@ -57,7 +57,8 @@ tripwire/            package: standards, store, server (tool server), faults (F1
                      phase2 (phase two: read tools, question templates, record_disagreement
                      scorer; scripted demo `python -m tripwire.phase2`), live_phase2 (phase
                      two live runner: frozen-protocol, input-hash and $65 cap checks, pilot then
-                     scored, `--dry-run` spends nothing; records stay in data/phase2/runs/)
+                     scored, `--dry-run` spends nothing, `rescore` re-scores stored verdicts offline;
+                     records stay in data/phase2/runs/)
 docs/                README.md (map of every doc), PREREGISTRATION.md, amendments/ (A1-A4), results/, STATUS.md, DATA.md,
                      MEASUREMENT_STANDARDS.md, PREREGISTRATION-v2-multimodel.md (shelved),
                      PREREGISTRATION-phase2-real-data.md (frozen 2026-11-01)

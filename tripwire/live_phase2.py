@@ -4,6 +4,7 @@ spends money on phase two. Run on the owner's machine, against the files the fre
     PYTHONPATH=. python3 -m tripwire.live_phase2 run --model muse-spark-open --arm pilot \\
         --budget-usd 2 --confirm I-APPROVE-LIVE-SPEND [--dry-run]
     PYTHONPATH=. python3 -m tripwire.live_phase2 report --out reports/phase2_results.json
+    PYTHONPATH=. python3 -m tripwire.live_phase2 rescore  # offline, no model
 
 ``--master``, ``--acftref``, ``--sdr`` and ``--items`` default to the paths the freeze used.
 
@@ -313,6 +314,37 @@ def report(runs_dir: Path) -> dict[str, Any]:
     return out
 
 
+def rescore(runs_dir: Path, tasks: Sequence[phase2.Task]) -> dict[str, Any]:
+    """Offline, no model: score each scored record's stored verdict again with today's scorer and
+    count what moved, per model and condition (deviation 5). Rates and counts only, safe to
+    commit. The stored scores, and ``report``, are left as they were."""
+    by_id = {t.task_id: t for t in tasks}
+    out: dict[str, Any] = {"models": {}}
+    for label in MODEL_CAPS:
+        recs = [_record_from(d) for d in _read_jsonl(runs_dir / label / "scored.jsonl")]
+        per: dict[str, Any] = {}
+        for cond in CONDITIONS:
+            rs = [r for r in recs if r.condition == cond.value and r.score is not None]
+            if not rs:
+                continue
+            new = []
+            moved = {"controls_correct": 0, "mined_correct": 0, "answered_from": 0}
+            for r in rs:
+                if r.task_id not in by_id:
+                    raise Refused(f"record {r.run_id} names a task not in the frozen item list")
+                verdict = None if r.verdict is None else phase2.Verdict.from_dict(r.verdict)
+                s, old = phase2.score(by_id[r.task_id], verdict), phase2.Score(**r.score)
+                new.append(s)
+                half = "mined_correct" if s.mined else "controls_correct"
+                moved[half] += s.correct != old.correct
+                moved["answered_from"] += s.answered_from != old.answered_from
+            per[cond.value] = {"runs": len(rs), "moved": moved,
+                               "rescored": phase2.summarize(new)}  # fmt: skip
+        if per:
+            out["models"][label] = per
+    return out
+
+
 def _paths(args: argparse.Namespace) -> dict[str, Any]:
     return {"master": args.master, "acftref": args.acftref, "sdr": args.sdr}
 
@@ -385,11 +417,25 @@ def main(argv: list[str] | None = None) -> int:
     rep = sub.add_parser("report", help="rates and counts from the scored records")
     rep.add_argument("--runs-dir", type=Path, default=RUNS)
     rep.add_argument("--out", type=Path, default=None)
+    rs = sub.add_parser("rescore", help="score the stored verdicts again with today's scorer")
+    rs.add_argument("--runs-dir", type=Path, default=RUNS)
+    rs.add_argument("--items", type=Path, default=ITEMS)
+    rs.add_argument("--freeze", type=Path, default=FREEZE)
+    rs.add_argument("--out", type=Path, default=None)
     args = p.parse_args(argv)
     if args.cmd == "run":
         args.sdr = args.sdr or [DEFAULT_INPUTS["sdr"]]
         return run(args)
-    text = json.dumps(report(args.runs_dir), indent=2, sort_keys=True) + "\n"
+    if args.cmd == "rescore":
+        try:
+            tasks = load_tasks(args.items, json.loads(args.freeze.read_text()))
+            result = rescore(args.runs_dir, tasks)
+        except (Refused, phase2.Phase2Error, OSError, KeyError, ValueError) as exc:
+            print(f"REFUSED: {exc}", file=sys.stderr)
+            return 2
+    else:
+        result = report(args.runs_dir)
+    text = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(text)

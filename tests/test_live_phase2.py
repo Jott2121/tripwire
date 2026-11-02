@@ -393,3 +393,34 @@ def test_the_live_client_gets_the_retrying_transport(study, monkeypatch, capsys)
     assert _run(study, "--arm", "pilot", "--budget-usd", "2", "--confirm",
                 live_phase2.CONFIRM_PHRASE, environ=env) == 0  # fmt: skip
     assert seen["transport"]("u", {}, b"b", 1.0)[0] == 200
+
+
+def test_rescore_counts_what_todays_scorer_moves_and_spends_nothing(study, monkeypatch, capsys):
+    env = _live(monkeypatch, _Answerer())
+    confirm = ["--confirm", live_phase2.CONFIRM_PHRASE]
+    assert _run(study, "--arm", "pilot", "--budget-usd", "2", *confirm, environ=env) == 0
+    assert _run(study, "--arm", "scored", "--budget-usd", "20", *confirm, environ=env) == 0
+    capsys.readouterr()
+    scored = study["runs"] / "muse-spark-open" / "scored.jsonl"
+    args = ["rescore", "--runs-dir", str(study["runs"]), "--items", str(study["items"]),
+            "--freeze", str(study["tmp"] / "freeze.json")]  # fmt: skip
+    assert live_phase2.main(args) == 0
+    out = json.loads(capsys.readouterr().out)["models"]["muse-spark-open"]
+    assert out["baseline"]["moved"] == {"controls_correct": 0, "mined_correct": 0,
+                                        "answered_from": 0}  # fmt: skip
+    assert out["baseline"]["runs"] == study["rec"]["tasks"]
+    # a stored score the scorer no longer gives (as a control scored under the old serial test)
+    rows = [json.loads(line) for line in scored.read_text().splitlines()]
+    i = next(k for k, r in enumerate(rows) if r["rule"] == "control")
+    rows[i]["score"] |= {"correct": not rows[i]["score"]["correct"], "answered_from": "registry"}
+    scored.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    rep = study["tmp"] / "rescore.json"
+    assert live_phase2.main([*args, "--out", str(rep)]) == 0
+    moved = json.loads(rep.read_text())["models"]["muse-spark-open"][rows[i]["condition"]]["moved"]
+    assert moved == {"controls_correct": 1, "mined_correct": 0, "answered_from": 1}
+    assert '"X"' not in rep.read_text()  # counts and rates only, no answers
+    capsys.readouterr()
+    rows[i]["task_id"] = "p2-not-a-task"
+    scored.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    assert live_phase2.main(args) == 2
+    assert "not in the frozen item list" in capsys.readouterr().err

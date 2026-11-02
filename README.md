@@ -374,8 +374,9 @@ and that the protocol is committed, before any request. Tests never make live ca
   the preregistered rule; the flagged rate is reported beside it.
 - **The rules are the reference.** The rules-as-gate is right by construction, and the rules can
   be wrong in ways this study cannot see.
-- **Control answers are matched against the report's serial,** which is stricter than the rules'
-  agreement test; it can affect at most one of 400 control runs
+- **Control serials were scored more strictly than the rules chose them.** The scorer now matches a
+  serial answer by the rules' own agreement test (deviation 5). The controls did not change, and
+  the effect is at most one of 400 control runs, with no false-alarm rate moving
   ([write-up](docs/results/phase2-real-data.md)).
 - **Per-run records are not public**, by design: they hold real serials.
 

@@ -95,11 +95,16 @@ The owner labelled no unsettled items, so Q4's one empirical number does not exi
 - **"Correct" requires acting.** By the preregistered rule, an `ok` answer that carries the flag
   is wrong. That rule is the point of Q1, and `flagged` is reported beside it so noticing can be
   read on its own.
-- **Control answers are matched against the report's serial** (letters and digits, zeros kept).
-  That is stricter than the agreement test the mining rules use (leading zeros dropped, an
-  all-digit report serial matching the registry's digits), so a control answered in the
-  registry's form is scored wrong. It can affect at most the one control above; the scorer is
-  left as frozen and a later protocol should align the two.
+- **Control serials were matched more strictly than the rules.** The frozen scorer matched a
+  serial answer on letters and digits with zeros kept, stricter than the agreement test the mining
+  rules use to pick controls (leading zeros dropped, an all-digit report serial matching the
+  registry's digits). A control answered in the registry's form scored wrong. The scorer now uses
+  the rules' own test (deviation 5); the controls themselves were always chosen by the rules and
+  did not change. The numbers above are as scored at run time. The committed rates bound the
+  effect at the one grok-4.7 prompt_fix control noted above: if it was a serial answered in an
+  agreeing form, that arm's control correct rate is 79%, not 78%, and its balanced accuracy 0.815,
+  not 0.81. No false-alarm rate can move. `python -m tripwire.live_phase2 rescore` settles it from
+  the owner's records, offline.
 - **The gate is the rules.** Q4 is a ceiling by design; the rules can be wrong in ways this study
   cannot see, because every item they settled is scored by the same rules.
 - **Status counts are not in the committed report.** "Gave the report's value" is the
@@ -108,7 +113,8 @@ The owner labelled no unsettled items, so Q4's one empirical number does not exi
 
 ## Deviations from the preregistration
 
-All logged in its deviations log; none changed an item, rule, prompt, scoring rule or cap.
+All logged in its deviations log; none changed an item, rule, prompt or cap. Deviation 5
+changed how a serial answer is matched, after the runs, at the owner's request.
 
 1. Muse Spark Open called through OpenRouter, pinned to Together with fallbacks off (the owner's
    card was declined at Together).
@@ -117,6 +123,9 @@ All logged in its deviations log; none changed an item, rule, prompt, scoring ru
    *(Owner's observation:)* the Muse scored run hit them often and took longer; no run was lost.
 4. The CIs use 2,000 bootstrap resamples, not v1's 10,000 as "as v1" in the plan implied; noted
    after the scored runs, and stated here instead of re-run.
+5. A serial answer is now matched by the mining rules' own agreement test, not the stricter
+   letters-and-digits match the frozen scorer used. It changes scoring only, can move at most one
+   of the 400 control runs, and no item, rule, prompt or cap changed (see Limits).
 
 ## Cost
 
