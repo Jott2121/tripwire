@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tripwire"
-version = "0.0.1"
+version = "1.0.0"
 description = "Pre-registered tests of whether tool-using AI agents notice wrong engineering data and act on it: planted faults, real FAA records, a fail-closed gate, no LLM judge."
 readme = "README.md"
 license = { text = "MIT" }
